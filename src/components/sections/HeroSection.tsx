@@ -1,30 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Users, IndianRupee, Star } from "@/lib/icons";
+import { motion } from "framer-motion";
+import { ArrowRight, Users, IndianRupee, Star, Sparkles } from "@/lib/icons";
 import { HeroTitle, HeroAnimationConfig, HeroGradientsConfig } from "@/components/sections/HeroTitle";
-
-const heroSlides = [
-  {
-    src: "/images/hero/hero-learn.jpg",
-    alt: "Students and professionals engaged in a collaborative learning workshop",
-    label: "Learn",
-  },
-  {
-    src: "/images/hero/hero-earn.jpg",
-    alt: "Professional working on laptop, building skills and earning opportunities",
-    label: "Earn",
-  },
-  {
-    src: "/images/hero/hero-grow.jpg",
-    alt: "Team celebrating success and career growth together",
-    label: "Grow",
-  },
-];
 
 interface SiteSettings {
   heroTitle?: string;
@@ -62,17 +42,6 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
     "A powerful ecosystem built for students and professionals to gain in-demand skills, convert their talents into real earning opportunities, and accelerate career growth through structured learning, expert guidance, and a strong, opportunity-driven community.";
   const cta = siteSettings?.heroCTA || "Get Started";
 
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  const nextSlide = useCallback(() => {
-    setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-  }, []);
-
-  useEffect(() => {
-    const timer = setInterval(nextSlide, 4000);
-    return () => clearInterval(timer);
-  }, [nextSlide]);
-
   return (
     <section
       className="relative min-h-[calc(100dvh-4rem)] flex items-center overflow-hidden"
@@ -90,18 +59,19 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
             animate="visible"
             className="lg:w-[55%] xl:w-1/2 space-y-4 sm:space-y-5 text-center lg:text-left"
           >
-            <motion.div variants={itemVariants} className="flex justify-center lg:justify-start">
+            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-2 justify-center lg:justify-start">
               <Link
                 href="/career"
-                className="group inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/[0.06] border border-primary/15 hover:border-primary/30 transition-all text-xs sm:text-sm"
+                className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/[0.06] border border-primary/15 hover:border-primary/30 transition-all text-xs sm:text-sm"
+                data-testid="badge-ai-career"
               >
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute h-1.5 w-1.5 rounded-full bg-primary opacity-75" />
-                  <span className="relative rounded-full h-1.5 w-1.5 bg-primary" />
-                </span>
+                <Sparkles className="h-3 w-3 text-primary" />
                 <span className="font-medium text-slate-700">New: AI Career Coach</span>
-                <ArrowRight className="h-3.5 w-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                <ArrowRight className="h-3 w-3 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </Link>
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-gradient-to-r from-primary/10 to-purple-500/10 border border-primary/15 text-xs sm:text-sm font-medium text-slate-700" data-testid="badge-ecosystem">
+                The Ultimate Career Ecosystem
+              </span>
             </motion.div>
 
             <motion.div variants={itemVariants}>
@@ -177,7 +147,7 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.15 }}
             className="w-full lg:w-[45%] xl:w-1/2 relative hidden sm:block"
-            data-testid="hero-image-slider"
+            data-testid="hero-video-container"
           >
             <div className="relative lg:pl-4 xl:pl-8">
               <motion.div
@@ -186,28 +156,19 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
                 whileHover={{ rotate: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="relative aspect-[4/3] lg:aspect-[16/11] w-full">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={currentSlide}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.8, ease: "easeInOut" }}
-                      className="absolute inset-0"
-                    >
-                      <Image
-                        src={heroSlides[currentSlide].src}
-                        alt={heroSlides[currentSlide].alt}
-                        fill
-                        className="object-cover"
-                        priority={currentSlide === 0}
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                      />
-                    </motion.div>
-                  </AnimatePresence>
+                <div className="relative aspect-[16/10] w-full bg-slate-900">
+                  <video
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover"
+                    data-testid="hero-video"
+                  >
+                    <source src="/videos/hero-brand.mp4" type="video/mp4" />
+                  </video>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
                 <div className="absolute bottom-4 left-4 sm:bottom-5 sm:left-5 z-10">
                   <div className="flex items-center gap-2 text-white">
@@ -219,22 +180,6 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
                       <p className="text-white/70 text-xs">Join the community</p>
                     </div>
                   </div>
-                </div>
-
-                <div className="absolute bottom-4 right-4 sm:bottom-5 sm:right-5 flex gap-1.5 z-10">
-                  {heroSlides.map((slide, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setCurrentSlide(idx)}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
-                        idx === currentSlide
-                          ? "w-6 bg-white"
-                          : "w-1.5 bg-white/50 hover:bg-white/70"
-                      }`}
-                      aria-label={`Go to slide: ${slide.label}`}
-                      data-testid={`slider-dot-${idx}`}
-                    />
-                  ))}
                 </div>
               </motion.div>
 
