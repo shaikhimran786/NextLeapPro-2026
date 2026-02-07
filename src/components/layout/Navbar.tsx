@@ -51,7 +51,6 @@ import {
   Star,
 } from "@/lib/icons";
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { createPortal } from "react-dom";
 import { useUserStatus, performLogout } from "@/hooks/useUserStatus";
 import { isAdmin, isCreator } from "@/lib/user-status";
 import { toast } from "sonner";
@@ -595,16 +594,11 @@ export function Navbar({
 }: NavbarProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const { userStatus, isLoading } = useUserStatus();
   const router = useRouter();
   const pathname = usePathname();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const menuToggleRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const { data: siteSettings } = useSWR("/api/admin/settings", fetcher, {
     revalidateOnFocus: false,
@@ -924,168 +918,162 @@ export function Navbar({
       </nav>
     </header>
 
-    {/* Mobile Menu - rendered via portal to escape header stacking context */}
-    {isMounted && createPortal(
+    <div
+      id="mobile-menu"
+      className={cn(
+        "fixed inset-0 z-[9999] lg:hidden transition-all duration-300",
+        isOpen ? "visible" : "invisible pointer-events-none"
+      )}
+      data-testid="mobile-menu-container"
+    >
       <div
-        id="mobile-menu"
         className={cn(
-          "fixed inset-0 z-[9999] lg:hidden transition-all duration-300",
-          isOpen ? "visible" : "invisible pointer-events-none"
+          "absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300",
+          isOpen ? "opacity-100" : "opacity-0"
         )}
-        data-testid="mobile-menu-container"
-      >
-        <div
-          className={cn(
-            "absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300",
-            isOpen ? "opacity-100" : "opacity-0"
-          )}
-          onClick={handleOverlayClick}
-          aria-hidden="true"
-          data-testid="mobile-menu-overlay"
-        />
+        onClick={handleOverlayClick}
+        aria-hidden="true"
+        data-testid="mobile-menu-overlay"
+      />
 
-        <div
-          className={cn(
-            "absolute top-0 right-0 h-full w-[85vw] max-w-md bg-white shadow-2xl transition-transform duration-300 ease-out",
-            isOpen ? "translate-x-0" : "translate-x-full"
-          )}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Navigation menu"
-        >
-          <div className="flex items-center justify-between px-4 py-4 border-b border-slate-100">
-            <Link href="/" onClick={closeMenu} className="flex items-center">
-              <Image
-                src={logoSrc}
-                alt={siteSettings?.siteName || "Next Leap Pro"}
-                width={160}
-                height={40}
-                className="h-10 w-auto object-contain"
-              />
-            </Link>
-            <button
-              ref={closeButtonRef}
-              type="button"
-              className="flex items-center justify-center h-11 w-11 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+      <div
+        className={cn(
+          "absolute top-0 right-0 h-full w-[85vw] max-w-md bg-white shadow-2xl transition-transform duration-300 ease-out",
+          isOpen ? "translate-x-0" : "translate-x-full"
+        )}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation menu"
+      >
+        <div className="flex items-center justify-between px-4 py-4 border-b border-slate-100">
+          <Link href="/" onClick={closeMenu} className="flex items-center">
+            <Image
+              src={logoSrc}
+              alt={siteSettings?.siteName || "Next Leap Pro"}
+              width={160}
+              height={40}
+              className="h-10 w-auto object-contain"
+            />
+          </Link>
+          <button
+            ref={closeButtonRef}
+            type="button"
+            className="flex items-center justify-center h-11 w-11 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            onClick={closeMenu}
+            aria-label="Close menu"
+            data-testid="mobile-menu-close"
+          >
+            <X className="h-5 w-5 text-slate-600" />
+          </button>
+        </div>
+
+        <div className="flex flex-col h-[calc(100%-73px)] overflow-y-auto overscroll-contain">
+          <div className="p-4 border-b border-slate-100">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-4 mb-3">Quick Links</p>
+            <Link
+              href="/"
               onClick={closeMenu}
-              aria-label="Close menu"
-              data-testid="mobile-menu-close"
+              className={cn(
+                "group flex items-center gap-4 px-4 py-4 rounded-2xl font-medium text-base",
+                "transition-all duration-200 ease-out active:scale-[0.98]",
+                isActiveLink("/")
+                  ? "bg-gradient-to-r from-primary/10 to-primary/5 text-primary border border-primary/20"
+                  : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+              )}
             >
-              <X className="h-5 w-5 text-slate-600" />
-            </button>
+              <div className={cn(
+                "flex items-center justify-center w-10 h-10 rounded-xl transition-colors",
+                isActiveLink("/") ? "bg-primary/10" : "bg-slate-100 group-hover:bg-slate-200"
+              )}>
+                <Home className={cn("h-5 w-5", isActiveLink("/") ? "text-primary" : "text-slate-500")} />
+              </div>
+              <span className="flex-1">Home</span>
+            </Link>
           </div>
 
-          <div className="flex flex-col h-[calc(100%-73px)] overflow-y-auto overscroll-contain">
-            {/* Quick Links */}
-            <div className="p-4 border-b border-slate-100">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-4 mb-3">Quick Links</p>
-              <Link
-                href="/"
-                onClick={closeMenu}
-                className={cn(
-                  "group flex items-center gap-4 px-4 py-4 rounded-2xl font-medium text-base",
-                  "transition-all duration-200 ease-out active:scale-[0.98]",
-                  isActiveLink("/")
-                    ? "bg-gradient-to-r from-primary/10 to-primary/5 text-primary border border-primary/20"
-                    : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                )}
-              >
-                <div className={cn(
-                  "flex items-center justify-center w-10 h-10 rounded-xl transition-colors",
-                  isActiveLink("/") ? "bg-primary/10" : "bg-slate-100 group-hover:bg-slate-200"
-                )}>
-                  <Home className={cn("h-5 w-5", isActiveLink("/") ? "text-primary" : "text-slate-500")} />
-                </div>
-                <span className="flex-1">Home</span>
-              </Link>
-            </div>
+          <div className="flex-1">
+            <MobileAccordionSection title="Learn" icon={GraduationCap}>
+              {dynamicMegaMenuData.learn.items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMenu}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              ))}
+            </MobileAccordionSection>
 
-            {/* Accordion Sections */}
-            <div className="flex-1">
-              <MobileAccordionSection title="Learn" icon={GraduationCap}>
-                {dynamicMegaMenuData.learn.items.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={closeMenu}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                ))}
-              </MobileAccordionSection>
+            <MobileAccordionSection title="Earn" icon={Briefcase}>
+              {dynamicMegaMenuData.earn.items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMenu}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              ))}
+            </MobileAccordionSection>
 
-              <MobileAccordionSection title="Earn" icon={Briefcase}>
-                {dynamicMegaMenuData.earn.items.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={closeMenu}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                ))}
-              </MobileAccordionSection>
+            <MobileAccordionSection title="Community" icon={Users}>
+              {dynamicMegaMenuData.community.items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMenu}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              ))}
+            </MobileAccordionSection>
 
-              <MobileAccordionSection title="Community" icon={Users}>
-                {dynamicMegaMenuData.community.items.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={closeMenu}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                ))}
-              </MobileAccordionSection>
+            <MobileAccordionSection title="Plans" icon={CreditCard}>
+              {dynamicMegaMenuData.plans.map((plan) => (
+                <Link
+                  key={plan.name}
+                  href={plan.href}
+                  onClick={closeMenu}
+                  className={cn(
+                    "flex items-center justify-between px-3 py-2 rounded-lg text-sm",
+                    plan.highlight
+                      ? "bg-primary/5 text-primary font-medium"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  )}
+                >
+                  <span>{plan.name}</span>
+                  <span className="font-semibold">{plan.price}</span>
+                </Link>
+              ))}
+            </MobileAccordionSection>
 
-              <MobileAccordionSection title="Plans" icon={CreditCard}>
-                {dynamicMegaMenuData.plans.map((plan) => (
-                  <Link
-                    key={plan.name}
-                    href={plan.href}
-                    onClick={closeMenu}
-                    className={cn(
-                      "flex items-center justify-between px-3 py-2 rounded-lg text-sm",
-                      plan.highlight
-                        ? "bg-primary/5 text-primary font-medium"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                    )}
-                  >
-                    <span>{plan.name}</span>
-                    <span className="font-semibold">{plan.price}</span>
-                  </Link>
-                ))}
-              </MobileAccordionSection>
+            <MobileAccordionSection title="Support" icon={HelpCircle}>
+              {dynamicMegaMenuData.support.items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMenu}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              ))}
+            </MobileAccordionSection>
+          </div>
 
-              <MobileAccordionSection title="Support" icon={HelpCircle}>
-                {dynamicMegaMenuData.support.items.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={closeMenu}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                ))}
-              </MobileAccordionSection>
-            </div>
-
-            <div className="mt-auto border-t border-slate-100 bg-slate-50/50">
-              {renderMobileAuth()}
-            </div>
+          <div className="mt-auto border-t border-slate-100 bg-slate-50/50">
+            {renderMobileAuth()}
           </div>
         </div>
-      </div>,
-      document.body
-    )}
+      </div>
+    </div>
 
     </>
   );
