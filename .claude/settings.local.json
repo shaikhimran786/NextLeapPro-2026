@@ -3,7 +3,9 @@
     "allow": [
       "Bash(git rebase:*)",
       "Bash(git checkout:*)",
-      "Bash(ss:*)"
+      "Bash(ss:*)",
+      "Bash(kill:*)",
+      "Bash(xargs kill:*)"
     ]
   }
 }

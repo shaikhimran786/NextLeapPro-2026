@@ -1,18 +1,7 @@
 import { spawn } from "child_process";
-import { rmSync, existsSync } from "fs";
-import { join } from "path";
 
 const port = parseInt(process.env.PORT || "5000", 10);
 const isProduction = process.env.NODE_ENV === "production";
-
-if (!isProduction) {
-  const nextCacheDir = join(process.cwd(), ".next");
-  if (existsSync(nextCacheDir)) {
-    console.log("Cleaning .next cache for fresh build...");
-    rmSync(nextCacheDir, { recursive: true, force: true });
-    console.log("Cache cleaned successfully.");
-  }
-}
 
 console.log(`Starting Next.js in ${isProduction ? "production" : "development"} mode on port ${port}...`);
 
