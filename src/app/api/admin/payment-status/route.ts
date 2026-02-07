@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isRazorpayConfigured } from "@/lib/razorpay";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,14 +13,19 @@ export async function GET(request: NextRequest) {
     const cashfreeWebhookUrl = `${protocol}://${host}/api/payments/cashfree/webhook`;
     const razorpayWebhookUrl = `${protocol}://${host}/api/webhooks/razorpay`;
 
+    const siteSettings = await prisma.siteSettings.findFirst();
+
     return NextResponse.json({
       cashfreeConfigured: !!(cashfreeAppId && cashfreeSecretKey),
+      cashfreeEnabled: siteSettings?.cashfreeEnabled ?? false,
       cashfreeAppId: cashfreeAppId ? `${cashfreeAppId.substring(0, 8)}...` : null,
       cashfreeWebhookUrl,
       razorpayConfigured: isRazorpayConfigured(),
       razorpayKeyId: razorpayKeyId ? `${razorpayKeyId.substring(0, 8)}...` : null,
       razorpayWebhookUrl,
-      paymentGateway: "cashfree",
+      activeGateway: siteSettings?.activePaymentGateway || "cashfree",
+      paymentEnabled: siteSettings?.paymentEnabled ?? true,
+      paymentTestMode: siteSettings?.paymentTestMode ?? true,
     });
   } catch (error) {
     console.error("Error fetching payment status:", error);

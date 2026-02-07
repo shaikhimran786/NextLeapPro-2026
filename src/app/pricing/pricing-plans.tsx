@@ -97,6 +97,10 @@ export function PricingPlans({ monthlyPlans, annualPlans }: PricingPlansProps) {
   const { userStatus, isLoading: isUserLoading } = useUserStatus();
   const [billingInterval, setBillingInterval] = useState<"month" | "year">("month");
   const [loadingPlan, setLoadingPlan] = useState<number | null>(null);
+  const [paymentGatewayStatus, setPaymentGatewayStatus] = useState<{
+    configured: boolean;
+    error?: string;
+  } | null>(null);
 
   const isLoggedIn = userStatus.authStatus === "logged_in";
   const plans = billingInterval === "month" ? monthlyPlans : annualPlans;
@@ -105,6 +109,23 @@ export function PricingPlans({ monthlyPlans, annualPlans }: PricingPlansProps) {
   const currentUserTier = userStatus.subscriptionTier?.toLowerCase() || "free";
   const currentUserTierLevel = getTierLevel(currentUserTier);
   const hasActiveSubscription = userStatus.subscriptionStatus === "active" || userStatus.subscriptionStatus === "trial";
+
+  // Check payment gateway status on mount
+  useEffect(() => {
+    async function checkPaymentGateway() {
+      try {
+        const response = await fetch("/api/admin/payment-status");
+        if (response.ok) {
+          const data = await response.json();
+          const configured = data.cashfreeConfigured || data.razorpayConfigured;
+          setPaymentGatewayStatus({ configured });
+        }
+      } catch (error) {
+        console.error("Failed to check payment gateway status:", error);
+      }
+    }
+    checkPaymentGateway();
+  }, []);
 
   useEffect(() => {
     if (isUserLoading) return;
@@ -219,6 +240,12 @@ export function PricingPlans({ monthlyPlans, annualPlans }: PricingPlansProps) {
       return;
     }
 
+    // Check payment gateway status for paid plans
+    if (!paymentGatewayStatus?.configured && plan.price > 0) {
+      toast.error("Payment gateway is not configured. Please contact support.");
+      return;
+    }
+
     if (isLoggedIn && userStatus.userId) {
       await proceedToCheckoutWithUser(plan, userStatus.email || "",
         [userStatus.firstName, userStatus.lastName].filter(Boolean).join(" "));
@@ -251,7 +278,17 @@ export function PricingPlans({ monthlyPlans, annualPlans }: PricingPlansProps) {
 
       if (!checkoutResponse.ok) {
         const error = await checkoutResponse.json();
-        throw new Error(error.error || "Failed to create checkout session");
+        const errorMessage = error.error || "Failed to create checkout session";
+
+        // Add specific handling for common error codes
+        if (error.code === "PAYMENT_GATEWAY_NOT_CONFIGURED") {
+          toast.error("Payment gateway is not configured. Please contact support.");
+        } else if (error.code === "AUTH_REQUIRED") {
+          toast.error("Please sign in to continue.");
+        } else {
+          toast.error(errorMessage);
+        }
+        throw new Error(errorMessage);
       }
 
       const checkoutData = await checkoutResponse.json();
@@ -264,10 +301,24 @@ export function PricingPlans({ monthlyPlans, annualPlans }: PricingPlansProps) {
 
 
   async function handleCheckoutResponse(checkoutData: any, plan: Plan, userName: string, userEmail: string) {
-    if (plan.price === 0) {
-      toast.success("Free plan activated successfully!");
-      await revalidateUserStatus();
-      window.location.href = "/dashboard";
+    // Log for debugging
+    console.log("Checkout response:", { method: checkoutData.method, success: checkoutData.success, price: plan.price });
+
+    // Handle free plans first
+    if (plan.price === 0 || plan.tier === "free") {
+      if (checkoutData.success && checkoutData.subscription) {
+        toast.success("Free plan activated successfully!");
+        await revalidateUserStatus();
+        window.location.href = "/dashboard";
+        return;
+      }
+    }
+
+    // Validate response structure for paid plans
+    if (plan.price > 0 && !checkoutData.useCustomPayment && !checkoutData.method) {
+      console.error("Invalid checkout response: missing method field", checkoutData);
+      toast.error("Invalid response from payment gateway. Please contact support.");
+      setLoadingPlan(null);
       return;
     }
 

@@ -103,6 +103,7 @@ export async function POST(request: NextRequest) {
       if (existingSubscription) {
         return NextResponse.json({
           success: true,
+          method: "free_plan",
           subscription: existingSubscription,
           message: "You already have an active subscription",
         });
@@ -125,6 +126,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
+        method: "free_plan",
         subscription,
         message: "Free plan activated",
       });
@@ -141,6 +143,8 @@ export async function POST(request: NextRequest) {
     }
 
     const activeGateway = siteSettings?.activePaymentGateway || "cashfree";
+    console.log("Payment gateway selection:", { activeGateway, razorpayConfigured: isRazorpayConfigured(), cashfreeConfigured: isCashfreeConfigured() });
+
     const isAnnual = plan.billingCycle === "yearly" || plan.tier.includes("annual");
     const periodDays = isAnnual ? 365 : 30;
     const checkoutToken = generateCheckoutToken();
@@ -148,8 +152,12 @@ export async function POST(request: NextRequest) {
     // ─── Razorpay Checkout ─────────────────────────────────────────────
     if (activeGateway === "razorpay") {
       if (!isRazorpayConfigured()) {
+        console.error("Payment gateway selection: Razorpay not configured");
         return NextResponse.json(
-          { error: "Payment gateway is not configured. Please contact support." },
+          {
+            error: "Payment gateway is not configured. Please contact support.",
+            code: "PAYMENT_GATEWAY_NOT_CONFIGURED"
+          },
           { status: 503 }
         );
       }
@@ -260,8 +268,12 @@ export async function POST(request: NextRequest) {
 
     // ─── Cashfree Checkout (default) ───────────────────────────────────
     if (!isCashfreeConfigured()) {
+      console.error("Payment gateway selection: Cashfree not configured");
       return NextResponse.json(
-        { error: "Payment gateway is not configured. Please contact support." },
+        {
+          error: "Payment gateway is not configured. Please contact support.",
+          code: "PAYMENT_GATEWAY_NOT_CONFIGURED"
+        },
         { status: 503 }
       );
     }
