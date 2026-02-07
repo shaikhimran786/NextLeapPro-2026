@@ -140,7 +140,8 @@ export function PricingPlans({ monthlyPlans, annualPlans }: PricingPlansProps) {
   }, [isLoggedIn, isUserLoading, searchParams, monthlyPlans, annualPlans]);
 
   function savePendingPlan(plan: Plan) {
-    if (typeof window !== "undefined") {
+    if (typeof window === "undefined") return;
+    try {
       sessionStorage.setItem(PENDING_PLAN_KEY, JSON.stringify({
         planId: plan.id,
         planTier: plan.tier,
@@ -148,6 +149,8 @@ export function PricingPlans({ monthlyPlans, annualPlans }: PricingPlansProps) {
         interval: plan.interval,
         timestamp: Date.now()
       }));
+    } catch (e) {
+      console.error("Failed to save pending plan:", e);
     }
   }
 
@@ -156,14 +159,18 @@ export function PricingPlans({ monthlyPlans, annualPlans }: PricingPlansProps) {
     try {
       const stored = sessionStorage.getItem(PENDING_PLAN_KEY);
       return stored ? JSON.parse(stored) : null;
-    } catch {
+    } catch (e) {
+      console.error("Failed to get pending plan:", e);
       return null;
     }
   }
 
   function clearPendingPlan() {
-    if (typeof window !== "undefined") {
+    if (typeof window === "undefined") return;
+    try {
       sessionStorage.removeItem(PENDING_PLAN_KEY);
+    } catch (e) {
+      console.error("Failed to clear pending plan:", e);
     }
   }
 

@@ -262,7 +262,7 @@ export function HeroTitle({
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      key={isPreview ? `preview-${Date.now()}` : "hero-title"}
+      key={isPreview ? "preview" : "hero-title"}
       data-testid="hero-title"
     >
       {words.map((word: string, wordIndex: number) => (

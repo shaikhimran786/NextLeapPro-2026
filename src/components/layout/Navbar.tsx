@@ -593,12 +593,17 @@ export function Navbar({
   initialSiteSettings
 }: NavbarProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { userStatus, isLoading } = useUserStatus();
   const router = useRouter();
   const pathname = usePathname();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const menuToggleRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const { data: siteSettings } = useSWR("/api/admin/settings", fetcher, {
     revalidateOnFocus: false,
@@ -918,7 +923,7 @@ export function Navbar({
       </nav>
     </header>
 
-    <div
+    {isMounted && <div
       id="mobile-menu"
       className={cn(
         "fixed inset-0 z-[9999] lg:hidden transition-all duration-300",
@@ -1073,7 +1078,7 @@ export function Navbar({
           </div>
         </div>
       </div>
-    </div>
+    </div>}
 
     </>
   );
