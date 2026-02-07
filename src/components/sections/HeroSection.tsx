@@ -20,73 +20,62 @@ interface HeroSectionProps {
   siteSettings?: SiteSettings | null;
 }
 
-// Animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+    transition: { staggerChildren: 0.08, delayChildren: 0.05 }
   }
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5 }
+    transition: { duration: 0.4, ease: "easeOut" as const }
   }
 };
 
 export function HeroSection({ siteSettings }: HeroSectionProps) {
-  const title = siteSettings?.heroTitle || "Learn. Earn. And Grow.";
   const subtitle =
     siteSettings?.heroSubtitle ||
     "A powerful ecosystem built for students and professionals to gain in-demand skills, convert their talents into real earning opportunities, and accelerate career growth through structured learning, expert guidance, and a strong, opportunity-driven community.";
   const cta = siteSettings?.heroCTA || "Get Started";
 
-  // Avatar placeholders for social proof
-  const avatars = [1, 2, 3, 4];
-
   return (
-    <section className="relative pt-16 pb-24 md:pt-20 md:pb-32 overflow-hidden" aria-label="Hero section - Welcome to Next Leap Pro">
-      <div className="container mx-auto px-4">
-        {/* Announcement Badge */}
-        <motion.div
-          initial={false}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="flex justify-center lg:justify-start mb-8"
-        >
-          <Link
-            href="/career"
-            className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/10 to-pink-500/10 border border-primary/20 hover:border-primary/40 transition-colors"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute h-2 w-2 rounded-full bg-primary opacity-75" />
-              <span className="relative rounded-full h-2 w-2 bg-primary" />
-            </span>
-            <span className="text-sm font-medium text-slate-700">New: AI Career Coach</span>
-            <ArrowRight className="h-4 w-4 text-slate-500 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-        </motion.div>
+    <section
+      className="relative min-h-[calc(100dvh-4rem)] flex items-center overflow-hidden"
+      aria-label="Hero section - Welcome to Next Leap Pro"
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-primary/[0.03]" />
+      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/[0.04] to-transparent hidden lg:block" />
 
-        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-          {/* Left Content */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-6 sm:py-8 lg:py-0">
+        <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12 xl:gap-16">
+
           <motion.div
             variants={containerVariants}
             initial={false}
             animate="visible"
-            className="lg:w-1/2 space-y-6 z-10 text-center lg:text-left"
+            className="lg:w-[55%] xl:w-1/2 space-y-4 sm:space-y-5 text-center lg:text-left"
           >
-            <motion.div variants={itemVariants}>
-              <span className="inline-block px-4 py-2 rounded-full bg-primary/10 text-primary font-semibold text-sm mb-4">
-                The Ultimate Career Ecosystem
-              </span>
+            <motion.div variants={itemVariants} className="flex justify-center lg:justify-start">
+              <Link
+                href="/career"
+                className="group inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/[0.06] border border-primary/15 hover:border-primary/30 transition-all text-xs sm:text-sm"
+              >
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute h-1.5 w-1.5 rounded-full bg-primary opacity-75" />
+                  <span className="relative rounded-full h-1.5 w-1.5 bg-primary" />
+                </span>
+                <span className="font-medium text-slate-700">New: AI Career Coach</span>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-heading font-bold leading-[1.1] tracking-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] xl:text-6xl font-heading font-bold leading-[1.1] tracking-tight">
                 <span className="text-slate-900">The platform to </span>
                 <span className="text-gradient-animated">Learn. Earn. Grow.</span>
               </h1>
@@ -94,27 +83,27 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
 
             <motion.p
               variants={itemVariants}
-              className="text-lg md:text-xl text-slate-600 max-w-xl leading-relaxed mx-auto lg:mx-0"
+              className="text-sm sm:text-base lg:text-lg text-slate-500 max-w-xl leading-relaxed mx-auto lg:mx-0"
             >
               {subtitle}
             </motion.p>
 
-            <motion.div variants={itemVariants} className="flex flex-wrap gap-4 justify-center lg:justify-start">
+            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-1">
               <Link href="/auth/register">
                 <Button
                   size="lg"
                   variant="gradient"
-                  className="rounded-full px-8 text-lg h-12 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
+                  className="w-full sm:w-auto rounded-full px-7 text-base h-11 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25 transition-all"
                   data-testid="button-get-started"
                 >
-                  {cta} <ArrowRight className="ml-2 h-5 w-5" />
+                  {cta} <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/events">
                 <Button
                   size="lg"
                   variant="outline"
-                  className="rounded-full px-8 text-lg h-12"
+                  className="w-full sm:w-auto rounded-full px-7 text-base h-11 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                   data-testid="button-explore-events"
                 >
                   Explore Events
@@ -122,56 +111,51 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
               </Link>
             </motion.div>
 
-            {/* Social Proof Section */}
             <motion.div
               variants={itemVariants}
-              className="flex flex-col sm:flex-row items-center gap-6 pt-6 justify-center lg:justify-start"
+              className="flex flex-wrap items-center gap-4 sm:gap-5 justify-center lg:justify-start pt-2 sm:pt-3"
             >
-              {/* Avatar Stack */}
-              <div className="flex -space-x-3">
-                {avatars.map((_, i) => (
+              <div className="flex -space-x-2.5">
+                {[0, 1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="h-10 w-10 rounded-full border-2 border-white bg-gradient-to-br from-slate-200 to-slate-300 shadow-sm"
+                    className="h-8 w-8 rounded-full border-2 border-white shadow-sm"
                     style={{
-                      background: `linear-gradient(135deg, ${['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4'][i]} 0%, ${['#ee5a24', '#009688', '#0077b6', '#52c41a'][i]} 100%)`
+                      background: `linear-gradient(135deg, ${['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4'][i]}, ${['#ee5a24', '#009688', '#0077b6', '#52c41a'][i]})`
                     }}
                   />
                 ))}
-                <div className="h-10 w-10 rounded-full border-2 border-white bg-primary flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                <div className="h-8 w-8 rounded-full border-2 border-white bg-slate-800 flex items-center justify-center text-white text-[10px] font-bold shadow-sm">
                   +9k
                 </div>
               </div>
-
-              {/* Rating */}
-              <div className="text-sm">
-                <div className="flex items-center gap-1">
+              <div className="h-8 w-px bg-slate-200 hidden sm:block" />
+              <div className="flex items-center gap-1.5 text-sm">
+                <div className="flex">
                   {[1, 2, 3, 4, 5].map(i => (
-                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                    <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                   ))}
-                  <span className="ml-1 font-semibold text-slate-900">4.9</span>
                 </div>
-                <p className="text-slate-500">from 2,500+ reviews</p>
+                <span className="font-semibold text-slate-800">4.9</span>
+                <span className="text-slate-400">from 2,500+ reviews</span>
               </div>
             </motion.div>
           </motion.div>
 
-          {/* Right Content - Hero Image */}
           <motion.div
             initial={false}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="w-full lg:w-1/2 relative"
+            transition={{ duration: 0.5, delay: 0.15 }}
+            className="w-full lg:w-[45%] xl:w-1/2 relative hidden sm:block"
           >
-            <div className="relative">
-              {/* Main Image */}
+            <div className="relative lg:pl-4 xl:pl-8">
               <motion.div
-                className="relative rounded-2xl md:rounded-3xl overflow-hidden shadow-xl md:shadow-2xl border-4 md:border-8 border-white"
-                initial={{ rotate: 2 }}
+                className="relative rounded-2xl overflow-hidden shadow-2xl shadow-slate-900/10 border border-slate-200/60"
+                initial={{ rotate: 1 }}
                 whileHover={{ rotate: 0 }}
-                transition={{ duration: 0.4 }}
+                transition={{ duration: 0.3 }}
               >
-                <div className="relative h-[280px] sm:h-[350px] md:h-[400px] lg:h-[480px] w-full">
+                <div className="relative aspect-[4/3] lg:aspect-[16/11] w-full">
                   <Image
                     src={siteSettings?.heroImage || "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800"}
                     alt="Diverse group of students and professionals collaborating on learning projects at Next Leap Pro"
@@ -181,63 +165,61 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
                     sizes="(max-width: 768px) 100vw, 50vw"
                   />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 
-                {/* Overlay Content */}
-                <div className="absolute bottom-6 left-6 text-white">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Users className="h-5 w-5 text-primary" />
-                    <span className="font-bold">10k+ Members</span>
+                <div className="absolute bottom-4 left-4 sm:bottom-5 sm:left-5">
+                  <div className="flex items-center gap-2 text-white">
+                    <div className="h-8 w-8 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                      <Users className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">10k+ Members</p>
+                      <p className="text-white/70 text-xs">Join the community</p>
+                    </div>
                   </div>
-                  <p className="text-white/80 text-sm md:text-base">
-                    Join the fastest growing career community.
-                  </p>
                 </div>
               </motion.div>
 
-              {/* Floating Earnings Card */}
               <motion.div
-                className="absolute -bottom-4 -left-4 md:-bottom-6 md:-left-6 bg-white rounded-xl md:rounded-2xl p-3 md:p-4 shadow-xl border border-slate-100 z-20 hidden sm:block"
+                className="absolute -bottom-3 -left-3 lg:-bottom-4 lg:-left-2 bg-white rounded-xl p-3 shadow-lg shadow-slate-900/8 border border-slate-100 z-20"
                 initial={false}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.4 }}
               >
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
-                    <IndianRupee className="h-5 w-5 md:h-6 md:w-6 text-white" />
+                <div className="flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                    <IndianRupee className="h-4 w-4 text-white" />
                   </div>
                   <div>
-                    <p className="text-xl md:text-2xl font-bold text-slate-900">₹1,04,500</p>
-                    <p className="text-xs md:text-sm text-slate-500">earned this month</p>
+                    <p className="text-lg font-bold text-slate-900 leading-tight">&#8377;1,04,500</p>
+                    <p className="text-[11px] text-slate-500">earned this month</p>
                   </div>
                 </div>
               </motion.div>
 
-              {/* Floating Members Card */}
               <motion.div
-                className="absolute -top-4 -right-4 md:-top-6 md:-right-6 bg-white rounded-xl md:rounded-2xl p-2.5 md:p-3 shadow-xl border border-slate-100 z-20 hidden sm:block"
+                className="absolute -top-3 -right-3 lg:-top-4 lg:-right-2 bg-white rounded-xl p-2.5 shadow-lg shadow-slate-900/8 border border-slate-100 z-20"
                 initial={false}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.7, duration: 0.5 }}
+                transition={{ delay: 0.6, duration: 0.4 }}
               >
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 md:h-9 md:w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Users className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                  <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center">
+                    <Users className="h-3.5 w-3.5 text-primary" />
                   </div>
-                  <span className="font-semibold text-sm md:text-base text-slate-900">10k+ members</span>
+                  <span className="font-semibold text-xs text-slate-800">10k+ members</span>
                 </div>
               </motion.div>
 
-              {/* Animated Badge - Workshop */}
               <motion.div
                 initial={{ y: 0 }}
-                animate={{ y: [0, -8, 0] }}
-                transition={{ repeat: Infinity, duration: 3 }}
-                className="absolute top-1/4 -left-8 md:-left-12 bg-white px-3 py-2 md:px-4 md:py-2.5 rounded-xl shadow-lg z-20 hidden md:block"
+                animate={{ y: [0, -6, 0] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                className="absolute top-1/3 -left-6 bg-white px-3 py-2 rounded-lg shadow-md border border-slate-100 z-20 hidden lg:block"
               >
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-xs md:text-sm font-medium text-slate-700">Live Workshop</span>
+                  <span className="text-xs font-medium text-slate-600">Live Workshop</span>
                 </div>
               </motion.div>
             </div>
@@ -245,10 +227,8 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
         </div>
       </div>
 
-      {/* Background Decorations */}
-      <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/3 w-[600px] md:w-[800px] h-[600px] md:h-[800px] bg-primary/5 blur-3xl rounded-full pointer-events-none" />
-      <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-[400px] md:w-[600px] h-[400px] md:h-[600px] bg-purple-500/5 blur-3xl rounded-full pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-pink-500/5 blur-3xl rounded-full pointer-events-none hidden lg:block" />
+      <div className="absolute top-0 right-0 -translate-y-1/4 translate-x-1/4 w-[500px] h-[500px] bg-primary/[0.04] blur-3xl rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 left-0 translate-y-1/4 -translate-x-1/4 w-[400px] h-[400px] bg-purple-500/[0.03] blur-3xl rounded-full pointer-events-none" />
     </section>
   );
 }
