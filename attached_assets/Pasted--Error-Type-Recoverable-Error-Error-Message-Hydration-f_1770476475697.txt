@@ -1,0 +1,59 @@
+## Error Type
+Recoverable Error
+
+## Error Message
+Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <ScrollAndFocusHandler segmentPath={[...]}>
+      <InnerScrollAndFocusHandler segmentPath={[...]} focusAndScrollRef={{apply:false, ...}}>
+        <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+          <LoadingBoundary name="/" loading={null}>
+            <HTTPAccessFallbackBoundary notFound={<SegmentViewNode>} forbidden={undefined} unauthorized={undefined}>
+              <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<SegmentViewNode>} forbidden={undefined} ...>
+                <RedirectBoundary>
+                  <RedirectErrorBoundary router={{...}}>
+                    <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:<Fragment>, ...}} ...>
+                      <SegmentViewNode type="page" pagePath="page.tsx">
+                        <SegmentTrieNode>
+                        <HomePage>
+                          <div className="min-h-scre...">
+                            <Navbar initialPlansData={{plans:[...]}} initialSiteSettings={{id:1, ...}}>
+                              <header className="sticky top..." role="banner">
+                                <nav>
++                               <div
++                                 id="mobile-menu"
++                                 className="fixed inset-0 z-[100] lg:hidden transition-all duration-300 invisible poi..."
++                                 data-testid="mobile-menu-container"
++                               >
+                            ...
+                      ...
+                    ...
+        ...
+
+
+
+    at div (<anonymous>:null:null)
+    at Navbar (src/components/layout/Navbar.tsx:917:47)
+    at HomePage (src/app/page.tsx:67:7)
+
+## Code Frame
+  915 |           )}
+  916 |           onClick={toggleMenu}
+> 917 |           aria-label={isOpen ? "Close menu" : "Open menu"}
+      |                                               ^
+  918 |           aria-expanded={isOpen}
+  919 |           aria-controls="mobile-menu"
+  920 |           data-testid="mobile-menu-toggle"
+
+Next.js version: 16.1.3 (Webpack)
