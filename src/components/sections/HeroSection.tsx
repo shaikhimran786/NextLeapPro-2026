@@ -197,10 +197,10 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
                     muted
                     playsInline
                     preload="auto"
-                    poster="/images/hero/hero-learn.jpg"
+                    poster="/images/hero/hero-brand-poster.png"
                     className="absolute inset-0 w-full h-full object-cover"
                     data-testid="hero-video"
-                    src="/videos/hero-brand.mp4"
+                    src="/videos/hero-brand-v2.mp4"
                     suppressHydrationWarning
                   />
                 </div>
