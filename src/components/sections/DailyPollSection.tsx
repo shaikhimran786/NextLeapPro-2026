@@ -14,6 +14,7 @@ import {
   MessageSquare, Users, ChevronRight, Loader2
 } from "@/lib/icons";
 import Link from "next/link";
+import { DailyPollSuspenseFallback } from "@/components/providers/SuspenseBoundaries";
 
 // Lazy-load confetti to reduce initial bundle size
 async function fireConfetti() {
@@ -55,7 +56,10 @@ export function DailyPollSection() {
   const { data, isLoading, error } = useSWR<PollData>(
     "/api/engagement/today",
     fetcher,
-    { refreshInterval: 30000 }
+    {
+      refreshInterval: 30000,
+      suspense: false,
+    }
   );
 
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -63,7 +67,7 @@ export function DailyPollSection() {
   const [justVoted, setJustVoted] = useState(false);
 
   if (isLoading) {
-    return null;
+    return <DailyPollSuspenseFallback />;
   }
 
   if (error || !data?.poll) {

@@ -79,15 +79,26 @@ export function MemberStatsSection() {
   const { data: memberStats, isLoading } = useSWR<MemberStats>(
     "/api/stats/members",
     fetcher,
-    { 
+    {
       refreshInterval: 300000,
       revalidateOnFocus: false,
       dedupingInterval: 60000,
+      suspense: false,
     }
   );
 
   if (isLoading || !memberStats) {
-    return null;
+    return (
+      <section className="py-16 relative overflow-hidden bg-gradient-to-b from-white via-slate-50/30 to-white">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-48 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (

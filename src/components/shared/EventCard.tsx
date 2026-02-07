@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { memo } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,7 @@ function getValidImageUrl(url: string): string {
   return url || DEFAULT_EVENT_IMAGE;
 }
 
-export function EventCard({
+function EventCardComponent({
   id,
   title,
   date,
@@ -85,3 +86,5 @@ export function EventCard({
     </Card>
   );
 }
+
+export const EventCard = memo(EventCardComponent);

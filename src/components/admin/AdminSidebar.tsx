@@ -43,6 +43,7 @@ export function AdminSidebar() {
   const { data: siteSettings } = useSWR("/api/admin/settings", fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 60000,
+    suspense: false,
   });
 
   const adminLogo = siteSettings?.adminLogo || siteSettings?.logoDark;

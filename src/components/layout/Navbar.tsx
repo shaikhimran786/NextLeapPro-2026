@@ -609,12 +609,14 @@ export function Navbar({
     revalidateOnFocus: false,
     dedupingInterval: 60000,
     fallbackData: initialSiteSettings,
+    suspense: false,
   });
 
   const { data: plansData } = useSWR<PlanApiResponse>("/api/subscriptions/plans", fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 60000,
     fallbackData: initialPlansData,
+    suspense: false,
   });
 
   // Transform API data to navigation format

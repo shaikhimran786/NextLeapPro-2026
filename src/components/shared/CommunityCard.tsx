@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { memo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, MapPin, ArrowUpRight } from "@/lib/icons";
@@ -43,7 +44,7 @@ const categoryGradients: Record<string, string> = {
   default: "from-primary to-blue-600",
 };
 
-export function CommunityCard({
+function CommunityCardComponent({
   id,
   name,
   description,
@@ -204,3 +205,5 @@ export function CommunityCard({
     </Link>
   );
 }
+
+export const CommunityCard = memo(CommunityCardComponent);

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { memo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -31,7 +32,7 @@ function getValidImageUrl(url: string): string {
   return url || DEFAULT_SERVICE_IMAGE;
 }
 
-export function ServiceCard({
+function ServiceCardComponent({
   id,
   title,
   provider,
@@ -94,3 +95,5 @@ export function ServiceCard({
     </Link>
   );
 }
+
+export const ServiceCard = memo(ServiceCardComponent);

@@ -49,6 +49,7 @@ export function Footer() {
   const { data: siteSettings } = useSWR("/api/admin/settings", fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 60000,
+    suspense: false,
   });
 
   const logoSrc = siteSettings?.footerLogo || siteSettings?.logoLight || "/logos/logo-light.png";

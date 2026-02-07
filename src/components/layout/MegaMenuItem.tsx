@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { memo } from "react";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "@/lib/icons";
 
@@ -12,7 +13,7 @@ interface MegaMenuItemProps {
   className?: string;
 }
 
-export function MegaMenuItem({ icon: Icon, label, description, href, className }: MegaMenuItemProps) {
+function MegaMenuItemComponent({ icon: Icon, label, description, href, className }: MegaMenuItemProps) {
   return (
     <Link
       href={href}
@@ -32,6 +33,8 @@ export function MegaMenuItem({ icon: Icon, label, description, href, className }
   );
 }
 
+export const MegaMenuItem = memo(MegaMenuItemComponent);
+
 interface MegaMenuFeaturedCardProps {
   badge?: string;
   title: string;
@@ -41,7 +44,7 @@ interface MegaMenuFeaturedCardProps {
   gradientTo?: string;
 }
 
-export function MegaMenuFeaturedCard({
+function MegaMenuFeaturedCardComponent({
   badge,
   title,
   description,
@@ -71,6 +74,8 @@ export function MegaMenuFeaturedCard({
   return content;
 }
 
+export const MegaMenuFeaturedCard = memo(MegaMenuFeaturedCardComponent);
+
 interface PlanMiniCardProps {
   name: string;
   price: string;
@@ -79,7 +84,7 @@ interface PlanMiniCardProps {
   href: string;
 }
 
-export function PlanMiniCard({ name, price, features, highlight, href }: PlanMiniCardProps) {
+function PlanMiniCardComponent({ name, price, features, highlight, href }: PlanMiniCardProps) {
   return (
     <Link
       href={href}
@@ -108,3 +113,5 @@ export function PlanMiniCard({ name, price, features, highlight, href }: PlanMin
     </Link>
   );
 }
+
+export const PlanMiniCard = memo(PlanMiniCardComponent);

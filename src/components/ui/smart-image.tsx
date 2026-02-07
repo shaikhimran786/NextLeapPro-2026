@@ -67,6 +67,7 @@ export function SmartImage({
         className={`${className} ${isLoading ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}
         onError={handleError}
         onLoad={handleLoad}
+        loading="lazy"
         {...props}
       />
     </>

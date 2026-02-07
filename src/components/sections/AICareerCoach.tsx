@@ -11,11 +11,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
-import { 
-  Sparkles, Loader2, Target, TrendingUp, Briefcase, 
-  IndianRupee, GraduationCap, Calendar, CheckCircle, 
+import {
+  Sparkles, Loader2, Target, TrendingUp, Briefcase,
+  IndianRupee, GraduationCap, Calendar, CheckCircle,
   AlertCircle, Plus, X, Lightbulb, Rocket, Users, BookOpen
 } from "@/lib/icons";
+import { AICoachSuspenseFallback } from "@/components/providers/SuspenseBoundaries";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -56,7 +57,9 @@ interface CareerProfile {
 }
 
 export function AICareerCoach() {
-  const { data, isLoading, error } = useSWR("/api/career/insights", fetcher);
+  const { data, isLoading, error } = useSWR("/api/career/insights", fetcher, {
+    suspense: false,
+  });
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState("input");
   

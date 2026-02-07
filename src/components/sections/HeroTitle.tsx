@@ -188,6 +188,7 @@ export function HeroTitle({
     {
       revalidateOnFocus: false,
       dedupingInterval: 60000,
+      suspense: false,
     }
   );
 
