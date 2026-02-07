@@ -1,0 +1,126 @@
+Project: Next Leap Pro — Preserve recent changes; implement standard functional flows and real-time CTA/status updates.
+
+IMPORTANT: Remember and keep all recent repository changes and configurations intact. Do NOT revert or overwrite any recent work. Use the existing Next Leap Pro codebase and build on top of it. Continue using the existing stack and conventions (Next.js app router, TypeScript, Tailwind CSS, Framer Motion, Prisma/Postgres, NextAuth). Default currency must remain INR.
+
+Primary goal:
+Make UI elements and CTAs reflect the user’s real status at all times (logged in/out, onboarding complete, subscription status, community membership, event registration, service order status). Implement robust server actions, optimistic UI updates, cache invalidation, and admin-configurable CTA text/status mappings so buttons update logically and instantly.
+
+Scope & concrete tasks (implement in code):
+
+1) Preserve recent changes
+- Read the repo state and keep all recent commits and changes intact.
+- Build new code as incremental changes and provide clear diffs/commits.
+
+2) Centralised user-state model & server-side source of truth
+- Implement or extend a server-side user-status model that consolidates:
+  - authStatus (guest, logged_in)
+  - onboardingStatus (not_started, in_progress, completed)
+  - subscriptionStatus (none, trial, active, expired, cancelled)
+  - roles (array)
+  - communityMemberships (map of communityId -> status: member, pending, invited, blocked)
+  - eventRegistrations (map eventId -> registrationStatus)
+  - serviceOrders (map serviceId -> orderStatus)
+- Expose a server-only API or server component `GET /api/me/status` or `serverAction getUserStatus()` that always returns the canonical state from DB/session.
+
+3) Client-side real-time reflection & caching
+- Use SWR (or React Server Components + fetch) to fetch `getUserStatus()` on pages where CTAs appear.
+- Implement optimistic UI updates for actions like Join/Leave community, Register/Cancel event, Create service request, Subscribe/Unsubscribe.
+- After optimistic change, call server action and revalidate `getUserStatus()` cache on success or rollback on failure.
+- Provide clear loading, success and error states (spinners, disabled buttons, toast messages).
+
+4) CTA state machine & admin configuration
+- Implement a small, typed CTA status engine mapping server-state -> CTA presentation:
+  - Example for community page:
+    - not_member  -> CTA: “Join Community” (primary gradient) -> action joinCommunity()
+    - pending     -> CTA: “Request Pending” (disabled)
+    - member      -> CTA: “Member — View Discussions” (secondary / outline)
+    - invited     -> CTA: “Accept Invite” (primary)
+    - blocked     -> CTA: “Contact Support” (danger)
+  - Example for event:
+    - not_registered -> “Register”
+    - registered     -> “Registered — View Ticket”
+    - live           -> “Join Now”
+    - finished       -> “View Recording”
+- Make these CTA mappings editable via admin panel (SiteSettings or dedicated CTAConfig model). Admin can set CTA text, type (primary/secondary/disabled), and redirect behavior per state.
+- Store CTA config in DB (CTAConfig with page, targetType, state, label, style, urlTemplate). Admin UI: CRUD for CTAConfig.
+
+5) Server actions & atomic flows
+- Implement server actions (Next.js server actions or API routes) for:
+  - joinCommunity(communityId)
+  - leaveCommunity(communityId)
+  - acceptInvite(communityId)
+  - registerEvent(eventId, ticketType?)
+  - cancelRegistration(eventId)
+  - createServiceRequest(serviceId)
+  - createSubscription(userId, planId) (mock payment)
+- Ensure each action:
+  - validates permissions & capacity
+  - writes DB records transactionally
+  - emits audit log (AdminAuditLog)
+  - returns updated canonical user-state
+- After action completes, return userState and trigger client cache revalidation.
+
+6) Onboarding & login flows reflecting CTA state
+- If user is logged out:
+  - CTAs that require auth show “Sign up to [action]” and open signup modal/redirect to /auth/register.
+- If user logged in but onboarding incomplete:
+  - CTAs that require profile/roles show “Complete Profile to [action]” with link to onboarding flow.
+- If user logged in & onboarding complete but subscription needed:
+  - CTAs show appropriate paywall: “Upgrade to Pro to [action]” and open /pricing modal.
+- After successful login or onboarding, re-fetch `getUserStatus()` and update all CTAs on page without full reload.
+
+7) WhatsApp redirect & post-registration behavior
+- After subscription or plan activation, the server action that creates the subscription must:
+  - read admin-defined WhatsApp URL & template for that plan
+  - return redirect URL to client
+- Client should show a success screen with CTA: “Continue to WhatsApp Group” and automatically redirect (or allow manual click).
+- If automatic redirect fails, offer a persistent manual link. Admin must be able to configure the whatsapp URL and message template from admin panel.
+
+8) UI/UX polish & accessibility
+- Buttons must visually reflect state: primary (gradient), secondary, disabled (grayed + aria-disabled).
+- Use Framer Motion for subtle state transitions (hover, pressed, success).
+- Ensure keyboard accessibility and aria labels for dynamic CTAs.
+- Ensure server-rendered CTAs on SSR pages use `getUserStatus()` server-side when possible for correct initial render and SEO safety.
+
+9) Edge cases & safeguards
+- Prevent double submissions (debounce or disable button until response).
+- Handle concurrent requests: if two actions happen concurrently, reconcile using server-side transaction and return latest state.
+- Rollback optimistic updates with user-facing error if server fails; log errors to AdminAuditLog.
+- Gracefully handle rate-limiting or downtime: show fallback CTAs with informative message.
+
+10) Admin & developer tooling
+- Add CTAConfig model to Prisma and migration.
+- Add admin UI page: /admin/cta-config to manage CTA text/styles per page/state.
+- Add endpoints or test UI to simulate user states for QA (e.g., /admin/test-user-state).
+- Add logs in AdminAuditLog for CTA-triggered actions.
+
+11) Tests & QA checklist
+- Implement smoke tests (Jest/Playwright) to assert:
+  - Guest sees Sign-up CTAs
+  - Logged-in but not onboarded user sees Complete Profile CTAs
+  - Joined community button changes to Member immediately after action
+  - Optimistic UI updates rollback on simulated failure
+  - Subscription creation returns WhatsApp URL and redirect works
+- Provide a manual QA checklist for product team.
+
+12) Documentation & run steps
+- Update README with:
+  - New endpoints and server actions
+  - How CTAConfig works and how to edit via admin
+  - How to run tests
+  - How to simulate states locally (seed scripts or admin test tools)
+
+Acceptance criteria:
+- All CTA buttons across key pages (landing hero, events, communities, services, pricing, dashboard) reflect canonical user state on initial server render and update in real-time after actions without full page reload.
+- Optimistic updates are implemented and reliably rollback on failure.
+- Admin can configure CTA text and style per state and changes reflect immediately on public pages.
+- No double-submit bugs; actions are transactional and audited.
+- Post-subscription WhatsApp redirect is functional and admin-configurable.
+
+Output expectations for Replit AI:
+- Make code changes directly; provide commit diffs or list of modified files.
+- Provide new Prisma migration and seed updates.
+- Add tests and README updates.
+- If any assumptions are made about missing code or data models, list them at the end of the response.
+
+Start applying these changes now while preserving all recent repository work.

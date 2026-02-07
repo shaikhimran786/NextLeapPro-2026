@@ -1,0 +1,205 @@
+You are working on a Next.js SaaS application with authentication, user dashboard, admin panel, and subscription-based access.
+The current payment gateway is Razorpay. Replace it completely with Cashfree Payment Gateway and refactor the entire subscription flow to follow standard, reliable SaaS practices with zero logical gaps.
+
+Objectives
+
+Replace Razorpay with Cashfree
+
+Remove all Razorpay SDKs, configs, APIs, and webhook logic.
+
+Integrate Cashfree Subscription / Orders API properly.
+
+Use secure server-side API calls only.
+
+Handle order creation, payment verification, and webhook validation correctly.
+
+Authentication-First Flow (Strict)
+
+Do not allow access to pricing, checkout, or payment initiation without login.
+
+If user is not authenticated:
+
+Redirect to login
+
+Preserve intended action (post-login redirect)
+
+Capture mandatory user details before payment:
+
+Full name
+
+Email
+
+Mobile number
+
+Block payment if any required user data is missing.
+
+Admin-Controlled Subscription Plans
+
+Create full CRUD for subscription plans in Admin Panel:
+
+Plan name
+
+Price
+
+Billing cycle (monthly / yearly)
+
+Features list
+
+Plan hierarchy level (numeric for upgrade/downgrade logic)
+
+Active / inactive toggle
+
+Admin can:
+
+Enable / disable plans
+
+Change pricing without code changes
+
+Pricing page must consume plans dynamically from admin configuration.
+
+Standard Subscription Flow (End-to-End)
+
+Pricing Page:
+
+Fetch user’s current subscription (if any)
+
+Highlight current active plan clearly
+
+Disable “Subscribe” CTA for active plan
+
+CTA Logic:
+
+If plan level > current plan → show Upgrade
+
+If plan level < current plan → show Downgrade
+
+If same plan → show Current Plan
+
+On downgrade:
+
+Show confirmation modal explaining what user will lose
+
+Apply downgrade from next billing cycle only
+
+On upgrade:
+
+Apply immediately
+
+Prorate if supported, otherwise clearly inform user
+
+Cashfree Payment Flow
+
+Create order on server after plan selection
+
+Redirect user to Cashfree checkout
+
+On successful payment:
+
+Verify payment server-side
+
+Store:
+
+Order ID
+
+Payment ID
+
+Plan ID
+
+Start date
+
+End date
+
+Status (active)
+
+Redirect user back to Dashboard (authenticated route)
+
+Show success message and updated plan instantly
+
+Webhook & Reliability
+
+Implement Cashfree webhook:
+
+Payment success
+
+Payment failure
+
+Subscription renewal
+
+Subscription cancellation
+
+Webhook must:
+
+Validate signature
+
+Update subscription status correctly
+
+Never trust client-side payment success alone
+
+Dashboard Improvements
+
+Role-based visibility:
+
+Free user
+
+Paid user
+
+Admin
+
+Dashboard must:
+
+Show current subscription plan
+
+Show renewal date
+
+Show upgrade / downgrade options
+
+Show cancel subscription (effective next billing cycle)
+
+Restrict premium features strictly based on active subscription
+
+UX and State Management
+
+No page flicker or reload loops
+
+Stable loading states
+
+Clear success and error messages
+
+Prevent duplicate payment attempts
+
+Persist subscription state globally (server + client sync)
+
+Security & Best Practices
+
+All payment logic on server
+
+No secret keys on client
+
+Secure environment variables
+
+Handle edge cases:
+
+Payment success but webhook delayed
+
+User closes payment window
+
+Duplicate callbacks
+
+Expected Output
+
+Fully functional Cashfree-based subscription system
+
+Admin-driven pricing and plan control
+
+Clean upgrade/downgrade logic
+
+Dashboard that reflects subscription state accurately
+
+Authentication-gated, production-ready payment flow
+
+Zero broken states, zero bypass paths
+
+Act as a Senior SaaS Architect, Payments Engineer, and UX Lead.
+Make decisions proactively.
+Do not ask questions.
+Refactor, clean, and implement everything end-to-end.

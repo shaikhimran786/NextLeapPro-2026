@@ -1,0 +1,240 @@
+Build a fully functional SaaS web application called Next Leap Pro with the slogan Learn Earn and Grow. The platform will help students and working professionals learn new skills, earn through opportunities, and grow their career using events, communities, services, and mentoring.
+This SaaS should function as a learning + earning + community ecosystem, similar in depth to commudle.com, but with additional monetisation and service-based earning features.
+
+1. Tech Stack Requirements
+Use the following:
+* Next.js (latest)
+* React.js + TypeScript
+* Tailwind CSS
+* Framer Motion for page transitions, scroll animations, micro interactions and hover effects
+* Prisma ORM
+* PostgreSQL
+* NextAuth for authentication with:
+    * Email/password
+    * OAuth social logins (Google, GitHub, LinkedIn)
+* Strong SEO support (meta tags, OG, structured data, clean routing, Core Web Vitals optimised)
+* High-performance image optimisation
+* Cached queries for fast data fetching
+* Clean, scalable folder structure
+
+2. Branding Requirements
+* App Name: Next Leap Pro
+* Slogan: Learn Earn and Grow
+* Use provided logo (if not available, use placeholder)
+* Colour theme: Magenta, Blue, Green gradient + white + light grey
+* Use beautiful stock imagery and illustrations for landing page and key sections
+* Modern SaaS design, lots of breathing space, professional but friendly
+* Rounded cards, soft shadows, consistent spacing
+
+3. User Roles & Access (Role-Based Platform)
+Implement role-based access control (RBAC).
+Supported roles:
+* Student / Learner
+* Working Professional
+* Mentor
+* Coach
+* Speaker
+* Organizer
+* Sponsor
+* Venue Partner
+* Vendor
+* Admin
+A user can have multiple roles.
+Each user profile includes: name, bio, avatar, skills, social links, role badges, experience, portfolio links.
+
+4. Core Platform Capabilities (Learn – Earn – Grow)
+Learn
+* Learn through events, workshops, webinars, meetups, hackathons, conferences, college sessions, corporate training.
+Earn
+Users can earn money by offering services:
+* Personal branding help
+* Social media reels and video editing
+* Graphic design (posters, banners, thumbnails)
+* Website building
+* Content writing & blogging
+* Event management support
+* Vendor management
+* Speaking sessions
+* Coaching & mentoring
+* Corporate & college training workshops
+Grow
+* Build personal brand
+* Grow followers through events
+* Join communities
+* Build network
+* Showcase services & achievements
+
+5. Multi-Currency Support
+Make multi-currency support functionally available.
+* Default currency = INR (Indian Rupees)
+* Admin can enable more currencies (USD, EUR, GBP etc.)
+* All prices stored in DB with both amount + currency code
+* Currency selection dropdown (optional for user)
+* Subscription, event tickets, services all support multi-currency pricing
+* Mock payment flows but leave structure ready for Stripe later
+
+6. Authentication System
+Use NextAuth with:
+* Email/password
+* OAuth login: Google, GitHub, LinkedIn
+* After login → onboarding role selection and interests selection
+* All routes protected according to role & subscription
+
+7. Subscription & Monetisation Model
+Platform revenue comes from role-based subscription plans.
+Create subscription tiers:
+Free Plan
+* Browse events
+* Join free events
+* Join communities
+Pro Plan
+* Students & Professionals
+* Premium events
+* Recordings
+* Certificates
+* Job board access
+Creator / Organizer Plan
+* Can create events
+* Host paid sessions
+* Analytics
+* Community creation
+* Branding support
+Partner / Enterprise Plans
+For sponsors, venue partners, vendors:
+* Listing benefits
+* Promotional placements
+* Event partnerships
+Subscription logic must be functional:
+* Store plans in DB
+* Store user subscription + expiry
+* Restrict features according to plan
+* Pricing page must reflect multi-currency
+
+8. Event Management System (Similar to commudle.com)
+Enable full event CRUD and event hosting functions for subscribed users.
+Supported event types:
+* Meetup
+* Webinar
+* Workshop
+* Bootcamp
+* Hackathon
+* Conference / Summit
+* College training
+* Corporate training
+* Online, offline, hybrid
+Event properties:
+* Title
+* Description
+* Category
+* Tags
+* Level (beginner, intermediate, advanced)
+* Date & time
+* Timezone
+* Duration
+* Cover image
+* Capacity
+* Price + currency
+* Registration deadline
+* Venue details
+* Online link
+* Status (draft, published, upcoming, live, finished)
+* Associated mentors, speakers, sponsors, venue partners, vendors
+Pages required:
+* Events listing with filters
+* Event detail page with agenda, speakers, organizer, sponsors, venue
+* Real user registrations stored in DB
+* Mock ticketing/payment structure
+
+9. Community System
+Users can create and join communities.
+Community includes:
+* Name, description, logo
+* Category & tags
+* Location (city, region)
+* Organizers
+* Members
+* Upcoming & past events
+* Simple announcement/discussion feed
+
+10. Services Marketplace (Earn Feature)
+A functional marketplace where mentors, coaches, designers, vendors, and organizers can offer paid services.
+Service fields:
+* Title
+* Description
+* Price + currency
+* Provider role (mentor, vendor etc.)
+* Cover image
+* Delivery type (offline/online)
+Users can:
+* Request help
+* Receive offers
+* Hire service providers
+
+11. Admin Panel (Full Functional Backend Admin)
+Create an advanced admin dashboard at /admin with:
+* Protected admin login
+* Manage users, roles, subscriptions
+* Approve mentors, coaches, speakers, organizers
+* Manage events (approve, feature, deactivate)
+* Manage communities
+* Manage sponsors, venue partners, vendors
+* Configure currencies (enable/disable + default currency)
+* Configure subscription plans and role-based features
+* Analytics dashboard:
+    * User growth
+    * Events & registrations
+    * Subscription metrics
+    * Active community stats
+
+12. Pages Required
+* / Landing page
+* /pricing Subscription plans
+* /events Events listing
+* /events/[id] Event detail
+* /communities Community listing
+* /communities/[id] Community detail
+* /services Earn marketplace
+* /dashboard Role-aware user dashboard
+* /admin Admin panel
+* /auth/login with OAuth
+* /auth/register
+* /auth/reset
+* /about, /contact, /help
+Landing page sections:
+* Hero with logo, name, slogan
+* Learn Earn Grow section
+* Featured events
+* Featured mentors
+* Popular communities
+* Testimonials
+* Pricing preview
+
+13. UX, UI & Animation Requirements
+Use Framer Motion for:
+* Page transitions
+* Smooth scroll-based animations
+* Hover micro interactions
+* Menu animations
+* Card motion effects
+UI must be:
+* Clean
+* Modern
+* Lightweight
+* Mobile-first
+* SEO optimized
+* Super fast
+
+14. Final Deliverable
+bolt.new should generate a functional SaaS app with:
+* Working role-based auth
+* Social login
+* Functional subscriptions
+* Multi-currency ready
+* Event management CRUD
+* Community management
+* Services marketplace
+* Admin dashboard
+* Modern UI with animations
+* Scalable Next.js codebase
+* Typed data models via Prisma
+* Clean UX using Tailwind + Framer Motion

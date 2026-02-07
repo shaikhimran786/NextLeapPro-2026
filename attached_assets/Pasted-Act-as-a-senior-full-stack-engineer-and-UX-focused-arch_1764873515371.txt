@@ -1,0 +1,277 @@
+Act as a senior full-stack engineer and UX-focused architect working on my product Next Leap Pro (nextleappro.com), a community-driven learning and earning platform.
+
+Carefully read all existing code first, understand the current architecture, then plan and implement the changes below step by step. Keep the codebase clean, optimized, and user-friendly. Reuse existing patterns where possible.
+
+Scope & Goals
+
+Fix and enhance the following parts of the application:
+
+Login / Logout behaviour & Navigation state
+
+Investigate and fix issues where:
+
+Login and logout are slow or not completing reliably.
+
+Navigation UI does not immediately reflect the updated auth state (e.g., still showing logged-out links after login, or vice versa).
+
+Make sure:
+
+Auth state updates are fast and consistent across the app.
+
+Header/navigation items change instantly as per user status:
+
+Logged-out: show Sign in / Sign up CTAs.
+
+Logged-in: show Dashboard, Profile, Settings, Logout/Sign out.
+
+Avoid unnecessary page reloads and flickers during auth transitions.
+
+If hydration or state management issues exist, resolve them in a standard, robust way.
+
+Admin – Communities Management
+
+Revise and enhance the Admin communities management module:
+
+While creating or editing a community, add all essential fields required to build a rich community page (similar to meetup.com style), such as (adapt to existing schema):
+
+Name (unique)
+
+Slug / URL identifier
+
+Description (short + detailed)
+
+Category / tags
+
+Location / city
+
+Online/Offline / Hybrid
+
+Cover image / logo
+
+Visibility (public / private)
+
+Language / region (if applicable)
+
+Owner / creator reference
+
+Ensure that:
+
+Any new or updated community data reflects on the website without delay (no stale cache issues).
+
+Admin can:
+
+Create, update, and delete any community.
+
+Assign or reassign community ownership to any creator/user.
+
+Add, modify, and delete events, chapters, and other related entities from the admin section.
+
+Keep all CRUD operations secure, validated, and consistent.
+
+Role-based login & feature visibility
+
+Implement or fix role-based access control (RBAC) so that:
+
+Different roles (e.g., admin, creator, member, general user) see only the relevant features and navigation.
+
+Role-based routes and components are protected on both client and server side (no exposing admin/creator features to regular users).
+
+Ensure that:
+
+On login, the UI and accessible sections update according to the user’s role.
+
+Unauthorized access is gracefully blocked with proper messaging / redirects.
+
+Community feature – advanced and user friendly (meetup.com style)
+
+Make the community feature more advanced and practical:
+
+Add all necessary fields to capture rich community information (in line with the Admin section fields).
+
+Build or refine the community detail page layout to be clear and easy to use.
+
+Aim to clone or approximate the core community builder experience of meetup.com within our constraints:
+
+Strong community overview section.
+
+Clear listing of chapters / groups within a community.
+
+Clear listing of upcoming and past events.
+
+Visible owner/organizer details.
+
+Ensure all forms have validation, helpful error messages, and good UX.
+
+Creators – events, chapters, ownership visibility
+
+Allow creators (with appropriate role/permissions) to:
+
+Create and manage communities (if allowed).
+
+Create and manage chapters under a community.
+
+Create and manage events under a community or chapter.
+
+Make sure the relationships are always clear in the UI:
+
+Show which chapter belongs to which community.
+
+Show which event belongs to which community and/or chapter.
+
+Show owner / creator name clearly on community, chapter, and event pages to avoid user confusion.
+
+Respect permissions:
+
+Only authorized owners/admins can edit/delete specific communities, chapters, or events.
+
+Admin – CRUD for communities and related entities
+
+In the Admin section, ensure full CRUD (Create, Read, Update, Delete) operations work reliably for:
+
+Communities
+
+Chapters
+
+Events
+
+Other related entities already present in the admin domain
+
+Provide:
+
+Clear feedback after operations (success/error messages).
+
+Basic safety measures (confirmations before destructive actions like delete).
+
+Pricing page – subscription logic & CTAs
+
+Improve subscription UX and logic:
+
+On the pricing page:
+
+At any time, a user can have only one active subscription plan.
+
+The current active plan:
+
+Should be clearly marked as “Current Plan” (or equivalent).
+
+Must NOT show “Subscribe now” again.
+
+Should have a CTA to “View plan details” or “Manage subscription” that leads to profile/dashboard subscription section.
+
+Other plans should show meaningful:
+
+Upgrade CTA (if higher tier).
+
+Downgrade CTA (if lower tier).
+
+While downgrading:
+
+Show a nice confirmation popup explaining clearly what the user will lose if they downgrade.
+
+Data rules:
+
+Each plan must have a unique name or unique prefix in the database.
+
+Avoid duplicate plan entries or ambiguous names.
+
+Enforce logic to ensure only one active subscription record per user.
+
+Creator profile – expanded roles
+
+In creator profile creation/update:
+
+Add an additional field to choose “Creator as a” (public display role) with multiple selectable options, such as:
+
+Mentor
+
+Coach
+
+Influencer
+
+Facilitator
+
+Organizer
+
+Trainer
+
+Speaker
+
+Community Builder
+
+Others (with an input box to add a custom designation)
+
+Ensure these roles:
+
+Are stored properly in the database (support multiple selections).
+
+Are displayed on the creator’s public profile in a clear, readable way.
+
+Keep all CRUD operations functional from website & admin
+
+Verify and fix all CRUD flows so they work from:
+
+Public/creator-facing website (where allowed by permissions).
+
+Admin panel.
+
+Ensure no broken links, missing handlers, or silent failures.
+
+Use consistent validation and error handling patterns.
+
+Data sync between Admin and website
+
+Keep Admin and website data in sync:
+
+Any create/update/delete in the Admin panel should reflect correctly on the public/creator website views in near real-time.
+
+Fix any caching or stale data problems.
+
+Implement appropriate cache invalidation or revalidation logic (for SSR/ISR or API responses) so changes show up quickly but efficiently.
+
+Database operations – performance & stability
+
+Review all related DB queries and mutations for:
+
+N+1 query issues.
+
+Unnecessary round trips.
+
+Missing indexes on commonly filtered fields (if applicable).
+
+Optimize:
+
+Use efficient query patterns, proper relations, and batching where needed.
+
+Avoid blocking the UI unnecessarily; use loading states where operations take time.
+
+Ensure:
+
+All operations are wrapped with proper error handling.
+
+No unhandled promise rejections or runtime errors.
+
+General expectations
+
+Follow existing tech stack and architecture. Detect from the codebase (e.g., Next.js/React, API routes, ORM, auth library) and apply best practices accordingly.
+
+Keep components modular, readable, and reusable.
+
+Maintain or improve SEO and performance where relevant.
+
+Add or update tests where appropriate for critical flows (auth, subscriptions, CRUD on communities).
+
+After implementing, do a quick self-review:
+
+Login/logout flows
+
+Role-based navigation
+
+Community and events relations
+
+Pricing page logic
+
+Creator profile display roles
+
+Admin CRUD and data sync
+
+Now start by scanning the project structure and key files (auth, navigation, admin, communities, events, pricing, creator profile), then propose a short step-by-step plan and begin implementing these changes one by one.

@@ -1,0 +1,76 @@
+Project: Next Leap Pro — make functional, SEO-friendly (SSR) and add a meaningful admin panel
+Tech stack (use exactly):
+- Next.js (latest; App Router preferred)
+- React + TypeScript
+- Tailwind CSS
+- Framer Motion
+- Prisma ORM + PostgreSQL
+- NextAuth for authentication (email/password + OAuth ready)
+- Next/Image for image optimisation
+- Use server components / SSR for SEO-critical pages
+
+Goal:
+Make the Next Leap Pro website fully functional and SEO-friendly by implementing SSR/server components for landing and content pages, plus a robust admin panel to update site features and component contents (CMS-like). Update the repository code directly.
+
+Deliverables & Tasks (do them in code):
+
+1) Project bootstrap & configuration
+- Ensure Next.js app uses TypeScript, app/ directory, Tailwind configured.
+- Configure Prisma + PostgreSQL connection env variable.
+- Add NextAuth skeleton with providers ready for keys insertion.
+- Add ESLint + Prettier basic config.
+
+2) Data models (Prisma)
+Add/modify Prisma schema to include at minimum:
+- User { id, email, passwordHash?, name, avatar, roles: UserRole[], profile (one-to-one) }
+- Role { id, name } and UserRole join
+- SiteSettings { id, siteName, slogan, defaultCurrency, primaryGradient (json/string), heroTitle, heroSubtitle, heroCTA, heroImage, footerHtml, analyticsEnabled, seoDefaults (json) }
+- ContentBlock { id, page, slug, title, body (rich text / markdown), sortOrder, visible, meta (JSON), imageUrl }
+- PageMeta { id, page, title, description, ogImage, structuredData (json) }
+- Event, Community, Service, SubscriptionPlan models (if not present) with price + currency fields
+- AdminAuditLog { id, userId, action, target, createdAt }
+
+Add seed script to create:
+- default admin user (password seeded in .env.sample or instructions)
+- default SiteSettings with INR as default currency
+- some ContentBlock entries (hero, features, CTA blocks) for landing page.
+
+3) SSR / SEO implementation
+- For SEO-critical pages (landing /, /events/[id], /communities/[id], /services/[id], /pricing, /about) implement server-rendering:
+  - Use Next.js app router server components that fetch data from Prisma at request-time (dynamic rendering) so meta tags are crawled.
+  - Where using app router, set page-level rendering to dynamic for SEO pages (`export const dynamic = 'force-dynamic'` or equivalent).
+  - Implement a shared Head / Meta component to render:
+    - title, description
+    - Open Graph tags
+    - Twitter card tags
+    - Structured data JSON-LD (from PageMeta or generated from DB)
+    - Canonical tags
+- Create a helper util `generateMeta(page, data)` to centralise meta generation.
+- Use Next/Image for images with appropriate `priority` on hero.
+
+4) Content API & Server Actions
+- Create server actions or API routes for:
+  - Reading and updating SiteSettings (GET/PUT) — protected to admin.
+  - CRUD for ContentBlock (GET/POST/PUT/DELETE) — admin-only updates.
+  - Reading PageMeta (GET) and updating (admin).
+  - Admin endpoints to manage Events, Services, Communities, Subscriptions.
+- Ensure all write endpoints validate admin role (via NextAuth session + role check middleware).
+- Implement typed request/response DTOs in TypeScript.
+
+5) Admin Panel (/admin)
+Build a functional admin panel with the following pages and features:
+- Admin login (uses NextAuth, admin-only)
+- Dashboard:
+  - Quick stats: user count, active subscriptions, events today, communities count.
+  - Recent admin audit log.
+- Site settings page:
+  - Edit SiteSettings (siteName, slogan, defaultCurrency (default = INR), primaryGradient colours, hero content, footer HTML, analytics flag).
+  - Upload hero image (implement local upload handler that stores in /public/uploads or temporary mock S3).
+- Content editor (ContentBlock):
+  - WYSIWYG or Markdown editor for blocks (title, slug, body) with preview.
+  - Set visibility, order, page target.
+  - Save publishes instantly and updates pages server-side.
+- Page meta editor:
+  - Edit SEO metadata per page (title, description, ogImage, structured data JSON).
+- Feature toggles:
+  - Turn on/off platform features

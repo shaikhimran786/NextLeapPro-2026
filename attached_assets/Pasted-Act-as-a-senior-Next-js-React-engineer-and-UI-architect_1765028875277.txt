@@ -1,0 +1,208 @@
+Act as a senior Next.js / React engineer and UI architect working on my product Next Leap Pro (nextleappro.com).
+
+Your task is to add the following product tour video embed in a clean, reusable, and responsive way at three key places in the app:
+
+<iframe width="700px" height="400px" src="https://embed.app.guidde.com/playbooks/dJmL1PdTisRkRqcMHE7fRq?mode=videoOnly" title="Explore Next Leap Pro Features To Earn Learn Grow" frameborder="0" referrerpolicy="unsafe-url" allowfullscreen="true" allow="clipboard-write" sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-forms allow-same-origin allow-presentation" style="border-radius: 10px"></iframe>
+<div style="display: none">
+  <!-- Transcript content… -->
+</div>
+
+
+Use this embed as the base, but adapt it properly to JSX and responsive layout.
+
+1. Create a reusable, responsive video section component
+
+Build a reusable React component, for example NextLeapProTourVideo (or similar), that:
+
+Uses the same iframe src, title, allow, sandbox, etc.
+
+Converts attributes to valid JSX:
+
+frameBorder={0}
+
+allowFullScreen
+
+referrerPolicy="unsafe-url"
+
+Does not hardcode width="700px" and height="400px" on the iframe.
+Instead, use a responsive 16:9 container, like:
+
+A wrapper with position: relative; padding-bottom: 56.25%; height: 0;
+
+Iframe with position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius.
+
+Adds loading="lazy" to the iframe to improve performance.
+
+Wrap it in a layout similar to:
+
+Title: “Explore Next Leap Pro Features”
+
+Subtitle: “Watch this quick walkthrough to see how you can Learn, Earn and Grow with events, services and communities.”
+
+The video iframe inside a responsive container.
+
+Optional: Two primary CTAs below the video (label text will differ per page, see sections below).
+
+Use the <div style="display: none"> transcript content in a better way:
+
+Do not keep it as a display:none block.
+
+Instead, extract key points and show them as:
+
+A short bullet list or “In this video you’ll see:” points under the video.
+
+Keep it concise so the section is not overloaded.
+
+2. Home page: add the video section below the hero with CTAs
+
+Find the home page component (e.g. pages/index.tsx or the app router equivalent).
+
+Place the new video section immediately below the main hero section.
+
+Structure:
+
+Hero section (existing).
+
+Then the new “Explore Next Leap Pro Features” section with the video.
+
+Below or next to the video, add CTAs such as:
+
+Primary button: “Get Started” → link to sign up / onboarding.
+
+Secondary button: “Explore Events” → link to events listing.
+
+Ensure this section:
+
+Looks clean on desktop and mobile (responsive).
+
+Uses the same spacing / typography system as the rest of the landing page.
+
+Keeps the video as a central element but with clear action buttons.
+
+3. “How It Works / Features” page: use video as main hero
+
+Locate or create a “How It Works” / “Features” page (for example pages/how-it-works.tsx or similar).
+
+On this page, make the video section act as the main hero:
+
+At the top of the page, show:
+
+Heading: “How Next Leap Pro Works”
+
+Short intro text summarizing the platform (learn, earn, grow through communities, events and services).
+
+The same responsive video embed component.
+
+Below the video, add a step-by-step explanation such as:
+
+Step 1: Create your account
+
+Step 2: Join communities and events
+
+Step 3: Explore services / offer services
+
+Step 4: Manage your profile and subscription
+
+CTAs on this page can be:
+
+“Create your account”
+
+“View pricing”
+
+“Browse communities”
+
+Make sure this page is SEO-friendly:
+
+Use proper <h1>, <h2> headings.
+
+Use text from the transcript to describe features in your own words, not hidden in display:none.
+
+4. Dashboard onboarding: show video for new users
+
+In the dashboard (after login), add a welcome / onboarding card that shows this video once for new users.
+
+Implementation approach:
+
+Create a component like DashboardOnboardingTour that uses the same NextLeapProTourVideo component.
+
+Show it near the top of the dashboard for users who are:
+
+Logged in.
+
+Marked as “new” / “onboarding not completed” (use existing user flags or add a simple boolean like hasSeenTour in user metadata or local storage).
+
+Include:
+
+Title: “Welcome to Next Leap Pro”
+
+Short line: “Watch this 4-minute tour to learn how to use communities, events, services and subscriptions.”
+
+The video embed.
+
+A dismiss / “I’m done” option that:
+
+Hides this card on future visits (persist this flag appropriately).
+
+CTAs inside the onboarding card:
+
+“Complete your profile”
+
+“Join a community”
+
+“Explore events”
+
+5. Technical and UX details
+
+Responsive container:
+
+Create a CSS class / Tailwind classes for a 16:9 ratio video.
+
+Ensure it works well on mobile (full width) and desktop (max width container).
+
+Lazy load:
+
+Add loading="lazy" on the iframe.
+
+Ensure this does not break the video behaviour.
+
+Accessibility:
+
+Keep title="Explore Next Leap Pro Features To Earn Learn Grow" on the iframe.
+
+Ensure surrounding text gives context for screen readers.
+
+Code organization:
+
+Place the reusable video component in a shared components folder (e.g. components/marketing/NextLeapProTourVideo.tsx).
+
+Reuse this component in:
+
+Home page.
+
+How It Works / Features page.
+
+Dashboard onboarding card.
+
+6. What to do now
+
+Scan the codebase to find:
+
+Home page component.
+
+How It Works / Features page (or create one).
+
+Dashboard layout and main component.
+
+Create the reusable video component with responsive iframe and lazy loading.
+
+Integrate it in:
+
+Home page (below hero with CTAs).
+
+How It Works / Features page (as the main hero).
+
+Dashboard onboarding card for new users.
+
+Make sure everything is responsive, visually consistent with existing design, and that the video loads correctly in all three contexts.
+
+Begin by creating the shared NextLeapProTourVideo component, then wire it into the three locations as described.

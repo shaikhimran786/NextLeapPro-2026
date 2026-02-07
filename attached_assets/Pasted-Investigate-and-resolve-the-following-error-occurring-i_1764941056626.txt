@@ -1,0 +1,69 @@
+Investigate and resolve the following error occurring in Console:
+
+Error Type:
+Console UnrecognizedActionError
+
+Error Message:
+Server Action "002bec17e947bbaf5d2813169416855c2eeab00775" was not found on the server. Refer: https: nextjs.org/docs/messages/failed-to-find-server-action
+
+Environment:
+Next.js version 16.0.5 (using Webpack)
+
+Fix Requirements:
+
+Locate the missing Server Action and ensure:
+
+The action is defined inside a Server Component file (.tsx) or inside app/ with "use server" directive at top of the function.
+
+The file exporting the action is not accidentally converted into a Client Component with "use client" present.
+
+The action function is directly exported and not wrapped inside another function or condition.
+
+Ensure that development build vs production build is not causing mismatch in Server Action IDs.
+
+Check the following common causes and fix them:
+
+Remove accidental dynamic imports or runtime bundling issues that break server action registration.
+
+Ensure the server action export is not renamed or moved without updating imports.
+
+If refactoring occurred, restart dev server and clear .next/ to rebuild action IDs:
+
+rm -rf .next
+npm run dev
+
+
+Verify React hooks or event handlers are calling the server action only within supported scope (form actions or startTransition).
+
+Update code to match best practices:
+
+Use proper Server Action declaration format:
+
+"use server";
+export async function myAction(data: FormData) {
+  // logic
+}
+
+
+Ensure client interaction forms reference the correct exported action.
+
+After applying fixes, test end-to-end:
+
+Submit form or trigger action and confirm no missing server action error.
+
+Check production build:
+
+npm run build
+npm start
+
+
+Focus areas:
+
+Eliminate hydration mismatch or client-server boundary confusion.
+
+Maintain clean separation of Server and Client components.
+
+Review recent code changes related to server actions or form submissions.
+
+Goal:
+Resolve the server action registration and make sure action IDs are compiled and accessible in server runtime.

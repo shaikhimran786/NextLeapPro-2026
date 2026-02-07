@@ -1,0 +1,163 @@
+Act as a senior Next.js engineer and UI architect working on my product Next Leap Pro (nextleappro.com), a community-driven platform.
+
+Carefully scan the existing codebase first (website + admin), understand the current architecture, then plan and implement fixes for the issues below.
+
+1. Image upload not reflecting on website and admin (Logo URL, Cover Image URL, etc.)
+
+Problem:
+Recent changes for image upload (Logo URL, Cover Image URL, and similar fields) are not reflected correctly on both the website and admin sections.
+
+Your tasks:
+
+Identify all forms and components where image upload is enabled for:
+
+Community logo / icon
+
+Community cover image
+
+Any other configured images (banners, thumbnails, etc.)
+
+Verify and fix that:
+
+Upload handlers correctly store the final image URL/path in the database or API.
+
+Website and admin UI components read the correct fields and display the latest uploaded images.
+
+There is no mismatch between field names (for example, logo, logoUrl, icon, coverImage, coverImageUrl).
+
+Make sure:
+
+All places that previously used plain text inputs (Logo URL, Cover URL, etc.) now use the new image upload flow end-to-end.
+
+After upload and save, the updated image is visible without needing a hard refresh.
+
+Fallback placeholders are shown when no image exists.
+
+2. Community owner cannot manage own community (ownership logic & privileges)
+
+Problem:
+
+Community owner/creator still sees “Join Community” instead of a “Manage Community” option on the community detail page.
+
+Community icon/image is missing or not editable by the community owner.
+
+Community owners are not able to properly manage their own communities, despite having the privilege through their subscription model.
+
+Your tasks:
+
+Fix ownership detection logic:
+
+Determine correctly whether the logged-in user is:
+
+The owner/creator of the community, or
+
+A member, or
+
+A non-member visitor.
+
+Use reliable checks on server/API and client side (e.g., comparing userId / creatorId / ownerId fields).
+
+Update community detail page behaviour:
+
+For owner/creator:
+
+Show “Manage Community” (or equivalent) instead of “Join Community”.
+
+Provide access to:
+
+Edit community details (name, description, logo, cover image, settings).
+
+Manage chapters and events belonging to that community.
+
+For non-owners:
+
+Show “Join Community” or relevant CTA as before.
+
+Image management privileges for owners:
+
+Allow community builder / community owner / creator to:
+
+Add / upload community logo and cover images.
+
+Edit/replace existing images.
+
+Delete images entirely (with confirmation) for communities they own.
+
+Restrict these operations:
+
+Only owners (and admins) can perform image CRUD on that community.
+
+No other users should get these privileges.
+
+Ensure this privilege model aligns with the user’s subscription model:
+
+Only users with appropriate creator/owner/subscription status should see and use management controls.
+
+3. Admin panel runtime hydration issues (Next.js SSR vs client components)
+
+Problem:
+The admin panel is still throwing runtime errors related to hydration mismatches between server and client.
+
+Your tasks:
+
+Identify all admin pages and components that are causing hydration issues:
+
+Look for warnings/errors in console related to mismatched markup or changing content between server and client.
+
+Focus especially on components that depend heavily on client-side state (auth, form state, dynamic data, conditional rendering, etc.).
+
+Apply the correct Next.js rendering strategy:
+
+Use SSR (server-side rendering) only where truly needed for SEO (mostly public website pages that need to be indexed).
+
+For admin panel and most dynamic dashboards:
+
+Prefer client-side components and client-side data fetching to avoid unnecessary SSR and hydration complexity.
+
+Convert problematic server components into client components where appropriate:
+
+Add "use client" only where needed.
+
+Avoid mixing server-only APIs (like directly reading from cookies or filesystem) inside client components.
+
+Fix hydration mismatches by:
+
+Ensuring that initial server-rendered markup matches what the client will render.
+
+Avoid rendering different content on the client based on values only available after mount (e.g., window, localStorage, timers) without guarding them.
+
+When necessary, move such logic to useEffect in client components so it runs only after hydration.
+
+Clean architecture for SSR vs client:
+
+Keep SEO-focused pages (public website listing, community details, etc.) using SSR/ISR where needed.
+
+Keep admin and internal dashboards primarily client-rendered with API calls for data.
+
+Remove suppressHydrationWarning hacks where possible by fixing the root cause instead.
+
+4. General expectations
+
+Do not introduce breaking changes to routing or auth flows unless required; reuse existing patterns.
+
+Maintain or improve performance and UX while fixing these issues.
+
+Add or adjust basic error handling and loading states where needed.
+
+After changes, manually verify:
+
+Image upload and display on both website and admin.
+
+Community owner sees “Manage Community” and can fully manage their own communities (including images).
+
+Admin panel runs without hydration errors or warnings.
+
+Start by scanning the relevant Next.js pages and components for:
+
+Image upload logic and display for communities.
+
+Community detail page ownership logic and button states.
+
+Admin panel pages that log hydration issues.
+
+Then propose a short step-by-step refactor plan and begin implementing these fixes systematically

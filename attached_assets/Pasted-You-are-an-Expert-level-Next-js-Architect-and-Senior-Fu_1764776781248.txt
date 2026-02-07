@@ -1,0 +1,184 @@
+You are an Expert-level Next.js Architect and Senior Full-Stack Engineer.
+
+I am building a production-grade Next.js app (Next Leap Pro). Your job is to refactor and adjust the codebase so that:
+
+Server vs Client usage is clean and appropriate
+
+Hydration issues are fixed properly (not suppressed)
+
+Navbar and auth-related UI do not cause hydration mismatches
+
+SEO is handled correctly via server components
+
+Follow the instructions carefully:
+
+1. Overall architecture goals
+
+Use Next.js Server Components by default for:
+
+SEO-sensitive pages (landing pages, marketing pages, pricing, blog, public profiles).
+
+Data fetching that depends on backend / DB / secure env vars.
+
+Layouts and route-level wrappers that don’t need browser-only APIs or event handlers.
+
+Use Client Components only when necessary:
+
+Components with useState, useEffect, useReducer, useRef, event handlers, or browser APIs (window, document, localStorage, matchMedia, etc.).
+
+Highly interactive dashboard widgets, filters, dropdowns, forms, modals, etc.
+
+Avoid marking entire pages as use client unless absolutely needed. Instead:
+
+Keep the page/layout as server component.
+
+Isolate interactivity into small client components and pass data as props.
+
+Refactor the codebase to follow this separation.
+
+2. Fix Hydration mismatch issues (high priority)
+
+There is a known issue:
+
+The suppressHydrationWarning on line 69 is just hiding the error, not fixing it.
+The Navbar component renders different content on the server (loading state) vs the client (actual user data).
+
+Your goal is to remove suppressHydrationWarning and fix the root cause.
+
+Do the following:
+
+Identify all hydration mismatches:
+
+Search for suppressHydrationWarning, useEffect hacks, typeof window !== 'undefined' conditions that change rendered markup between server and client.
+
+Run the app and check the browser console for hydration warnings. Fix them one by one.
+
+Navbar-specific fix (very important):
+
+Currently, on the server, Navbar renders a "loading" or anonymous state.
+
+On the client, after hydration, Navbar shows the actual user data (name, avatar, logged-in menu).
+
+This difference in initial markup is causing the mismatch.
+
+Refactor Navbar using one of these patterns (choose the cleanest for this codebase):
+
+Pattern A: Server-side session + client shell
+
+Make a Server Component wrapper for the navbar, for example: NavbarServer.
+
+In NavbarServer, fetch the current user/session on the server (e.g. using cookies(), getServerSession, or the existing server-side auth utility).
+
+Pass the user object (or null) as props to a small Client Component, e.g. NavbarClient.
+
+NavbarClient should render the same structure on first render as what the server produced.
+
+There should be no "loading…" on the server while real user data is expected on the client. Use:
+
+user data from server directly, or
+
+a consistent "guest" state both on server and client if user is not known yet.
+
+Pattern B: Fully client-side Navbar with consistent initial state
+
+If server-side session is not straightforward, make Navbar a pure client component.
+
+Ensure that the initial client render uses the same fallback/placeholder structure that is rendered by the server.
+
+For example:
+
+Server outputs a generic skeleton (not personalized).
+
+Client, on first render, shows the exact same skeleton, then swaps to user data after state is resolved.
+
+The key point: the HTML generated on the server must match the HTML for the initial client render.
+
+Remove suppressHydrationWarning:
+
+After you fix the logic so server and client initial markup matches, completely remove suppressHydrationWarning.
+
+Ensure there are no hydration warnings left in the console.
+
+Handle typical sources of mismatch:
+
+Time-based rendering (e.g. new Date()), random values, or per-render IDs. Use stable values or generate them on the server and pass as props.
+
+Theme toggles (dark/light) based on window.matchMedia:
+
+Derive theme from cookies or a server-safe value when possible, or
+
+Render a neutral, non-flickery initial theme that matches both server and client.
+
+Any conditional rendering that depends on client-only APIs must be moved entirely into client components.
+
+3. Next.js Server vs Client usage (enforce good patterns)
+
+Refactor components as follows:
+
+Server Components (default):
+
+app/(marketing)/layout.tsx, app/(marketing)/page.tsx, blog pages, SEO pages.
+
+Data-fetching components that read from DB, external services, or use server-only utilities.
+
+Components that render meta tags or structured data for SEO.
+
+Client Components:
+
+Dashboard, interactive widgets, forms, filters, carousels, sortable tables, interactive charts.
+
+Any component using useState, useEffect, or browser APIs.
+
+Auth-related logic that must run on the client only (e.g. reading from localStorage tokens, if used).
+
+Patterns to apply:
+
+Where possible, do data fetching in server components, then pass data into client components as props, instead of fetching again on the client.
+
+Do not pass server-only objects like Request, cookies, or DB clients into client components.
+
+Use dynamic imports with ssr: false only when absolutely necessary for browser-only libraries, and document why.
+
+4. SEO handling
+
+Ensure SEO-related components (meta tags, Open Graph, structured data, canonical URLs) are handled in server components:
+
+Use Next.js metadata or server-side <head> where appropriate.
+
+Pages important for search engines (home, pricing, features, blog, public profiles) should be server-rendered with complete content.
+
+Do not move these pages entirely to client components unless there is a very strong reason.
+
+5. Code quality and safety
+
+Do not break existing routes and core user flows (auth, dashboard, subscription, profile).
+
+Keep TypeScript types accurate. If you introduce new props for user, session, etc., define proper interfaces/types.
+
+Run and fix:
+
+next lint
+
+Any existing tests or type checks.
+
+Remove dead code, unused imports, and unnecessary use client directives.
+
+6. Deliverables
+
+Refactored Next.js codebase with:
+
+Clean separation of server and client components.
+
+Fully fixed hydration mismatches (especially in Navbar).
+
+No suppressHydrationWarning workarounds.
+
+Server-driven SEO and data fetching for appropriate pages.
+
+Briefly comment in the code (where helpful) to explain key architectural decisions, especially:
+
+How Navbar session data is handled.
+
+Why certain components are server vs client.
+
+Apply these changes across the project now.

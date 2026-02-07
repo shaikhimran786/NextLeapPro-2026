@@ -1,0 +1,121 @@
+Act as a senior Frontend Engineer and UX designer.
+Refactor and improve the Header Navigation of my SaaS / community platform to follow standard navigation patterns, UX best practices, and clean responsive design.
+
+Follow these requirements carefully:
+
+Goal of refactor
+
+Clean up and simplify the existing header navigation code.
+
+Remove unnecessary / duplicate / unused code, styles, and components.
+
+Make the navigation standard, predictable, and easy to use across devices.
+
+Improve readability, spacing, and visual hierarchy.
+
+Logo & branding
+
+Make the logo size slightly larger and clearly visible (standard header logo size, not too tiny, not oversized).
+
+Maintain proper spacing around the logo so it does not look cramped.
+
+Ensure the logo maintains aspect ratio and does not stretch on different devices.
+
+Standard navigation layout
+
+Use standard header patterns:
+
+Logo on the left.
+
+Main navigation links in the middle or right (e.g. Home, Learn, Earn, Grow, Communities, Opportunities, Pricing, About, Contact).
+
+CTAs (Sign In / Sign Out, Start / Join) on the right.
+
+Make sure the layout looks consistent and aligned on all pages.
+
+Use clear, readable typography, proper font size, and good contrast.
+
+Responsive behaviour (as per device screen size)
+
+Implement responsive layout using proper breakpoints (e.g. mobile, tablet, desktop).
+
+On desktop:
+
+Show full navigation horizontally in the header.
+
+CTAs (Sign In / Sign Out, Start / Join) visible as buttons.
+
+On mobile / smaller screens:
+
+Use a standard hamburger menu or mobile-friendly nav pattern.
+
+Ensure the menu is easy to open/close and items are big enough to tap.
+
+Navigation should adapt based on screen width, not rely only on user agent.
+
+Navigation items & states
+
+Ensure links have:
+
+Hover state (visual feedback like underline or subtle background).
+
+Active/current page state (clearly highlighted tab or pill).
+
+Focus state for keyboard accessibility.
+
+Keep interaction consistent between desktop and mobile versions.
+
+CTAs: Sign In / Sign Out / Start / Join
+
+Implement CTA buttons in the header:
+
+When user is logged out:
+
+Show “Sign In” button and a prominent “Start” / “Join Now” button.
+
+When user is logged in:
+
+Show “Sign Out” button and optionally “Go to Dashboard” or “My Profile”.
+
+Assume there is an isAuthenticated state or similar:
+
+Use this to conditionally render Sign In / Sign Out.
+
+Make CTAs look visually distinct (primary and secondary styles) with proper hover states.
+
+UX & usability best practices
+
+Maintain enough spacing and padding so header does not look compact or cluttered.
+
+Ensure elements are easily clickable/tappable with proper hit area.
+
+Follow standard patterns so users immediately understand how to navigate.
+
+Use semantic HTML (<header>, <nav>, <ul>, <li>, <button>) and basic ARIA attributes where needed.
+
+Keep the header behaviour consistent across pages.
+
+Code quality & structure
+
+Refactor the header into a clean, reusable component (React / Next.js / plain HTML+CSS – use what is most standard).
+
+Remove:
+
+Dead code.
+
+Old commented blocks that are not needed.
+
+Repeated styles that can be consolidated.
+
+Organize styles (CSS/Tailwind) in a maintainable way with clear class names.
+
+Add short comments explaining:
+
+Breakpoints and responsive logic.
+
+Auth-based rendering (Sign In / Sign Out).
+
+Any special handling of navigation items.
+
+Now, refactor the header navigation with this specification.
+Return the final, production-ready header component (JSX or HTML+CSS), which I can directly replace in my project.

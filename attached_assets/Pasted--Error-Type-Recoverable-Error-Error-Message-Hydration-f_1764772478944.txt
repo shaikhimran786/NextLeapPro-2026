@@ -1,0 +1,110 @@
+## Error Type
+Recoverable Error
+
+## Error Message
+Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <ScrollAndFocusHandler segmentPath={[...]}>
+      <InnerScrollAndFocusHandler segmentPath={[...]} focusAndScrollRef={{apply:false, ...}}>
+        <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+          <LoadingBoundary name="/" loading={null}>
+            <HTTPAccessFallbackBoundary notFound={<SegmentViewNode>} forbidden={undefined} unauthorized={undefined}>
+              <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<SegmentViewNode>} forbidden={undefined} ...>
+                <RedirectBoundary>
+                  <RedirectErrorBoundary router={{...}}>
+                    <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{lazyData:null, ...}} ...>
+                      <SegmentViewNode type="page" pagePath="page.tsx">
+                        <SegmentTrieNode>
+                        <HomePage>
+                          <script>
+                          <HomePage>
+                            <div className="min-h-scre..." suppressHydrationWarning={true}>
+                              <Navbar>
+                                <a>
+                                <header className="sticky top..." suppressHydrationWarning={true} role="banner">
+                                  <nav className="container ..." aria-label="Main navig...">
+                                    <LinkComponent>
+                                    <div
+                                      className="hidden lg:flex items-center justify-center flex-1 px-8"
+-                                     data-testid="desktop-nav"
+                                    >
+                                      <div className="flex items...">
+                                        <LinkComponent href="/how-it-works" className={"\n      ..."} ...>
+                                          <a className={"\n      ..."} data-testid="nav-link-h..." ref={function} ...>
+                                            <span
++                                             className={"\n                        absolute bottom-0 left-1/2 -trans..."}
+-                                             className={"\n                        absolute bottom-0 left-1/2 -trans..."}
+                                            >
+                                        <LinkComponent href="/events" className={"\n      ..."} ...>
+                                          <a className={"\n      ..."} data-testid="nav-link-e..." ref={function} ...>
+                                            <span
++                                             className={"\n                        absolute bottom-0 left-1/2 -trans..."}
+-                                             className={"\n                        absolute bottom-0 left-1/2 -trans..."}
+                                            >
+                                        <LinkComponent href="/services" className={"\n      ..."} ...>
+                                          <a className={"\n      ..."} data-testid="nav-link-s..." ref={function} ...>
+                                            <span
++                                             className={"\n                        absolute bottom-0 left-1/2 -trans..."}
+-                                             className={"\n                        absolute bottom-0 left-1/2 -trans..."}
+                                            >
+                                        <LinkComponent href="/communities" className={"\n      ..."} ...>
+                                          <a className={"\n      ..."} data-testid="nav-link-c..." ref={function} ...>
+                                            <span
++                                             className={"\n                        absolute bottom-0 left-1/2 -trans..."}
+-                                             className={"\n                        absolute bottom-0 left-1/2 -trans..."}
+                                            >
+                                        <LinkComponent href="/pricing" className={"\n      ..."} ...>
+                                          <a className={"\n      ..."} data-testid="nav-link-p..." ref={function} ...>
+                                            <span
++                                             className={"\n                        absolute bottom-0 left-1/2 -trans..."}
+-                                             className={"\n                        absolute bottom-0 left-1/2 -trans..."}
+                                            >
+                                    <div>
+                                    <button
+                                      type="button"
++                                     className="lg:hidden flex items-center justify-center h-12 w-12 rounded-full bg-..."
+-                                     className="flex lg:hidden items-center justify-center h-12 w-12 rounded-full bg-..."
+                                      onClick={function onClick}
+                                      aria-label="Open menu"
+                                      data-testid="mobile-menu-toggle"
+-                                     aria-expanded="false"
+                                    >
++                               <div
++                                 className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden transition-opac..."
++                                 onClick={function onClick}
++                                 data-testid="mobile-menu-overlay"
++                               >
+-                               <main id="main-content" className="flex-grow" role="main">
+                                ...
+                              ...
+                      ...
+                    ...
+        ...
+
+
+
+    at div (<anonymous>:null:null)
+    at Navbar (src/components/layout/Navbar.tsx:313:19)
+    at HomePage (src/app/page.tsx:70:9)
+
+## Code Frame
+  311 |                 className={`absolute left-0 block h-0.5 w-6 bg-slate-700 transform transition-all duration-300 ease-out ${
+  312 |                   isOpen ? '-rotate-45 top-3' : 'top-5'
+> 313 |                 }`}
+      |                   ^
+  314 |               />
+  315 |             </div>
+  316 |           </button>
+
+Next.js version: 16.0.5 (Turbopack)

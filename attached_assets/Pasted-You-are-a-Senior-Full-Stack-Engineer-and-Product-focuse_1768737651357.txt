@@ -1,0 +1,198 @@
+You are a Senior Full-Stack Engineer and Product-focused Architect working on a community-driven SaaS platform (Next Leap Pro) built using modern React and server rendering.
+
+Your task is to identify, fix, and refactor authentication, authorization, subscription, and community-membership state management issues across the entire application and ensure a clean, predictable end-to-end user flow.
+
+1. Fix Sign-In and Sign-Out State Issues
+Objectives
+
+Ensure auth state is single-source-of-truth
+
+Prevent stale UI after login/logout
+
+Avoid partial or inconsistent session state
+
+Requirements
+
+On sign-in:
+
+Correctly hydrate user session
+
+Fetch and store:
+
+userId
+
+role (learner, mentor, creator, admin)
+
+subscriptionPlan
+
+communityMembershipStatus
+
+Update UI immediately without requiring refresh
+
+On sign-out:
+
+Clear all auth-related state including:
+
+user data
+
+role
+
+subscription
+
+community status
+
+Reset global store to initial state
+
+Redirect user to public landing page
+
+Prevent protected routes from rendering
+
+2. Role-Based Login and Authorization
+Implement role-aware access control:
+
+Learner
+
+Mentor
+
+Creator
+
+Admin
+
+Ensure:
+
+Routes, dashboards, CTAs, and actions are rendered only if role permits
+
+Backend APIs validate role and subscription before responding
+
+Frontend does not rely only on UI hiding, but on real permission checks
+
+3. Subscription Plan and Pricing State Management
+Improve subscription flow so that:
+
+Subscription plan is fetched on login and stored globally
+
+UI reflects:
+
+Active plan
+
+Expiry date
+
+Allowed features
+
+Feature access is strictly tied to plan
+
+Pricing page dynamically hides current plan
+
+Upgrade and downgrade logic works without breaking state
+
+After successful payment:
+
+Sync subscription state immediately
+
+Revalidate user session
+
+Redirect user to correct dashboard based on role and plan
+
+4. Community Join State Bug Fix
+Current Issue
+
+Even after a user joins a community, the UI still shows “Join Community”, which confuses users.
+
+Fix Required
+
+Introduce explicit communityMembershipStatus:
+
+not_joined
+
+pending
+
+joined
+
+Update this state immediately after:
+
+Join community action
+
+Successful backend confirmation
+
+Replace “Join Community” CTA with:
+
+“Go to Community” or “View Community” once joined
+
+Persist this state across refresh, sign-in, and navigation
+
+5. Unified Global State Management
+
+Refactor to a clean global state architecture.
+
+Must Include
+
+Auth State
+
+Role State
+
+Subscription State
+
+Community Membership State
+
+Guidelines
+
+Avoid duplicate state across components
+
+Use derived selectors instead of recalculations
+
+Ensure SSR and client hydration consistency
+
+State must update correctly on:
+
+Sign-in
+
+Sign-out
+
+Subscription change
+
+Community join/leave
+
+6. End-to-End Flow Validation
+
+Validate and fix the full journey:
+
+User signs up
+
+User signs in
+
+User selects subscription plan
+
+User completes payment
+
+User joins community
+
+User navigates dashboard
+
+User signs out
+
+User signs back in
+
+Ensure:
+
+No stale UI
+
+No incorrect CTAs
+
+No mismatched role or plan access
+
+Smooth UX without refresh hacks
+
+7. Deliverables
+
+Refactored state structure
+
+Clear explanation of root causes
+
+Fixed auth, subscription, and community logic
+
+Code snippets where necessary
+
+Notes on preventing regressions
+
+Focus on clarity, correctness, and long-term maintainability.
+Think like a product engineer, not just a coder.

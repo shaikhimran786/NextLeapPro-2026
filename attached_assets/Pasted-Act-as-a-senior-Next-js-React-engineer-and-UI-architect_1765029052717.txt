@@ -1,0 +1,227 @@
+Act as a senior Next.js / React engineer and UI architect working on my product Next Leap Pro (nextleappro.com).
+
+Your task is to integrate the following Guidde video embed in a clean, configurable, and responsive way across the website and dashboard, with admin control to toggle it on/off per placement.
+
+1. Base embed we must use
+
+Use this embed as the core video content:
+
+<iframe
+  width="700px"
+  height="400px"
+  src="https://embed.app.guidde.com/playbooks/dJmL1PdTisRkRqcMHE7fRq?mode=videoOnly"
+  title="Explore Next Leap Pro Features To Earn Learn Grow"
+  frameborder="0"
+  referrerpolicy="unsafe-url"
+  allowfullscreen="true"
+  allow="clipboard-write"
+  sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-forms allow-same-origin allow-presentation"
+  style="border-radius: 10px"
+></iframe>
+
+
+There is also a long transcript wrapped in a hidden <div style="display:none">...</div>. We will not render this raw block directly, but you can reuse its content (if needed) as structured text in the UI (e.g., bullets/summary), not as a giant hidden div.
+
+2. Create a reusable “Feature Demo Video” component
+
+Create a reusable React/Next.js component, for example FeatureDemoVideo (or similar), that:
+
+Wraps the iframe in a responsive container:
+
+Make it 16:9 or similar aspect ratio.
+
+On desktop, max width ~700–900px centered.
+
+On mobile, iframe should be width: 100% of container and auto height (no fixed 700px width).
+
+Adds strong context text + CTAs around it:
+
+Title (e.g.) “Explore Next Leap Pro Features”
+
+Short description (2–3 lines) explaining that this is a platform walkthrough to Learn, Earn and Grow.
+
+Below the video, add CTA buttons such as:
+
+“Get Started / Create Account”
+
+“Explore Events”
+
+“View Plans & Pricing”
+
+Make CTAs configurable if practical (props).
+
+Use lazy loading for the iframe:
+
+Add loading="lazy" (if supported in this environment) and any other standard lazy loading optimization.
+
+Ensure the component does not block initial page render unnecessarily.
+
+Accept props / config:
+
+title
+
+description
+
+showPrimaryCta / primaryCtaLabel / primaryCtaHref
+
+secondaryCtaLabel / secondaryCtaHref
+
+embedUrl (default to the Guidde URL above, but overridable from admin config)
+
+isActive (boolean, controlled by admin settings per placement)
+
+Keep the component clean, accessible, and easy to reuse.
+
+3. Add video on Home page, just below hero
+
+On the public home page:
+
+Insert the FeatureDemoVideo section directly below the hero section.
+
+Use the same embed URL, with:
+
+Title: “See How Next Leap Pro Works”
+
+Description focusing on Learn, Earn, Grow.
+
+CTAs:
+
+Primary: “Get Started” → sign-up or onboarding route.
+
+Secondary: “Explore Events” → events listing page.
+
+The rendering of this section should be controlled by the admin-controlled active toggle (see admin section below):
+
+If homeDemoActive is true, show it.
+
+If false, hide the section cleanly.
+
+4. Add video on How It Works / Features page as the main hero
+
+On the How It Works / Features page (or equivalent page):
+
+Use the same FeatureDemoVideo component, but here it should behave like the main hero content:
+
+Place at the top of the page.
+
+Above or alongside a short step-by-step explanation of how the platform works.
+
+CTAs can be more “flow oriented”, for example:
+
+Primary: “Join the Platform”
+
+Secondary: “Explore Communities”
+
+Again, make this placement controlled from admin:
+
+howItWorksDemoActive boolean.
+
+If this page does not exist yet, create a basic “How It Works” page that uses the component as its hero and shows 3–5 short steps below.
+
+5. Add video once inside dashboard onboarding for new users
+
+In the user dashboard (after login):
+
+Create an onboarding card/section that is shown to new users or users who have not yet dismissed the tour.
+
+This card should include:
+
+A short welcome text (e.g., “Welcome to Next Leap Pro 👋 Watch this quick tour to understand how to use communities, events and services.”)
+
+The FeatureDemoVideo component (possibly in a slightly smaller layout if needed).
+
+A “Dismiss / I’ve seen this” option that sets a flag so the video card does not keep appearing.
+
+Logic:
+
+Only show for:
+
+Logged-in users.
+
+Users with a flag like hasSeenFeatureDemo === false.
+
+After the user closes the card, update this flag so it no longer appears.
+
+Also, ensure this dashboard placement is controlled by an admin toggle:
+
+dashboardDemoActive boolean.
+
+6. Admin panel: control embed code and active/inactive toggles
+
+Add configuration control in the Admin panel to manage the demo video:
+
+Create an Admin settings section for “Feature Demo Video Settings” (or similar), which allows:
+
+Editing the embed URL (so we can update or replace the Guidde video later without code changes).
+
+Optional: editing title and description for each placement (home, how-it-works, dashboard), or use defaults if not provided.
+
+Add active/inactive toggles per placement:
+
+homeDemoActive (show/hide on home page)
+
+howItWorksDemoActive (show/hide on How It Works / Features page)
+
+dashboardDemoActive (show/hide in dashboard onboarding)
+
+Store these settings in a suitable place:
+
+A global Settings table or config model in the database.
+
+Or existing site-config mechanism if the project already has one.
+
+When toggles are changed:
+
+Changes should reflect on the respective web pages without requiring code deployment.
+
+Make sure that if a placement is inactive, the page layout remains clean (no empty gaps).
+
+7. General implementation details
+
+Ensure the video component:
+
+Works well on mobile, tablet, and desktop.
+
+Has consistent spacing and typography with the rest of the site.
+
+Use existing design tokens / classes for:
+
+Spacing
+
+Buttons
+
+Typography
+
+Avoid adding heavy extra dependencies; use plain React/Next.js and existing styling approach (Tailwind/CSS modules/etc.).
+
+8. What to do now
+
+Scan the codebase to find:
+
+Home page component.
+
+How It Works / Features page (or create one if missing).
+
+Dashboard main layout / onboarding area.
+
+Admin settings infrastructure.
+
+Implement the reusable FeatureDemoVideo component with responsive iframe and lazy loading.
+
+Integrate it on:
+
+Home (below hero)
+
+How It Works / Features (hero)
+
+Dashboard onboarding (conditional on user + admin toggle)
+
+Add admin configuration for:
+
+Embed URL
+
+Active/inactive toggles per placement
+
+Test all three placements and admin control end-to-end.
+
+Begin by creating the reusable component and wiring it into the home page, then extend to How It Works and dashboard, and finally add the admin settings and toggles.

@@ -1,0 +1,112 @@
+Context
+I am facing frequent Hydration mismatch errors in a Next.js App Router project (Next.js v16.0.5, Webpack) deployed on Replit.
+
+Error Type
+Recoverable Error
+Hydration failed because the server-rendered HTML did not match the client-rendered HTML.
+
+The mismatch is occurring on the HomePage and Navbar components.
+
+Stack Trace Highlights
+
+Component: Navbar (src/components/layout/Navbar.tsx)
+
+Component: HomePage (src/app/page.tsx)
+
+Mismatch between:
+
+<a href="#main-content" class="sr-only ...">
+
+<header class="sticky top-0 ...">
+
+What I Need You to Do
+
+Please analyze, refactor, and stabilize the rendering logic to permanently fix hydration mismatches.
+
+1. Identify and Fix Root Causes
+
+Carefully inspect and resolve:
+
+Conditional rendering using typeof window !== 'undefined'
+
+Server-side rendering of client-only logic
+
+Dynamic values such as:
+
+Date.now()
+
+Math.random()
+
+Browser-only APIs
+
+Locale-based formatting differences
+
+Conditional JSX that changes element structure between SSR and CSR
+
+Invalid or inconsistent HTML tag nesting
+
+2. Navbar-Specific Fixes
+
+Ensure the DOM structure rendered on the server and client is identical
+
+Avoid conditionally switching between <a> and <header> elements
+
+If logic depends on client-only state:
+
+Use useEffect
+
+Use useState with a mounted flag
+
+If needed, isolate Navbar as a Client Component safely
+
+3. HomePage Fixes
+
+Ensure HomePage renders deterministic HTML on first render
+
+Move all browser-dependent logic inside useEffect
+
+Avoid injecting scripts or dynamic elements during initial render
+
+Remove or strictly control suppressHydrationWarning usage
+
+4. Architectural Improvements
+
+Clearly separate Server Components vs Client Components
+
+Use "use client" only where required
+
+Avoid server/client branching inside JSX
+
+Ensure shared layout components remain stable during SSR
+
+5. Code Refactor Expectations
+
+Refactor Navbar.tsx and page.tsx with best practices
+
+Maintain accessibility (skip links, roles, semantics)
+
+Preserve current UI/UX behavior
+
+Ensure hydration-safe rendering across reloads and navigation
+
+6. Validation
+
+Confirm no hydration warnings appear in:
+
+Local dev
+
+Replit preview
+
+Production build
+
+Ensure consistent HTML output between server and client
+
+Output Expected
+
+Cleaned and refactored code
+
+Explanation of what caused the hydration issue
+
+Clear reasoning for each fix applied
+
+No regressions in layout, navigation, or accessibility

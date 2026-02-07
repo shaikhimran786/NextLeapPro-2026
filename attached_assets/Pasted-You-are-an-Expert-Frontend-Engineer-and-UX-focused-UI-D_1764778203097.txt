@@ -1,0 +1,103 @@
+You are an Expert Frontend Engineer and UX-focused UI Designer.
+
+Refactor the header navigation (Navbar) of my Next.js app for Next Leap Pro with a modern, attractive, and fully responsive design that works smoothly on both mobile and desktop.
+
+Goals
+
+Make the header look clean, modern, and professional, suitable for a community + SaaS platform.
+
+Ensure fully responsive behavior:
+
+Desktop: horizontal menu, proper spacing, hover and active states.
+
+Mobile: compact header with a hamburger menu that opens a smooth slide-in / dropdown navigation.
+
+Improve usability and clarity of the navigation for first-time and returning users.
+
+Requirements
+
+Layout & Structure
+
+Keep the logo/brand on the left.
+
+Main nav links (e.g. Home, Learn, Earn, Community, Pricing, About, Contact) in the center or right on desktop.
+
+User actions on the far right:
+
+“Login” / “Sign up” buttons (or user avatar + menu if already authenticated).
+
+Use a clear visual hierarchy: logo > primary links > secondary actions.
+
+Design & Styling
+
+Use a modern, minimal look:
+
+Good use of white space, not cramped.
+
+Rounded corners where needed (buttons, dropdowns).
+
+Subtle shadows for dropdowns / mobile menu if used.
+
+Add:
+
+Hover states for navigation items.
+
+Active state to indicate current page/route.
+
+Typography:
+
+Readable font sizes.
+
+Balanced weight (e.g. medium/bold for main links).
+
+Responsiveness
+
+Desktop:
+
+Horizontal layout.
+
+Navigation items visible and spaced nicely.
+
+Tablet & Mobile:
+
+Collapse main links into a hamburger icon.
+
+On tap, open a mobile menu (dropdown or side drawer).
+
+Ensure smooth open/close animation.
+
+Make sure tap targets are large enough and easy to use.
+
+Implementation details
+
+Use the existing tech stack (e.g. Next.js + Tailwind CSS or the current styling system in the project).
+
+Keep the component accessible:
+
+Proper aria attributes for mobile menu toggles.
+
+Keyboard navigation should work (Tab through links).
+
+Make sure the same Navbar works correctly with Next.js app routing and supports marking the current route as active.
+
+Code Quality
+
+Refactor to keep the Navbar component clean, modular, and readable.
+
+Extract small reusable components if needed (e.g. NavLink, MobileMenu, UserMenu).
+
+Remove any old unused styles or layout hacks.
+
+Deliverable
+
+A refactored Navbar / header navigation component:
+
+Visually modern and attractive.
+
+Fully responsive (mobile + desktop).
+
+With working hover, active, and mobile menu interactions.
+
+Integrated cleanly into the existing Next.js app.
+
+Please apply these changes now and update all relevant files.

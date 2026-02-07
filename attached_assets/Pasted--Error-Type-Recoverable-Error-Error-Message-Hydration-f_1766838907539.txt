@@ -1,0 +1,61 @@
+## Error Type
+Recoverable Error
+
+## Error Message
+Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <RenderFromTemplateContext>
+      <ScrollAndFocusHandler segmentPath={[...]}>
+        <InnerScrollAndFocusHandler segmentPath={[...]} focusAndScrollRef={{apply:false, ...}}>
+          <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+            <LoadingBoundary name="pricing/" loading={null}>
+              <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+                <RedirectBoundary>
+                  <RedirectErrorBoundary router={{...}}>
+                    <InnerLayoutRouter url="/pricing" tree={[...]} params={{}} cacheNode={{lazyData:null, ...}} ...>
+                      <SegmentViewNode type="page" pagePath="pricing/pa...">
+                        <SegmentTrieNode>
+                        <PricingPage>
+                          <div className="min-h-scre...">
+                            <Navbar>
++                             <header
++                               className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-lg border-b border-slate..."
++                               suppressHydrationWarning={true}
++                             >
+-                             <a
+-                               href="#main-content"
+-                               className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200..."
+-                             >
+                              ...
+                            ...
+                      ...
+                    ...
+          ...
+
+
+
+    at header (<anonymous>:null:null)
+    at Navbar (src/components/layout/Navbar.tsx:95:9)
+    at PricingPage (src/app/pricing/page.tsx:37:7)
+
+## Code Frame
+  93 |       aria-current={isActive ? "page" : undefined}
+  94 |       className={cn(
+> 95 |         "relative px-4 xl:px-5 py-2.5 text-sm xl:text-[15px] font-medium rounded-full",
+     |         ^
+  96 |         "transition-all duration-200 ease-out",
+  97 |         "after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2",
+  98 |         "after:h-[3px] after:rounded-full after:bg-primary",
+
+Next.js version: 16.0.5 (Webpack)

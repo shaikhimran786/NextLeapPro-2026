@@ -1,0 +1,170 @@
+Act as a senior Frontend Engineer and UX Designer.
+Refactor the Header Navigation of my SaaS / community platform to follow standard navigation patterns, UX best practices, and clean information architecture.
+
+Apply the following requirements:
+
+Overall Goal
+
+Make the header simple, clear, and easy to use for all users.
+
+Follow standard navigation behaviour as expected on modern web apps.
+
+Remove any unnecessary or duplicate code, simplify the structure, and improve readability.
+
+Logo & Header Layout
+
+Make the logo size clearly visible and standard, not too small, not oversized.
+
+Ensure consistent spacing around the logo, so it does not look cramped.
+
+Layout structure:
+
+Left: Logo
+
+Center or Right: Main navigation links
+
+Right: CTAs (Sign In / Sign Out, Start / Join Platform, Profile dropdown when logged in)
+
+Responsive Design & Screen Size Handling
+
+Implement a responsive header that adapts to:
+
+Desktop / large screens
+
+Tablet / medium screens
+
+Mobile / small screens
+
+On desktop:
+
+Show full navigation bar with all key items and CTAs.
+
+On mobile:
+
+Use a hamburger menu or compact layout that still keeps logo visible.
+
+Use standard breakpoints and device-width detection (CSS media queries or framework utilities) to adjust styles.
+
+Ensure spacing and padding are consistent across breakpoints.
+
+Navigation Structure & Information Architecture
+
+Use clear, standard navigation labels that make sense to end users. For example:
+
+Home
+
+Learn
+
+Opportunities
+
+Community
+
+Pricing
+
+Help / Support
+
+For authenticated users, add:
+
+Dashboard
+
+Profile
+
+Settings
+
+Organize these using good information architecture:
+
+Primary navigation for main sections (Home, Learn, Opportunities, Community, Pricing).
+
+User-specific items (Dashboard, Profile, Settings, Logout) grouped under a Profile dropdown on desktop.
+
+Ensure navigation labels are easily understandable and follow common patterns.
+
+Authentication Logic: Sign In / Sign Out / Profile
+
+Assume there is an isAuthenticated state (or similar) to check login status.
+
+When the user is NOT logged in:
+
+Show a primary CTA like “Start” or “Join Now”.
+
+Show a secondary CTA “Sign In” button.
+
+Do not show Dashboard, Profile, Settings, or Logout.
+
+When the user IS logged in:
+
+Replace “Sign In” and “Join” with:
+
+A Profile / Avatar dropdown containing:
+
+Dashboard
+
+Profile
+
+Settings
+
+Sign Out / Logout
+
+Sign Out should call a function like handleSignOut() or handleLogout() and update the auth state.
+
+Ensure login / logout state is reflected correctly in both desktop and mobile views.
+
+UX & Usability Best Practices
+
+Use semantic elements: <header>, <nav>, <ul>, <li>, <button>, <a>.
+
+Ensure good contrast and readable font sizes for all navigation items.
+
+Maintain sufficient spacing between items to avoid accidental taps/clicks.
+
+Provide hover, focus, and active states:
+
+Hover: subtle visual feedback.
+
+Active: clearly indicates the current page.
+
+Keep the header visually clean, avoid clutter, and do not overload with too many items in the top level.
+
+Mobile Navigation UX
+
+For mobile:
+
+Keep logo visible.
+
+Use a hamburger menu button that toggles the mobile nav.
+
+Show navigation items and auth options in a vertical list.
+
+Keep “Start / Join” and “Sign In / Sign Out” clearly visible inside the mobile menu.
+
+Ensure the menu is easy to open/close, and interacts well with scroll (no broken layouts).
+
+Code Quality & Cleanup
+
+Remove unused imports, dead code, and redundant components in the header/navigation area.
+
+Use a clean and consistent structure for:
+
+Navigation items data (e.g., an array of objects for labels and paths).
+
+Conditional rendering for auth-dependent items.
+
+Add short comments to explain:
+
+How auth-based conditional rendering works.
+
+How responsive behaviour and breakpoints are handled.
+
+Use modern best practices for the chosen stack (e.g., React/Next.js + Tailwind if applicable). Mention the stack clearly in the code.
+
+Now, refactor and provide the complete, production-ready Header Navigation component with:
+
+Standard navigation structure.
+
+Responsive layout for desktop and mobile.
+
+Clear logo sizing.
+
+Proper Sign In / Sign Out and Start / Join behaviour based on auth status.
+
+Profile, Dashboard, Settings, and Logout under a logical dropdown for logged-in users.

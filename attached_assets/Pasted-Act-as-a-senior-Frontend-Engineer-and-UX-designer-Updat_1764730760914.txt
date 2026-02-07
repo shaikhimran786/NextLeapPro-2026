@@ -1,0 +1,70 @@
+Act as a senior Frontend Engineer and UX designer.
+Update and redesign the header navigation of my SaaS web app with a modern, creative, and engaging appearance using HTML, CSS (or Tailwind), and minimal JavaScript/Framer Motion (if needed).
+
+Follow these requirements:
+
+Overall style
+
+Clean, modern, and premium look suitable for a learning and earning community platform.
+
+Use my existing brand colours for background, text, hover and active states.
+
+Avoid a compact, squeezed look. Use proper padding and spacing so the header feels open and breathable.
+
+Layout & responsiveness
+
+Make the header fully responsive for desktop, tablet and mobile.
+
+On desktop: show logo on the left, main nav links in the middle, CTAs (like “Sign In”, “Join Now”) on the right.
+
+On mobile: use a clean hamburger menu or slide-out drawer with smooth animation.
+
+Ensure spacing between links is consistent and easy to click/tap.
+
+Navigation links
+
+Design navigation items so they look visually distinct and easy to scan.
+
+Use clear typography with good contrast and readable font size.
+
+Optionally support a secondary level (dropdown) for items like “Programs”, “Communities”, “Opportunities”.
+
+Hover & active / selected state
+
+Add clear hover effects (e.g. underline animation, background pill, subtle scale, or glow) to make the nav feel interactive.
+
+Add a strong active/selected state for the current page (e.g. different background, bold text, colored bottom border, or pill highlight).
+
+Hover state and active state must look different from each other but still consistent with the theme.
+
+Spacing & alignment
+
+Maintain proper left/right padding inside the header.
+
+Ensure nav items are not touching edges and there is enough white space so it does not look cluttered.
+
+Vertically center-align logo, links, and buttons.
+
+CTAs and buttons
+
+Style primary CTA (e.g. “Join Now” or “Get Started”) to stand out with a filled button style.
+
+Style secondary CTA (e.g. “Sign In”) as an outlined or subtle button.
+
+Add hover effects to buttons that feel smooth and modern.
+
+Micro-interactions
+
+Add small, tasteful motion effects (like fade-in, slide, or slight scale) on load or on hover that do not feel overwhelming.
+
+Animations should be fast and smooth, suitable for production.
+
+Code quality
+
+Provide complete, clean, and well-structured code.
+
+Keep classes and styles organized and easy to modify later.
+
+Add short comments where needed to explain key parts (especially for responsiveness and active states).
+
+Now, generate the updated header navigation code with these requirements, and include an example HTML structure that I can directly plug into my existing layout.

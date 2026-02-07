@@ -1,0 +1,29 @@
+Project: Next Leap Pro — Make fully functional, engaging SaaS with bug-free admin-controlled features
+
+Context (remember everything prior):
+- App name: Next Leap Pro — slogan: "Learn Earn and Grow".
+- Tech stack to use: Next.js (App Router, latest), React + TypeScript, Tailwind CSS, Framer Motion, Prisma ORM, PostgreSQL, NextAuth (Email/password + OAuth: Google, GitHub, LinkedIn), Next/Image.
+- Use server-side rendering / server components for SEO-critical pages.
+- Default currency: INR (Indian Rupee). Multi-currency support may exist but INR is default.
+- Existing features required: events, communities, services marketplace, subscriptions, dashboards, admin panel, role-based access control (RBAC).
+- UI: magenta-blue-green gradient CTAs, rounded cards, soft shadows, mobile-first, accessible, fast.
+- Content must be editable from admin (SiteSettings, ContentBlock, PageMeta).
+- Seed data must include admin user and default SiteSettings.
+
+Primary objective:
+Make the entire website fully functional and polished, with a robust, bug-free admin panel that has full CRUD control over every content and feature the site exposes. Ensure registration, onboarding, subscription, community join/share, services hire, event registration, and admin content updates are end-to-end functional and reliable.
+
+Tasks — implement directly in code:
+
+1) Admin Panel — Full CRUD & Feature Control
+- Expand the /admin UI to provide CRUD for:
+  - SiteSettings and ContentBlock (landing hero, CTA text, feature blocks, footer).
+  - PageMeta (SEO).
+  - Users & roles (assign/unassign roles, activate/deactivate).
+  - Subscription plans (create/update/delete, set price + currency (default INR), plan features).
+  - Events, Communities, Services (full approve/edit/feature/deactivate flows).
+  - Sponsor, Venue Partner, Vendor records.
+  - Community membership requests and approvals.
+- Admin must be able to toggle feature flags (enable/disable marketplace, events, communities, chat, public registration).
+- Add SiteSettings fields for WhatsApp integration:
+  - whatsappGroups: array of { id, name, url, defaultMessage

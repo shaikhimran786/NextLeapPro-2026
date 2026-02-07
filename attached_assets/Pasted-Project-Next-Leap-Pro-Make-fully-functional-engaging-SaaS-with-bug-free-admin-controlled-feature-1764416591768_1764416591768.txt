@@ -1,0 +1,132 @@
+Project: Next Leap Pro — Make fully functional, engaging SaaS with bug-free admin-controlled features
+
+Context (remember everything prior):
+- App name: Next Leap Pro — slogan: "Learn Earn and Grow".
+- Tech stack to use: Next.js (App Router, latest), React + TypeScript, Tailwind CSS, Framer Motion, Prisma ORM, PostgreSQL, NextAuth (Email/password + OAuth: Google, GitHub, LinkedIn), Next/Image.
+- Use server-side rendering / server components for SEO-critical pages.
+- Default currency: INR (Indian Rupee). Multi-currency support may exist but INR is default.
+- Existing features required: events, communities, services marketplace, subscriptions, dashboards, admin panel, role-based access control (RBAC).
+- UI: magenta-blue-green gradient CTAs, rounded cards, soft shadows, mobile-first, accessible, fast.
+- Content must be editable from admin (SiteSettings, ContentBlock, PageMeta).
+- Seed data must include admin user and default SiteSettings.
+
+Primary objective:
+Make the entire website fully functional and polished, with a robust, bug-free admin panel that has full CRUD control over every content and feature the site exposes. Ensure registration, onboarding, subscription, community join/share, services hire, event registration, and admin content updates are end-to-end functional and reliable.
+
+Tasks — implement directly in code:
+
+1) Admin Panel — Full CRUD & Feature Control
+- Expand the /admin UI to provide CRUD for:
+  - SiteSettings and ContentBlock (landing hero, CTA text, feature blocks, footer).
+  - PageMeta (SEO).
+  - Users & roles (assign/unassign roles, activate/deactivate).
+  - Subscription plans (create/update/delete, set price + currency (default INR), plan features).
+  - Events, Communities, Services (full approve/edit/feature/deactivate flows).
+  - Sponsor, Venue Partner, Vendor records.
+  - Community membership requests and approvals.
+- Admin must be able to toggle feature flags (enable/disable marketplace, events, communities, chat, public registration).
+- Add SiteSettings fields for WhatsApp integration:
+  - whatsappGroups: array of { id, name, url, defaultMessage, associatedPlanId? }.
+  - Admin UI to add/edit/delete WhatsApp group URLs and default messages, and map groups to subscription plans.
+- Provide an Audit Log (AdminAuditLog) showing admin actions with user, action, target, timestamp.
+
+2) Registration, Onboarding & Subscription Flow — Smooth and Reliable
+- Sign-up/sign-in must support:
+  - Email/password
+  - OAuth providers: Google, GitHub, LinkedIn (keys injectable via .env)
+- After registration or login run onboarding:
+  - Role selection (multi-select)
+  - Interests / skills selection
+  - Optional short profile setup (name, avatar, bio, skills)
+- Subscription purchase flow (mock payments now, Stripe-ready architecture):
+  - Show plans in INR by default.
+  - Checkout flow storing a UserSubscription record (planId, startDate, expiryDate, status).
+  - On successful subscription, redirect user to the WhatsApp group URL mapped to the selected plan (if configured). Use admin-configured default message as prefilled text. If no WhatsApp group configured for the plan, skip redirect.
+  - All redirects should be safe — server-side validate mapping, log redirect in AdminAuditLog.
+- Ensure subscription gating: features behind paywall (Creator plan, Pro features etc.) enforced by middleware and UI (show CTA to upgrade).
+
+3) Community & Social Features — Functional Flows
+- Join community flow:
+  - Public join for open communities.
+  - Request/approval flow for private communities; notifications in admin and organizer dashboard.
+  - On join, store CommunityMember record with role=member and timestamp.
+- Share link / invite flow:
+  - Generate shareable community and event links with UTM where possible.
+  - Admin and organizers can generate invite links and copy/share.
+- Community feed:
+  - Allow posting announcements (organizers) and basic posts (members) with optional attachments (images).
+  - Simple comment and reaction support.
+- Ensure membership and event registration updates are reflected immediately (no stale UI).
+
+4) Services Marketplace & Event Registration — End-to-end
+- Services: list, detail, request a service, provider responds (mock offers), create service orders; store ServiceRequest and ServiceOrder records.
+- Events: full CRUD for organizers; event registration stored as EventRegistration. For paid events, mock payment flow similar to subscriptions.
+- On actions (hire, register), send server-side notifications (email mock or log) and create entries in AdminAuditLog.
+
+5) Admin control for content and CTA flows
+- All hero text, CTA labels, CTA links, featured lists (events, mentors, communities) must come from SiteSettings / ContentBlock so admin can change CTAs and content without code changes.
+- Admin should be able to mark CTA style (gradient variant) and primary/secondary CTA for each ContentBlock.
+- When admin updates a ContentBlock, the corresponding page must revalidate/cause fresh server rendering (use appropriate headers or Next.js revalidation strategies).
+
+6) UI / UX — Engagement & CTA improvements
+- Add additional CTAs across the site with magenta-blue-green gradient style and accessible focus states.
+- Use Framer Motion for micro-interactions and page transitions; ensure animations are performant and optional for reduced-motion preference.
+- Update hero copy to include motivating language (e.g., "Learn. Earn. Grow — Start building skills and earning today. No experience needed, we’ll help you get there.").
+- Add contextual tooltips/inline help during onboarding encouraging skill-building and showing suggested starter paths.
+- Ensure all CTA buttons have clear action text and visually stand out on mobile.
+
+7) WhatsApp Group Redirect & Admin Mapping — Functional
+- Implement server-side logic to:
+  - Let admin set multiple WhatsApp group URLs and default messages in SiteSettings.
+  - Map each subscription plan to one WhatsApp group (optional) in Plan settings.
+  - After successful registration and/or successful subscription purchase, server should:
+    - Insert a RedirectLog record (userId, planId, groupUrl, timestamp).
+    - Redirect user client-side/server-side to the WhatsApp group URL with prefilled message (use https://wa.me/?text=... or api.whatsapp.com link with encoded message).
+    - If redirect is refused by browser, show fallback CTA with copyable link and button to "Open WhatsApp Group".
+- Ensure admin can update the group URL/message and changes are applied immediately.
+
+8) Backend & DB
+- Update Prisma models if necessary:
+  - Ensure UserSubscription, Plan, SiteSettings, ContentBlock, AdminAuditLog, WhatsAppGroup models exist.
+  - Prices stored with amount + currency code defaulting to "INR".
+- Add seed data:
+  - Admin user
+  - Default SiteSettings including WhatsAppGroup entries mapped to sample plans
+  - Example plans (Free, Pro, Creator)
+  - Example community, event, service.
+- Provide migration and seed scripts; update README with run steps.
+
+9) Security, Validation & Bug-free Expectations
+- All admin endpoints and UI must validate admin role via NextAuth session server-side (requireAdmin).
+- Validate inputs server-side and client-side; handle race conditions (e.g., capacity checks on event registration).
+- Add transactional safety where required (for order/registration creation).
+- Implement error handling patterns and clear user-facing error messages.
+- Add unit/integration tests or at least smoke tests for key flows (registration + redirect, subscription creation, community join, admin CRUD). If test framework is too heavy, add simple integration script that runs through flows and logs success/failure.
+
+10) Caching & Revalidation
+- Public listing pages may use ISR or SWR with short TTL for performance.
+- Admin edits should trigger revalidation or use `no-store` server fetching for immediate reflection.
+- Document caching strategy in code comments.
+
+11) Output & Acceptance Criteria
+- Update codebase directly with concrete commits/changes.
+- Provide clear list of files changed and a short summary in a top-level commit message.
+- The following flows must be demonstrably functional (manual testable):
+  - User registration (email + OAuth), onboarding, profile update.
+  - Subscription purchase (mock): creation of subscription, plan mapping, WhatsApp redirect.
+  - Admin can add/edit/delete ContentBlock and SiteSettings and changes reflect on public pages.
+  - Admin can create WhatsApp group entries and map to plans.
+  - Community join & invite links work; organizers can approve members.
+  - Event creation & registration works.
+  - Services marketplace request/hire flow works.
+- No console errors in dev build; no uncaught server exceptions for the tested flows.
+- Provide updated `.env.sample`, `README` instructions, prisma migrations, and seed script.
+- Keep INR default for all prices.
+
+Notes:
+- Do not remove existing auth or routing; extend where required.
+- Make code modular and well-typed.
+- Keep Stripe/real payments integration commented as TODO and implement mock flow now.
+- Prioritize reliability: if a complete feature cannot be fully implemented due to repo constraints, implement robust server-side stubs and ensure admin UI and DB models are complete and functional.
+
+Start applying the code changes now. Provide clear commit diffs and a short testing checklist once done.

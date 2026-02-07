@@ -1,0 +1,68 @@
+Project: Next Leap Pro — Reliable user status flows and UI updates for logout, community membership, subscription features, profile editing & public share links.
+
+Context & constraints:
+- Use the existing Next Leap Pro repository and preserve recent changes.
+- Technology stack: Next.js (App Router, TypeScript), Tailwind CSS, Framer Motion, Prisma + PostgreSQL, NextAuth.
+- Default currency = INR; RBAC, admin panel, events/communities/services and subscription models already present or to be extended.
+- Make changes incrementally and provide file diffs/commits.
+
+Primary objectives:
+1. Add a clear Logout option available after login (global/header + dashboard).
+2. Ensure after a user joins a community the community CTA/button and related UI immediately reflect the correct membership status (member, pending, invited, blocked) everywhere the community appears.
+3. After a user subscribes, expose premium services/features appropriate to their subscription tier and update CTA/paywall states accordingly.
+4. Allow users to update their profile and generate a public profile share link; reflect profile completeness and published status throughout the UI.
+5. Ensure all status indicators across the site are consistent, server-driven, and update reliably without full page reloads.
+
+Required implementation details (code-level):
+
+A) Server-side canonical user state
+- Implement or extend a canonical server-side `getUserStatus(request)` server action / API route that returns:
+  - authStatus (guest | logged_in)
+  - onboardingStatus (not_started | in_progress | completed)
+  - subscriptionStatus (none | trial | active | expired | cancelled)
+  - roles (string[])
+  - communities: [{ id, slug, membershipStatus: member | pending | invited | blocked }]
+  - events: [{ id, registrationStatus }]
+  - profile: { id, name, handle, publicUrl, isPublished, completenessScore }
+  - serviceAccess: list of enabled premium features derived from subscription
+- Always read the authoritative status from DB and session; return typed JSON.
+
+B) Logout flow
+- Add a visible Logout button in the global header and in /dashboard.
+- Logout must call NextAuth signOut and then:
+  - Clear client caches (SWR/React Query) for user status.
+  - Redirect to landing page (/) or a configurable post-logout route from SiteSettings.
+- Provide graceful confirmation/toast and loading state.
+
+C) Join Community -> Immediate status update
+- Implement `joinCommunity(communityId)` server action that:
+  - Validates user auth and onboarding.
+  - Creates membership or join request transactionally.
+  - Returns updated membership object and full `getUserStatus()` payload.
+  - Writes entry to AdminAuditLog.
+- Client behavior:
+  - On Join click, run optimistic UI update to show pending/joining state.
+  - Disable double-clicks; show spinner.
+  - On success, revalidate `getUserStatus()` and update all CTAs and membership badges across the page.
+  - On failure, rollback optimistic update and show an error toast.
+- Ensure the community card/listing, community detail page, and user dashboard reflect the new status immediately (member badge, "View discussions" CTA instead of "Join").
+
+D) Subscription -> Enable premium access & status updates
+- When a user purchases or selects a subscription:
+  - Create `UserSubscription` record with plan, startDate, expiryDate, status and currency = INR.
+  - Server action returns updated `getUserStatus()` including `serviceAccess`.
+- Client behavior:
+  - After subscription success, revalidate `getUserStatus()` and update UI to:
+    - Replace paywall CTAs with "Access Premium" or "Open [feature]" buttons.
+    - Show subscription badge on profile and dashboard.
+  - If admin config defines WhatsApp redirect for this plan, show success screen with the WhatsApp link and allow manual click if auto-redirect is disabled.
+- Ensure features gated behind subscription (e.g., create events, host paid sessions, analytics) are shown as enabled in dashboard UX.
+
+E) Profile editing & public share link
+- Extend Profile model / Prisma to include:
+  - handle (unique), isPublished (boolean), publicSlug or publicUrl
+- Implement profile edit page with server action `updateProfile(payload)`:
+  - Allow user to set handle, name, bio, social links, avatar, skills, portfolio links.
+  - Add "Publish profile" toggle; when published, generate `publicUrl = /u/[handle]` or `/profile/[id]?public=true`.
+  - Return updated `getUserStatus()` containing publicUrl and isPublished flag.
+- Client behavior:

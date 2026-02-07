@@ -1,0 +1,133 @@
+ Subscription Flow Fix Plan                                                                                                   │
+│                                                                                                                              │
+│ Context                                                                                                                      │
+│                                                                                                                              │
+│ The /pricing page subscription flow is broken end-to-end. Users who click "Subscribe Now" while logged out are redirected to │
+│  login, but after logging in they land on /dashboard instead of returning to complete checkout. Additionally, the checkout   │
+│ API trusts a client-sent userId (security vulnerability), duplicate clicks can create multiple orders, and the Razorpay      │
+│ integration is missing error handling for failed payments. This plan fixes all blockers and hardens the flow to              │
+│ production-grade quality.                                                                                                    │
+│                                                                                                                              │
+│ ---                                                                                                                          │
+│ Changes (in priority order)                                                                                                  │
+│                                                                                                                              │
+│ 1. Fix checkout API security — server-side auth                                                                              │
+│                                                                                                                              │
+│ File: src/app/api/subscriptions/checkout/route.ts                                                                            │
+│                                                                                                                              │
+│ - Import getCurrentUserId from @/lib/auth-utils (async, returns number | null)                                               │
+│ - Replace the client-sent userId from request body with await getCurrentUserId() (reads session cookie)                      │
+│ - Remove userId from the destructured body; keep email, name, phone for Razorpay/Cashfree prefill only                       │
+│ - Remove the parseInt(userId) call — getCurrentUserId() already returns a number                                             │
+│ - Keep the rest of the logic (plan lookup, free plan handling, gateway routing) unchanged                                    │
+│                                                                                                                              │
+│ 2. Fix login form — respect redirect param                                                                                   │
+│                                                                                                                              │
+│ File: src/app/auth/login/login-form.tsx                                                                                      │
+│                                                                                                                              │
+│ - Add useSearchParams from next/navigation                                                                                   │
+│ - After successful login, redirect to searchParams.get("redirect") if present and starts with /, otherwise /dashboard        │
+│ - Update the "Sign up" link to pass through current search params so plan context is preserved                               │
+│                                                                                                                              │
+│ File: src/app/auth/login/page.tsx                                                                                            │
+│                                                                                                                              │
+│ - Wrap <LoginForm /> in <Suspense> (required by Next.js when a client component uses useSearchParams)                        │
+│                                                                                                                              │
+│ 3. Fix register form — skip redundant login, preserve redirect                                                               │
+│                                                                                                                              │
+│ File: src/app/auth/register/register-form.tsx                                                                                │
+│                                                                                                                              │
+│ The register API already sets the session cookie, so users are authenticated after registration. Currently the form          │
+│ redirects to /auth/login, forcing an unnecessary re-login and losing plan context.                                           │
+│                                                                                                                              │
+│ - Add useSearchParams from next/navigation                                                                                   │
+│ - Import fetchAndSetUserStatus from @/hooks/useUserStatus                                                                    │
+│ - After successful registration: call fetchAndSetUserStatus() to hydrate SWR cache, then redirect to the redirect param      │
+│ (validated to start with /) or /dashboard                                                                                    │
+│ - If fetchAndSetUserStatus() fails, fall back to redirecting to /auth/login with params preserved                            │
+│ - Update the "Sign in" link to pass through current search params                                                            │
+│                                                                                                                              │
+│ File: src/app/auth/register/page.tsx                                                                                         │
+│                                                                                                                              │
+│ - Wrap <RegisterForm /> in <Suspense>                                                                                        │
+│                                                                                                                              │
+│ 4. Fix pricing page — double-click, script loading, error handling, UX                                                       │
+│                                                                                                                              │
+│ File: src/app/pricing/pricing-plans.tsx                                                                                      │
+│                                                                                                                              │
+│ a) Double-click prevention:                                                                                                  │
+│ - Add if (loadingPlan !== null) return; at the top of handleSubscribe()                                                      │
+│                                                                                                                              │
+│ b) Razorpay script deduplication:                                                                                            │
+│ - Check window.Razorpay before appending a new script tag                                                                    │
+│ - If already loaded, call initialization directly                                                                            │
+│ - Extract Razorpay initialization into a helper function initializeRazorpayCheckout()                                        │
+│                                                                                                                              │
+│ c) Razorpay payment.failed handler:                                                                                          │
+│ - After creating the Razorpay instance, register rzp.on("payment.failed", handler) that shows a toast with the error         │
+│ description and resets loadingPlan                                                                                           │
+│                                                                                                                              │
+│ d) Disable all plan buttons during processing:                                                                               │
+│ - Track isAnyLoading = loadingPlan !== null in renderButton()                                                                │
+│ - Add disabled={isAnyLoading} to all action buttons (Subscribe, Upgrade, Downgrade, Get Started, Switch Billing)             │
+│ - Exception: "View Plan Details" button (navigates to /profile) stays enabled                                                │
+│                                                                                                                              │
+│ e) Revalidate user status before dashboard redirect:                                                                         │
+│ - Import revalidateUserStatus from @/hooks/useUserStatus                                                                     │
+│ - Call await revalidateUserStatus() before window.location.href = "/dashboard" in all three success paths (Razorpay,         │
+│ Cashfree, free plan)                                                                                                         │
+│                                                                                                                              │
+│ f) Simplify proceedToCheckoutWithUser signature:                                                                             │
+│ - Remove userId parameter since checkout API now reads from session                                                          │
+│ - Remove userId from the request body                                                                                        │
+│ - Update all call sites (handleSubscribe and the useEffect auto-checkout)                                                    │
+│                                                                                                                              │
+│ 5. Apply same Cashfree script deduplication                                                                                  │
+│                                                                                                                              │
+│ File: src/app/pricing/pricing-plans.tsx                                                                                      │
+│                                                                                                                              │
+│ - Check window.Cashfree before appending the Cashfree SDK script                                                             │
+│ - Extract Cashfree initialization into a helper function initializeCashfreeCheckout()                                        │
+│                                                                                                                              │
+│ ---                                                                                                                          │
+│ Files Modified                                                                                                               │
+│ ┌─────────────────────────────────────────────┬────────────────────────────────────────┐                                     │
+│ │                    File                     │             Type of Change             │                                     │
+│ ├─────────────────────────────────────────────┼────────────────────────────────────────┤                                     │
+│ │ src/app/api/subscriptions/checkout/route.ts │ Security: server-side session auth     │                                     │
+│ ├─────────────────────────────────────────────┼────────────────────────────────────────┤                                     │
+│ │ src/app/auth/login/login-form.tsx           │ Feature: redirect param support        │                                     │
+│ ├─────────────────────────────────────────────┼────────────────────────────────────────┤                                     │
+│ │ src/app/auth/login/page.tsx                 │ Infra: Suspense boundary               │                                     │
+│ ├─────────────────────────────────────────────┼────────────────────────────────────────┤                                     │
+│ │ src/app/auth/register/register-form.tsx     │ Feature: skip login, preserve redirect │                                     │
+│ ├─────────────────────────────────────────────┼────────────────────────────────────────┤                                     │
+│ │ src/app/auth/register/page.tsx              │ Infra: Suspense boundary               │                                     │
+│ ├─────────────────────────────────────────────┼────────────────────────────────────────┤                                     │
+│ │ src/app/pricing/pricing-plans.tsx           │ Bug fixes + UX improvements            │                                     │
+│ └─────────────────────────────────────────────┴────────────────────────────────────────┘                                     │
+│ Existing Code to Reuse (no changes needed)                                                                                   │
+│                                                                                                                              │
+│ - getCurrentUserId() — src/lib/auth-utils.ts:18                                                                              │
+│ - revalidateUserStatus() — src/hooks/useUserStatus.ts:71                                                                     │
+│ - fetchAndSetUserStatus() — src/hooks/useUserStatus.ts:89                                                                    │
+│ - verifyWebhookSignature() — src/lib/razorpay.ts:43 (already correct)                                                        │
+│ - Razorpay webhook handler — src/app/api/webhooks/razorpay/route.ts (already correct, no changes)                            │
+│ - Payment verify endpoint — src/app/api/subscriptions/verify/route.ts (already correct, no changes)                          │
+│                                                                                                                              │
+│ ---                                                                                                                          │
+│ Verification                                                                                                                 │
+│                                                                                                                              │
+│ 1. Auth redirect flow: Click Subscribe on a paid plan while logged out. Verify redirect to                                   │
+│ /auth/login?redirect=/pricing?plan=X&checkout=true. Log in. Verify auto-redirect back to pricing and Razorpay checkout opens │
+│  automatically.                                                                                                              │
+│ 2. Register flow: From the login page (with redirect params), click "Sign up". Register. Verify direct redirect to pricing   │
+│ page with auto-checkout (no login step).                                                                                     │
+│ 3. Security: Call POST /api/subscriptions/checkout without a session cookie — expect 401. Call with valid session but forged │
+│  userId in body — expect the server to use the session user, not the body user.                                              │
+│ 4. Double-click: Rapidly click Subscribe multiple times. Verify only one checkout session is created (check DB or network    │
+│ tab).                                                                                                                        │
+│ 5. Payment failure: Use Razorpay test mode with a failing card. Verify toast error appears in the app.                       │
+│ 6. Button states: Click Subscribe on one plan. Verify all other plan buttons are disabled.                                   │
+│ 7. Script dedup: Complete checkout, navigate back, try again — inspect DOM for duplicate script tags.                        │
+│ 8. Dashboard: After successful payment, verify dashboard shows the correct active plan immediately. 

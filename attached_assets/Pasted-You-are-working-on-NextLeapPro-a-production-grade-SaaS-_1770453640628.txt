@@ -1,0 +1,122 @@
+You are working on NextLeapPro, a production-grade SaaS community platform. Your task is to activate, validate, and fix the complete subscription flow for the /pricing page with a seamless, secure Razorpay integration, following enterprise-level UI, UX, and engineering best practices.
+
+Objective
+Implement and test a robust subscription flow on /pricing that:
+* Works smoothly for Monthly and Annual plans
+* Uses Razorpay for payments
+* Enforces login-first flow
+* Correctly updates subscription status, plan privileges, and user access
+* Uses the existing Razorpay webhook API
+* Removes any errors, blockers, or broken states
+* Provides clear user feedback and a polished experience
+
+Plans & Pricing Logic
+Plans available:
+* Free – no payment, basic access
+* Pro
+    * Monthly: ₹1,499
+    * Annual: ₹14,388 (20% discount)
+* Creator
+    * Monthly: ₹3,999
+    * Annual: ₹38,388 (20% discount)
+Rules
+* Amount must always be fetched dynamically from the selected plan
+* No hardcoded prices
+* Annual toggle should correctly switch pricing and labels
+* Razorpay order amount must exactly match the selected plan
+
+Authentication & Access Control
+Mandatory Login Rule
+* User must be logged in before initiating payment
+* If not logged in:
+    * Redirect to Login / Signup
+    * After successful login, return user back to the selected plan
+* Do not ask user to create account again if already logged in
+* Prevent payment initiation without authentication
+
+Subscription Flow (Expected UX)
+1. User visits /pricing
+2. User selects Monthly or Annual
+3. User clicks Subscribe Now
+4. System checks authentication
+    * If not logged in → redirect to login
+    * If logged in → continue
+5. Create Razorpay order with:
+    * Correct plan ID
+    * Correct amount
+    * Correct billing cycle
+6. Open Razorpay Checkout
+7. On successful payment:
+    * Verify payment
+    * Update subscription status in DB
+    * Assign plan privileges
+8. Show success feedback
+9. Redirect user to Dashboard
+10. Dashboard reflects:
+    * Active plan
+    * Correct privileges unlocked
+
+Razorpay Integration
+Payment Flow
+* Use Razorpay Orders API
+* Ensure:
+    * Secure key handling
+    * Server-side order creation
+    * Client-side checkout only
+Webhook Handling
+Use this webhook endpoint:
+https://nextleappro.com/api/webhooks/razorpay
+Webhook must:
+* Verify Razorpay signature
+* Handle events like:
+    * payment.captured
+    * subscription.activated (if applicable)
+* Update:
+    * Payment status
+    * Subscription status
+    * Plan start and end dates
+* Be idempotent (no duplicate updates)
+
+Subscription State Management
+After successful payment:
+* Update user record:
+    * plan_type
+    * billing_cycle
+    * subscription_status = active
+    * valid_till
+* Grant access to:
+    * Events
+    * Premium content
+    * Creator tools (if applicable)
+* Ensure access is revoked if subscription expires or fails
+
+UI & UX Standards
+Follow enterprise SaaS UX practices:
+* Clear pricing toggle feedback
+* Disable buttons during processing
+* Show loaders and progress states
+* Friendly error messages (no raw errors)
+* Clear success confirmation
+* No dead ends or blank screens
+* Smooth redirection after login and payment
+
+Error Handling & Stability
+* Remove hydration issues, broken states, and blocking errors
+* Handle:
+    * Payment failures
+    * Network issues
+    * Duplicate clicks
+    * Webhook delays
+* Ensure user never pays without subscription being updated
+
+Final Validation Checklist
+Ensure:
+* Payment amount always matches selected plan
+* Login is enforced correctly
+* Razorpay flow works end-to-end
+* Webhook updates subscription reliably
+* Dashboard reflects updated plan immediately
+* UX feels smooth, predictable, and trustworthy
+* Flow is production-ready
+
+Goal: Deliver a clean, reliable, enterprise-grade subscription experience that aligns with Next Leap Pro’s mission to help users Learn, Earn, and Grow, without friction or confusion.

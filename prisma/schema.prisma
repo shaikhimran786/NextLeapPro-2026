@@ -1,0 +1,842 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  email           String    @unique
+  passwordHash    String?
+  firstName       String
+  lastName        String
+  phone           String?
+  handle          String?   @unique
+  avatar          String?
+  bio             String?
+  skills          String[]
+  socialLinks     Json?
+  portfolioLinks  String[]
+  roles           Role[]    @relation("UserRoles")
+  subscriptionTier String   @default("free")
+  subscriptionExpiry DateTime?
+  onboardingStatus String   @default("not_started")
+  hasSeenFeatureDemo Boolean  @default(false)
+  isPublished     Boolean   @default(false)
+  publicSlug      String?   @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  eventsOrganized     Event[]
+  eventRegistrations  EventRegistration[]
+  communityMemberships CommunityMember[]
+  createdCommunities  Community[] @relation("CreatedCommunities")
+  ledChapters         Chapter[] @relation("ChapterLeaders")
+  servicesOffered     Service[]
+  serviceBookings     ServiceBooking[]
+  serviceReviews      ServiceReview[]
+  adminAuditLogs      AdminAuditLog[]
+  subscriptions       UserSubscription[]
+  payments            PaymentTransaction[]
+  sessions            Session[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model Session {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id         Int       @id @default(autoincrement())
+  tokenHash  String
+  userId     Int
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@unique([userId, tokenHash])
+  @@index([expiresAt])
+  @@index([userId])
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  users       User[]   @relation("UserRoles")
+  createdAt   DateTime @default(now())
+}
+
+model SiteSettings {
+  id               Int      @id @default(autoincrement())
+  siteName         String   @default("Next Leap Pro")
+  slogan           String   @default("Learn, Earn, and Grow")
+  defaultCurrency  String   @default("INR")
+  primaryGradient  Json     @default("{\"from\": \"#FF0099\", \"via\": \"#0066FF\", \"to\": \"#00CC66\"}")
+  heroTitle        String   @default("Learn. Earn. And Grow.")
+  heroSubtitle     String   @default("The platform for students and professionals to master new skills, monetize their talents, and accelerate their career growth.")
+  heroCTA          String   @default("Get Started")
+  heroImage        String?
+  heroAnimation    Json     @default("{\"type\": \"fade\", \"duration\": 0.8, \"delay\": 0.1, \"stagger\": 0.15, \"easing\": \"easeOut\", \"loop\": false}")
+  heroGradients    Json     @default("{\"source\": \"brand\", \"angle\": 90, \"learn\": [\"#E8348A\", \"#FF66B2\"], \"earn\": [\"#007BFF\", \"#00A6FF\"], \"grow\": [\"#28A745\", \"#6BE07B\"]}")
+  footerHtml       String?
+  analyticsEnabled Boolean  @default(false)
+  seoDefaults      Json     @default("{\"title\": \"Next Leap Pro\", \"description\": \"Learn, Earn, and Grow with Next Leap Pro\"}")
+  logoLight        String?  @default("/logos/logo-light.png")
+  logoDark         String?  @default("/logos/logo-dark.png")
+  footerLogo       String?  @default("/logos/logo-light.png")
+  adminLogo        String?  @default("/logos/logo-dark.png")
+  favicons         Json     @default("{\"favicon16\": \"/favicon-16x16.png\", \"favicon32\": \"/favicon-32x32.png\", \"apple180\": \"/apple-touch-icon.png\", \"android192\": \"/android-chrome-192x192.png\", \"android512\": \"/android-chrome-512x512.png\"}")
+  socialLinks      Json     @default("[]")
+  paymentEnabled   Boolean  @default(true)
+  paymentTestMode  Boolean  @default(true)
+  
+  // Payment Gateway Selection (Cashfree only)
+  activePaymentGateway String  @default("cashfree")
+  
+  // Cashfree Settings (stored in secrets, display status only)
+  cashfreeEnabled  Boolean  @default(false)
+  
+  // Feature Demo Video Settings
+  demoVideoEmbedUrl       String?  @default("https://embed.app.guidde.com/playbooks/dJmL1PdTisRkRqcMHE7fRq?mode=videoOnly")
+  demoVideoTitle          String?  @default("Explore Next Leap Pro Features")
+  demoVideoDescription    String?  @default("Watch this quick platform walkthrough to discover how you can Learn new skills, Earn through real opportunities, and Grow with a supportive community.")
+  homeDemoActive          Boolean  @default(true)
+  howItWorksDemoActive    Boolean  @default(true)
+  dashboardDemoActive     Boolean  @default(true)
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model ContentBlock {
+  id         Int      @id @default(autoincrement())
+  page       String
+  slug       String   @unique
+  title      String
+  body       String
+  sortOrder  Int      @default(0)
+  visible    Boolean  @default(true)
+  meta       Json?
+  imageUrl   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model PageMeta {
+  id              Int      @id @default(autoincrement())
+  page            String   @unique
+  title           String
+  description     String
+  ogImage         String?
+  structuredData  Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model FeatureToggle {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique
+  name        String
+  description String?
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Event {
+  id               Int      @id @default(autoincrement())
+  title            String
+  slug             String?  @unique
+  shortDescription String?
+  description      String
+  coverImage       String
+  theme            String   @default("default")
+  category         String
+  tags             String[]
+  level            String   @default("beginner")
+  eventType        String
+  mode             String   @default("online")
+  startDate        DateTime
+  endDate          DateTime
+  timezone         String   @default("IST")
+  capacity         Int?
+  price            Decimal  @default(0) @db.Decimal(10, 2)
+  currency         String   @default("INR")
+  venue            String?
+  venueAddress     String?
+  venueMapUrl      String?
+  onlineLink       String?
+  virtualLinkHidden Boolean @default(true)
+  status           String   @default("draft")
+  featured         Boolean  @default(false)
+  requiresApproval Boolean  @default(false)
+  maxTickets       Int?
+  agenda           Json?
+  sponsors         Json?
+  speakers         Json?
+  faqs             Json?
+  viewCount        Int      @default(0)
+  organizerId      Int
+  organizer        User     @relation(fields: [organizerId], references: [id])
+  createdByAdmin   Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  registrations    EventRegistration[]
+  communityEvents  CommunityEvent[]
+  ticketTypes      TicketType[]
+}
+
+model TicketType {
+  id          Int      @id @default(autoincrement())
+  eventId     Int
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  currency    String   @default("INR")
+  quantity    Int?
+  soldCount   Int      @default(0)
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  salesStart  DateTime?
+  salesEnd    DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  registrations EventRegistration[]
+}
+
+model EventRegistration {
+  id            Int         @id @default(autoincrement())
+  eventId       Int
+  event         Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId        Int
+  user          User        @relation(fields: [userId], references: [id])
+  ticketTypeId  Int?
+  ticketType    TicketType? @relation(fields: [ticketTypeId], references: [id], onDelete: SetNull)
+  status        String      @default("pending")
+  paidAmount    Decimal?    @db.Decimal(10, 2)
+  paymentStatus String      @default("pending")
+  qrCode        String?     @unique
+  checkedIn     Boolean     @default(false)
+  checkedInAt   DateTime?
+  checkedInBy   Int?
+  approvedAt    DateTime?
+  approvedBy    Int?
+  notes         String?
+  registeredAt  DateTime    @default(now())
+  updatedAt     DateTime    @default(now()) @updatedAt
+
+  @@unique([eventId, userId])
+}
+
+model Community {
+  id              Int      @id @default(autoincrement())
+  name            String
+  slug            String   @unique
+  description     String
+  shortDescription String?
+  logo            String
+  coverImage      String?
+  category        String
+  tags            String[]
+  location        String?
+  city            String?
+  country         String?
+  timezone        String   @default("Asia/Kolkata")
+  language        String   @default("English")
+  website         String?
+  socialLinks     Json?
+  
+  mode            String   @default("hybrid")
+  membershipType  String   @default("open")
+  meetupFrequency String?
+  maxMembers      Int?
+  
+  primaryColor    String?
+  featured        Boolean  @default(false)
+  verified        Boolean  @default(false)
+  
+  isPublic        Boolean  @default(true)
+  creatorId       Int?
+  creator         User?    @relation("CreatedCommunities", fields: [creatorId], references: [id], onDelete: SetNull)
+  createdByAdmin  Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  members  CommunityMember[]
+  chapters Chapter[]
+  events   CommunityEvent[]
+
+  @@index([category])
+  @@index([location])
+  @@index([featured])
+}
+
+model Chapter {
+  id          Int       @id @default(autoincrement())
+  communityId Int
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  name        String
+  slug        String
+  description String?
+  location    String?
+  leaderId    Int?
+  leader      User?     @relation("ChapterLeaders", fields: [leaderId], references: [id], onDelete: SetNull)
+  logo        String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([communityId, slug])
+}
+
+model CommunityEvent {
+  id          Int       @id @default(autoincrement())
+  communityId Int
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  eventId     Int
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  isFeatured  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@unique([communityId, eventId])
+}
+
+model CommunityMember {
+  id          Int       @id @default(autoincrement())
+  communityId Int
+  community   Community @relation(fields: [communityId], references: [id])
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  role        String    @default("member")
+  joinedAt    DateTime  @default(now())
+}
+
+model Service {
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String
+  coverImage   String
+  providerId   Int
+  provider     User     @relation(fields: [providerId], references: [id])
+  category     String
+  tags         String[]
+  skills       String[]
+  price        Decimal  @db.Decimal(10, 2)
+  currency     String   @default("INR")
+  deliveryType String   @default("online")
+  availability String?
+  rating       Decimal  @default(0) @db.Decimal(3, 2)
+  reviewCount  Int      @default(0)
+  status       String   @default("active")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  bookings ServiceBooking[]
+  reviews  ServiceReview[]
+}
+
+model ServiceReview {
+  id         Int      @id @default(autoincrement())
+  serviceId  Int
+  service    Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  reviewerId Int
+  reviewer   User     @relation(fields: [reviewerId], references: [id])
+  rating     Int
+  title      String?
+  comment    String
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([serviceId, reviewerId])
+}
+
+model ServiceBooking {
+  id         Int      @id @default(autoincrement())
+  serviceId  Int
+  service    Service  @relation(fields: [serviceId], references: [id])
+  clientId   Int
+  client     User     @relation(fields: [clientId], references: [id])
+  status     String   @default("pending")
+  paidAmount Decimal? @db.Decimal(10, 2)
+  bookedAt   DateTime @default(now())
+}
+
+model SubscriptionPlan {
+  id              Int      @id @default(autoincrement())
+  name            String
+  description     String
+  price           Decimal  @db.Decimal(10, 2)
+  currency        String   @default("INR")
+  interval        String   @default("month")
+  intervalCount   Int      @default(1)
+  billingCycle    String   @default("monthly")
+  hierarchyLevel  Int      @default(0)
+  features        Json
+  tier            String   @unique
+  planCode        String   @unique
+  razorpayPlanId  String?
+  cashfreePlanId  String?
+  trialDays       Int      @default(0)
+  sortOrder       Int      @default(0)
+  isPopular       Boolean  @default(false)
+  active          Boolean  @default(true)
+  whatsappUrl     String?
+  whatsappMessage String?
+  customPaymentUrl String?
+  useCustomPayment Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  subscriptions   UserSubscription[]
+  priceHistory    SubscriptionPriceHistory[]
+}
+
+model SubscriptionPriceHistory {
+  id        Int              @id @default(autoincrement())
+  planId    Int
+  plan      SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  oldPrice  Decimal          @db.Decimal(10, 2)
+  newPrice  Decimal          @db.Decimal(10, 2)
+  changedBy Int?
+  reason    String?
+  createdAt DateTime         @default(now())
+}
+
+model UserSubscription {
+  id                   Int              @id @default(autoincrement())
+  userId               Int
+  user                 User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId               Int
+  plan                 SubscriptionPlan @relation(fields: [planId], references: [id])
+  status               String           @default("pending")
+  razorpaySubscriptionId String?        @unique
+  cashfreeSubscriptionId String?        @unique
+  paymentGateway       String?          @default("cashfree")
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  trialEnd             DateTime?
+  cancelledAt          DateTime?
+  cancelReason         String?
+  scheduledDowngrade   Json?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  payments             PaymentTransaction[]
+}
+
+model PaymentTransaction {
+  id                    Int               @id @default(autoincrement())
+  subscriptionId        Int?
+  subscription          UserSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  userId                Int
+  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  razorpayOrderId       String?           @unique
+  razorpayPaymentId     String?           @unique
+  razorpaySignature     String?
+  cashfreeOrderId       String?           @unique
+  cashfreePaymentId     String?
+  paymentGateway        String?           @default("cashfree")
+  amount                Decimal           @db.Decimal(10, 2)
+  currency              String            @default("INR")
+  status                String            @default("pending")
+  paymentMethod         String?
+  failureReason         String?
+  metadata              Json?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+}
+
+model Currency {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  name      String
+  symbol    String
+  enabled   Boolean  @default(false)
+  isDefault Boolean  @default(false)
+}
+
+model AdminAuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  target    String
+  details   Json?
+  createdAt DateTime @default(now())
+}
+
+model CTAConfig {
+  id            Int      @id @default(autoincrement())
+  page          String
+  targetType    String
+  state         String
+  label         String
+  style         String   @default("primary")
+  urlTemplate   String?
+  icon          String?
+  isDisabled    Boolean  @default(false)
+  requiresAuth  Boolean  @default(false)
+  requiresOnboarding Boolean @default(false)
+  requiresSubscription String?
+  sortOrder     Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([page, targetType, state])
+}
+
+model BroadcastNotification {
+  id        Int      @id @default(autoincrement())
+  type      String
+  message   String
+  userName  String?
+  planName  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ============================================
+// ENGAGEMENT SYSTEM MODELS
+// Daily Polls, Surveys, and Ratings
+// ============================================
+
+model EngagementTopic {
+  id           Int       @id @default(autoincrement())
+  title        String
+  description  String?
+  category     String    @default("general")
+  isActive     Boolean   @default(true)
+  visibility   String    @default("public")
+  targetAudience String[] @default([])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  polls        Poll[]
+  schedules    DailySurveySchedule[]
+}
+
+model Poll {
+  id           Int      @id @default(autoincrement())
+  topicId      Int
+  topic        EngagementTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  question     String
+  pollType     String   @default("single")
+  description  String?
+  imageUrl     String?
+  isAnonymous  Boolean  @default(false)
+  showResults  Boolean  @default(true)
+  resultsVisibility String @default("after_vote")
+  startDate    DateTime?
+  endDate      DateTime?
+  isActive     Boolean  @default(true)
+  status       String   @default("draft")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  options      PollOption[]
+  responses    PollResponse[]
+
+  @@index([topicId])
+  @@index([status])
+}
+
+model PollOption {
+  id          Int      @id @default(autoincrement())
+  pollId      Int
+  poll        Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  label       String
+  description String?
+  imageUrl    String?
+  sortOrder   Int      @default(0)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  responses   PollResponse[]
+
+  @@index([pollId])
+}
+
+model PollResponse {
+  id           Int         @id @default(autoincrement())
+  pollId       Int
+  poll         Poll        @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionId     Int?
+  option       PollOption? @relation(fields: [optionId], references: [id], onDelete: SetNull)
+  userId       Int?
+  responseText String?
+  ratingValue  Int?
+  metadata     Json?
+  submittedAt  DateTime    @default(now())
+
+  @@unique([pollId, userId])
+  @@index([pollId])
+  @@index([optionId])
+}
+
+model DailySurveySchedule {
+  id            Int              @id @default(autoincrement())
+  scheduledDate DateTime         @db.Date
+  topicId       Int
+  topic         EngagementTopic  @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  publishedById Int?
+  status        String           @default("scheduled")
+  publishedAt   DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@unique([scheduledDate])
+  @@index([scheduledDate])
+  @@index([topicId])
+}
+
+// ============================================
+// AI EVENT CREATION MODELS
+// Templates and AI-Generated Events
+// ============================================
+
+model EventTemplate {
+  id             Int       @id @default(autoincrement())
+  title          String
+  description    String
+  targetPersona  String
+  category       String
+  eventType      String
+  mode           String    @default("online")
+  duration       Int?
+  agendaJson     Json?
+  speakersJson   Json?
+  assetsJson     Json?
+  tags           String[]
+  status         String    @default("active")
+  visibility     String    @default("public")
+  usageCount     Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  aiRequests     EventAIRequest[]
+}
+
+model TrendInsight {
+  id               Int       @id @default(autoincrement())
+  topic            String
+  audienceSegment  String?
+  description      String?
+  searchSignalsJson Json?
+  relevanceScore   Int       @default(50)
+  freshnessScore   Int       @default(100)
+  source           String?
+  expiresAt        DateTime?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  aiRequests       EventAIRequest[]
+
+  @@index([isActive])
+  @@index([relevanceScore])
+}
+
+model EventAIRequest {
+  id                 Int             @id @default(autoincrement())
+  requesterId        Int
+  templateId         Int?
+  template           EventTemplate?  @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  trendInsightId     Int?
+  trendInsight       TrendInsight?   @relation(fields: [trendInsightId], references: [id], onDelete: SetNull)
+  requestPayload     Json
+  generatedEventJson Json?
+  promptUsed         String?
+  modelUsed          String?
+  tokensUsed         Int?
+  status             String          @default("pending")
+  errorMessage       String?
+  processingTime     Int?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@index([requesterId])
+  @@index([status])
+}
+
+// ============================================
+// ENHANCED COMMUNITY MODELS
+// Resources, Challenges, and Spotlights
+// ============================================
+
+model CommunityResource {
+  id           Int       @id @default(autoincrement())
+  communityId  Int
+  title        String
+  description  String?
+  resourceType String    @default("link")
+  url          String?
+  fileUrl      String?
+  thumbnailUrl String?
+  category     String?
+  tags         String[]
+  sortOrder    Int       @default(0)
+  isPublic     Boolean   @default(true)
+  isPinned     Boolean   @default(false)
+  viewCount    Int       @default(0)
+  downloadCount Int      @default(0)
+  createdById  Int?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([communityId])
+  @@index([resourceType])
+}
+
+model CommunityChallenge {
+  id            Int       @id @default(autoincrement())
+  communityId   Int
+  title         String
+  description   String
+  instructions  String?
+  challengeType String    @default("weekly")
+  difficulty    String    @default("intermediate")
+  startDate     DateTime
+  endDate       DateTime
+  prizes        Json?
+  rewards       String?
+  criteria      String?
+  maxParticipants Int?
+  participantCount Int    @default(0)
+  status        String    @default("upcoming")
+  coverImage    String?
+  tags          String[]
+  createdById   Int?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  participations ChallengeParticipation[]
+
+  @@index([communityId])
+  @@index([status])
+  @@index([startDate])
+}
+
+model ChallengeParticipation {
+  id           Int               @id @default(autoincrement())
+  challengeId  Int
+  challenge    CommunityChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  userId       Int
+  status       String            @default("joined")
+  submissionUrl String?
+  submissionText String?
+  submittedAt  DateTime?
+  score        Int?
+  rank         Int?
+  feedback     String?
+  joinedAt     DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@unique([challengeId, userId])
+  @@index([challengeId])
+  @@index([userId])
+}
+
+model CommunitySpotlight {
+  id            Int       @id @default(autoincrement())
+  communityId   Int
+  userId        Int
+  title         String
+  description   String
+  achievement   String?
+  coverImage    String?
+  spotlightType String    @default("member")
+  featuredFrom  DateTime
+  featuredUntil DateTime?
+  isActive      Boolean   @default(true)
+  viewCount     Int       @default(0)
+  createdById   Int?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([communityId])
+  @@index([userId])
+  @@index([isActive])
+}
+
+// ============================================
+// AI CAREER GUIDANCE MODELS
+// Personalized Career Insights
+// ============================================
+
+model CareerProfile {
+  id               Int       @id @default(autoincrement())
+  userId           Int       @unique
+  targetPersona    String?
+  currentRole      String?
+  experienceLevel  String?
+  interests        String[]
+  learningGoals    String[]
+  preferredLearningStyle String?
+  careerAspirations String[]
+  incomeGoals      String?
+  availableHours   Int?
+  completedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  insights         CareerInsight[]
+
+  @@index([userId])
+}
+
+model CareerInsight {
+  id             Int           @id @default(autoincrement())
+  careerProfileId Int
+  careerProfile  CareerProfile @relation(fields: [careerProfileId], references: [id], onDelete: Cascade)
+  insightType    String
+  title          String
+  summary        String
+  actionsJson    Json?
+  priority       Int           @default(0)
+  relevanceScore Int           @default(50)
+  sourceModel    String?
+  expiresAt      DateTime?
+  isRead         Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  feedback       CareerInsightFeedback[]
+
+  @@index([careerProfileId])
+  @@index([insightType])
+}
+
+model CareerInsightFeedback {
+  id           Int           @id @default(autoincrement())
+  insightId    Int
+  insight      CareerInsight @relation(fields: [insightId], references: [id], onDelete: Cascade)
+  userId       Int
+  rating       Int?
+  isHelpful    Boolean?
+  feedback     String?
+  createdAt    DateTime      @default(now())
+
+  @@unique([insightId, userId])
+  @@index([insightId])
+}

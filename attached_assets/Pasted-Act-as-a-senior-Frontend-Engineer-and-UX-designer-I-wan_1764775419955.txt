@@ -1,0 +1,116 @@
+Act as a senior Frontend Engineer and UX designer.
+I want you to design and implement a responsive header navigation for my SaaS / community platform with separate menu behaviour for desktop and mobile.
+
+Follow these requirements carefully:
+
+Overall goal
+
+Build a modern, creative, and user-friendly header.
+
+Use separate layouts for desktop and mobile as per standard best practices.
+
+Use a hamburger menu on mobile devices with a smooth open/close animation.
+
+Fix and avoid common usability issues in navigation and login/logout flows.
+
+Layout behaviour
+
+On desktop (large screens):
+
+Show logo on the left, main navigation links in the centre or right, and authentication buttons (Login / Signup or Profile / Logout) clearly visible.
+
+Display all main nav items in a horizontal row.
+
+On mobile and tablet (small screens):
+
+Show logo on the left and a hamburger icon on the right.
+
+When the hamburger is tapped, open a slide-out or dropdown menu with vertical navigation links.
+
+Ensure the mobile menu can be closed by tapping the close icon, tapping outside, or pressing Esc (for accessibility).
+
+Navigation items & states
+
+Include example nav items like: Home, Learn, Earn, Grow, Communities, Opportunities, Mentors, Pricing, Contact.
+
+Implement hover, focus, and active states:
+
+Hover: subtle visual feedback (underline, background pill, or slight scale).
+
+Active (current page): clearly highlighted with a distinct style (e.g. colored border or pill).
+
+Ensure the active state works on both desktop and mobile menus.
+
+Mobile hamburger menu UX
+
+Use a standard hamburger icon (3 lines) that transforms into a close (X) icon when the menu is open.
+
+Menu should slide or fade smoothly, with no janky animation.
+
+Ensure the mobile menu items are large enough to tap comfortably.
+
+Prevent body scroll when the mobile menu is open (optional but preferred).
+
+Authentication: Login / Logout / Profile
+
+Maintain fully functional login and logout actions in the header.
+
+Assume there is an isAuthenticated state (or similar) to check if user is logged in.
+
+If NOT logged in:
+
+Show “Login” and “Sign Up / Join Now” buttons in desktop header.
+
+Show the same options in the mobile menu.
+
+If logged in:
+
+Show user avatar / name / profile link, plus a clearly visible “Logout” action.
+
+Logout button should trigger a function like handleLogout() and update the UI state properly.
+
+Ensure the state is in sync for both desktop and mobile menus (no mismatch where desktop shows logged in but mobile shows logged out).
+
+Accessibility & best practices
+
+Use semantic HTML: <header>, <nav>, <button>, <ul>, <li>, etc.
+
+Add ARIA attributes for the hamburger menu: aria-label, aria-expanded, aria-controls.
+
+Make the menu fully keyboard accessible:
+
+Tab navigation should move through interactive elements logically.
+
+Enter/Space should open/close the mobile menu and activate links.
+
+Ensure sufficient colour contrast for text and icons.
+
+Styling & visual design
+
+Use a clean, modern, and premium look, keeping enough spacing so nothing feels cramped.
+
+Use smooth transitions for hover and menu open/close.
+
+Keep the header sticky at the top (optional but preferred).
+
+You may use CSS, Tailwind CSS, or a simple React + Tailwind setup (mention what you use clearly in the code).
+
+Code quality
+
+Provide complete, working example code:
+
+If using plain HTML/CSS/JS, give a full snippet.
+
+If using React, give a functional component, including state management for the menu and auth state example.
+
+Add short comments explaining:
+
+How breakpoint / responsive behaviour works.
+
+How login/logout state affects what is shown.
+
+How the hamburger menu is toggled.
+
+Avoid unnecessary complexity; keep it production-ready and easy to modify later.
+
+Now, generate the full implementation for this responsive header with desktop and mobile menus, including working hamburger behaviour and login/logout UI logic.

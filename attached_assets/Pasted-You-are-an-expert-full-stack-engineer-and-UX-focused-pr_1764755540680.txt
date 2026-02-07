@@ -1,0 +1,117 @@
+You are an expert full-stack engineer and UX-focused product developer working on the Next Leap Pro web app (subscription-based SaaS).
+
+Goal:
+Fix and improve the subscription and pricing flow so that:
+1) The active subscription is reflected correctly on the pricing page.
+2) Users do not see a “Subscribe now” button again for their active plan.
+3) Users get a clear, organized, and standard subscription status experience across pricing page, profile, and dashboard.
+4) Creators with subscribers get Monetization features + an AI helper to grow their earnings.
+
+Key requirements:
+
+1. Pricing page behaviour for active plan:
+- Detect logged-in user’s current subscription (plan id, status, billing period, next billing date).
+- For the active plan:
+  - Do NOT show “Subscribe now” or any primary purchase CTA again.
+  - Instead show:
+    - A clear “Current Active Plan” badge.
+    - A CTA like “View plan details” that routes to the user’s Profile > Subscription details page.
+- For other plans:
+  - If the plan is higher than current → show “Upgrade” CTA.
+  - If the plan is lower than current → show “Downgrade” CTA.
+  - Do NOT allow selecting the same plan again as a new subscription.
+
+2. Subscription status and flow (standard & organized):
+- Make the subscription model and UI follow standard states, for example:
+  - ACTIVE
+  - TRIALING (if applicable)
+  - CANCELLED_AT_PERIOD_END
+  - EXPIRED
+- Ensure status is fetched and updated in real-time (or near real-time) after:
+  - Successful payment / subscription creation.
+  - Upgrade.
+  - Downgrade.
+  - Cancel request.
+- On the profile subscription section, show:
+  - Current plan name.
+  - Price and billing frequency.
+  - Start date.
+  - Next billing date.
+  - Status (e.g. “Active”, “Will cancel on [date]”).
+- Make sure the front-end does not show conflicting CTAs based on status. For example, if status is CANCELLED_AT_PERIOD_END, show “Active till [date], then will cancel” and hide “Cancel again” CTA.
+
+3. Upgrade and downgrade UX:
+- For Upgrade:
+  - On clicking Upgrade from pricing page, show a nice confirmation modal:
+    - Highlight benefits of upgrading.
+    - Encourage user: connect to “earn more” and “unlock more opportunities” (for creators, mentors, etc.).
+    - Show new price, billing period, and when the change takes effect (immediately or next cycle, depending on current logic).
+- For Downgrade:
+  - On clicking Downgrade, show a beautiful and clear confirmation popup:
+    - List exactly what the user will lose if they downgrade:
+      - Features, limits, access to tools, monetization limits, etc.
+    - Ask for explicit confirmation before making the change.
+    - Show when downgrade will actually apply (immediate or from next billing cycle) and how it affects billing.
+
+4. Cancel anytime experience:
+- On the profile subscription section, add a “Cancel anytime” CTA/link to make users feel comfortable while subscribing.
+- Integrate with the Cancel Subscription API in a standard SaaS way:
+  - When user clicks “Cancel Subscription”:
+    - Show a confirmation modal explaining clearly:
+      - Access will continue till the end of the current billing cycle.
+      - No refund for the already paid current period.
+      - The exact date when the subscription will end.
+  - On confirmation:
+    - Call the Cancel Subscription API.
+    - Do NOT cancel access immediately.
+    - Set subscription to CANCELLED_AT_PERIOD_END (or similar) and store end date (current_period_end).
+  - Update the UI:
+    - Show “Your subscription will end on [end date]. You will continue to have access till then.”
+    - Change CTAs accordingly (e.g. show “Resume subscription” if supported in the future).
+
+5. Creator monetization enablement:
+- For users who are “creators” and have an active eligible subscription (or have subscribers under them):
+  - Enable a “Monetization” section on their dashboard.
+  - Show transparent monetization details:
+    - Total earnings.
+    - Current month earnings.
+    - Number of paying subscribers.
+    - Upcoming payout date and amount (if available from backend).
+    - Payout history list/table.
+- Add an AI helper/agent widget in the Monetization section:
+  - The AI should give suggestions on how the creator can:
+    - Earn more (improve pricing, create new offerings, upsell existing members).
+    - Grow (content ideas, engagement strategies, event/bootcamp suggestions, community activities).
+  - Implement the front-end structure and mock the AI responses if needed (we can plug in the real AI backend later). Make the UI ready for a chat-like AI helper.
+
+6. Technical implementation notes:
+- Follow clean, modular component design for the pricing page and profile subscription components.
+- Use clear conditional rendering for:
+  - Current plan vs other plans.
+  - Active vs cancelled_at_period_end vs expired, etc.
+- Make all API calls robust:
+  - Proper loading states.
+  - Error handling with user-friendly messages.
+- Keep UX consistent:
+  - Same status labels and wording across pricing page, profile, and dashboard.
+- Do not break existing SEO and performance. Avoid heavy client-side computations on every render.
+
+7. What you need to do:
+- Update the pricing page components and logic to:
+  - Hide “Subscribe now” for active plan.
+  - Show “Current Plan” + “View plan details” CTA instead.
+  - Correctly show Upgrade and Downgrade CTAs for other plans.
+- Implement/adjust the subscription status display and flow on:
+  - Pricing page.
+  - User profile page.
+  - Creator dashboard (for monetization).
+- Implement modals/popups for:
+  - Upgrade confirmation (growth/earn-focused messaging).
+  - Downgrade confirmation (what user will lose).
+  - Cancel Subscription (cancel at end of billing cycle, no immediate refund).
+- Wire up the Cancel Subscription API so that:
+  - Cancellation is applied till next billing cycle.
+  - Status is updated correctly and reflected immediately in the UI.
+- Add Monetization section for eligible creators and the AI helper panel with a basic UI and placeholder/mock AI responses.
+
+Please implement all the above changes end-to-end, ensure consistent UX, and keep the code clean, well-structured, and easy to extend in the future.

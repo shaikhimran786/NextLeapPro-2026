@@ -1,0 +1,255 @@
+Act as a senior full stack engineer and cloud architect working on my product Next Leap Pro (nextleappro.com).
+
+Your task is to design and implement a clean, secure, and scalable solution for handling all website static assets and images using a cloud storage bucket named "assets".
+
+Think through the architecture first, then refactor and implement step by step.
+
+1. Storage architecture using "assets" bucket
+
+Use a cloud application storage bucket named assets as the single source for:
+
+Website static images (logos, banners, common graphics).
+
+User-generated images:
+
+Creator profile photos.
+
+Community cover images and logos.
+
+Chapter images.
+
+Event images.
+
+Design a logical folder structure inside the assets bucket, for example:
+
+static/ for platform-level static assets.
+
+creators/{creatorId}/profile/
+
+communities/{communityId}/
+
+chapters/{chapterId}/
+
+events/{eventId}/
+
+Store only references/URLs to these images in the database, not the files themselves.
+
+Apply security and permissions at both:
+
+Application level (who can upload, edit, delete).
+
+Storage / URL level (signed URLs if needed, access rules for private vs public).
+
+2. Replace image path text fields with upload feature
+
+Find all forms where images are currently configured via plain text path input, in both:
+
+Website (creator / user facing).
+
+Admin section.
+
+Replace them with a proper image upload component that:
+
+Lets users pick an image from their device.
+
+Shows upload progress or a simple loading state.
+
+On success, stores the uploaded file in the correct folder in assets bucket.
+
+Saves the final public or accessible URL in the database.
+
+Ensure that:
+
+Existing records with old path-based values still continue to work, or you provide a migration path.
+
+The upload component supports:
+
+Preview of the selected image.
+
+Re-upload / change existing image.
+
+Delete image with confirmation.
+
+Apply basic validation on upload:
+
+Allowed file types: e.g. JPEG, PNG, WebP.
+
+Maximum size limit (set a reasonable size).
+
+Optional: aspect ratios for cover images vs profile photos.
+
+3. Access and ownership rules for creators
+
+Implement strict ownership-based control for image operations:
+
+For creators:
+
+A creator can upload, add, edit, and delete images only for:
+
+Their own profile.
+
+Communities they created or own.
+
+Chapters they created or own.
+
+Events they created or own.
+
+They must not be able to:
+
+Modify or delete images for content owned by other creators.
+
+Access internal paths or IDs that belong to others.
+
+Implement checks at the server/API level:
+
+Before any upload, update, or delete:
+
+Verify that the authenticated user is the owner of the target entity (creator profile, community, chapter, event).
+
+If the user is not the owner, return a proper authorization error.
+
+Map image storage paths to ownership:
+
+When uploading:
+
+Derive the folder path from the entity and its owner.
+
+Example:
+
+creators/{creatorId}/profile/avatar.jpg
+
+communities/{communityId}/cover.jpg
+
+This helps ensure correct grouping and easier cleanup.
+
+For admins:
+
+Admins should retain full rights to upload, edit, and delete images for any entity, as per previous admin rules.
+
+Clearly separate admin privileges from creator privileges in code.
+
+4. Functional behaviour for image CRUD
+
+Ensure full CRUD functionality for images with proper constraints:
+
+Create / Upload:
+
+On upload, generate a new file in the correct assets path.
+
+Save or update the corresponding URL in the database.
+
+Read / Display:
+
+All front-end views (profile, community, chapter, event pages) should load images from the assets URLs.
+
+Use optimized image loading where possible (lazy loading, appropriate sizes).
+
+Update / Replace:
+
+When a creator or admin updates an image:
+
+Upload new image.
+
+Update DB record with new URL.
+
+Optionally delete the old image from the assets bucket to avoid orphaned files.
+
+Delete:
+
+When image is deleted:
+
+Confirm action with the user (especially for public-facing photos).
+
+Delete or mark-as-deleted in the assets bucket.
+
+Clear or update the DB reference to avoid broken links.
+
+Respect ownership rules:
+
+Only the content owner or admin can trigger delete.
+
+5. Integration with website and admin flows
+
+Update all relevant flows where images are managed:
+
+Creator profile setup and editing.
+
+Community creation and editing.
+
+Chapter creation and editing.
+
+Event creation and editing.
+
+Admin management screens for the same.
+
+Make sure:
+
+The same assets storage logic is used in both website and admin.
+
+No direct manual path typing is needed for images.
+
+UI labels and error messages are clear and user friendly.
+
+Keep Admin and website data in sync:
+
+If an image is updated in Admin, the website should reflect it quickly.
+
+If a creator updates an image on the website, Admin views should show the updated image.
+
+6. Performance, security, and reliability
+
+Optimize image loading:
+
+Use appropriate sizes, thumbnails, or responsive image handling (if supported).
+
+Cache images where it makes sense, but ensure cache invalidation when images change.
+
+Security:
+
+Validate all uploads on the server.
+
+Do not trust client-side validation alone.
+
+Prevent upload of executable or dangerous file types.
+
+Use safe filenames or generate unique IDs for stored files.
+
+Reliability:
+
+Handle upload failures gracefully with proper error messages.
+
+Prevent partially saved state (e.g., DB updated but file not uploaded, or vice versa).
+
+If needed, wrap upload + DB update in a safe transactional flow.
+
+7. Implementation approach
+
+First scan the codebase to identify:
+
+Current image fields and how paths are stored.
+
+Existing file upload logic, if any.
+
+Admin and website forms related to profiles, communities, chapters, and events.
+
+Propose a short step-by-step plan:
+
+Introduce the assets bucket integration and helpers.
+
+Replace text fields with upload components.
+
+Implement ownership-based access control for image CRUD.
+
+Refactor all relevant forms and views.
+
+Clean up old unused image path logic.
+
+Then start implementing, testing each part:
+
+Upload and display for one entity (e.g., creator profile) as a base pattern.
+
+Reuse the pattern for communities, chapters, and events.
+
+Finally, integrate Admin flows and verify consistency.
+
+Begin now by discovering all the existing image-related code and then propose the folder structure and helper utilities for working with the assets bucket before moving into full integration.
