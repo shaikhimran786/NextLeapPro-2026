@@ -51,6 +51,7 @@ import {
   Star,
 } from "@/lib/icons";
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useUserStatus, performLogout } from "@/hooks/useUserStatus";
 import { isAdmin, isCreator } from "@/lib/user-status";
 import { toast } from "sonner";
@@ -594,11 +595,16 @@ export function Navbar({
 }: NavbarProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const { userStatus, isLoading } = useUserStatus();
   const router = useRouter();
   const pathname = usePathname();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const menuToggleRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const { data: siteSettings } = useSWR("/api/admin/settings", fetcher, {
     revalidateOnFocus: false,
@@ -762,6 +768,7 @@ export function Navbar({
   };
 
   return (
+    <>
     <header
       className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-xl border-b border-slate-200/60 supports-[backdrop-filter]:bg-white/80"
       role="banner"
@@ -915,12 +922,14 @@ export function Navbar({
           <HamburgerIcon isOpen={isOpen} />
         </button>
       </nav>
+    </header>
 
-      {/* Mobile Menu */}
+    {/* Mobile Menu - rendered via portal to escape header stacking context */}
+    {isMounted && createPortal(
       <div
         id="mobile-menu"
         className={cn(
-          "fixed inset-0 z-[100] lg:hidden transition-all duration-300",
+          "fixed inset-0 z-[9999] lg:hidden transition-all duration-300",
           isOpen ? "visible" : "invisible pointer-events-none"
         )}
         data-testid="mobile-menu-container"
@@ -1074,7 +1083,10 @@ export function Navbar({
             </div>
           </div>
         </div>
-      </div>
-    </header>
+      </div>,
+      document.body
+    )}
+
+    </>
   );
 }
