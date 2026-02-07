@@ -19,7 +19,7 @@ export const revalidate = 300;
 export const metadata: Metadata = generateMeta({
   title: "Learn, Earn, and Grow",
   description:
-    "The platform for students and professionals to master new skills, monetize their talents, and accelerate their career growth through community and events.",
+    "A powerful ecosystem built for students and professionals to gain in-demand skills, convert their talents into real earning opportunities, and accelerate career growth through structured learning, expert guidance, and a strong, opportunity-driven community.",
   path: "/",
 });
 

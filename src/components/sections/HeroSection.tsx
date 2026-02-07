@@ -42,7 +42,7 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
   const title = siteSettings?.heroTitle || "Learn. Earn. And Grow.";
   const subtitle =
     siteSettings?.heroSubtitle ||
-    "The platform for students and professionals to master new skills, monetize their talents, and accelerate their career growth through community and events.";
+    "A powerful ecosystem built for students and professionals to gain in-demand skills, convert their talents into real earning opportunities, and accelerate career growth through structured learning, expert guidance, and a strong, opportunity-driven community.";
   const cta = siteSettings?.heroCTA || "Get Started";
 
   // Avatar placeholders for social proof
