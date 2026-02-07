@@ -635,10 +635,15 @@ export function Navbar({
   }, [plansData]);
 
   // Create a local version of megaMenuData with dynamic plans
-  const dynamicMegaMenuData = useMemo(() => ({
-    ...megaMenuData,
-    plans: navigationPlans,
-  }), [navigationPlans]);
+  const dynamicMegaMenuData = useMemo(() => {
+    return {
+      learn: megaMenuData.learn || { items: [] },
+      earn: megaMenuData.earn || { items: [] },
+      community: megaMenuData.community || { items: [] },
+      support: megaMenuData.support || { items: [] },
+      plans: navigationPlans && navigationPlans.length > 0 ? navigationPlans : megaMenuData.plans,
+    };
+  }, [navigationPlans]);
 
   const closeMenu = useCallback(() => {
     setIsOpen(false);
