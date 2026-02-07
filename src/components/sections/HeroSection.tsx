@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
@@ -41,6 +42,37 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
     siteSettings?.heroSubtitle ||
     "A powerful ecosystem built for students and professionals to gain in-demand skills, convert their talents into real earning opportunities, and accelerate career growth through structured learning, expert guidance, and a strong, opportunity-driven community.";
   const cta = siteSettings?.heroCTA || "Get Started";
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.muted = true;
+    video.setAttribute("muted", "");
+    video.setAttribute("playsinline", "");
+    video.setAttribute("autoplay", "");
+
+    const tryPlay = () => {
+      if (video.paused) {
+        video.play().catch(() => {});
+      }
+    };
+
+    video.load();
+    tryPlay();
+
+    video.addEventListener("canplay", tryPlay);
+    video.addEventListener("loadeddata", tryPlay);
+    video.addEventListener("loadedmetadata", tryPlay);
+
+    return () => {
+      video.removeEventListener("canplay", tryPlay);
+      video.removeEventListener("loadeddata", tryPlay);
+      video.removeEventListener("loadedmetadata", tryPlay);
+    };
+  }, []);
 
   return (
     <section
@@ -157,16 +189,20 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
                 transition={{ duration: 0.3 }}
               >
                 <div className="relative aspect-[16/10] w-full bg-slate-900">
+                  {/* suppressHydrationWarning needed because React SSR doesn't properly serialize the muted attribute */}
                   <video
+                    ref={videoRef}
                     autoPlay
                     loop
                     muted
                     playsInline
+                    preload="auto"
+                    poster="/images/hero/hero-learn.jpg"
                     className="absolute inset-0 w-full h-full object-cover"
                     data-testid="hero-video"
-                  >
-                    <source src="/videos/hero-brand.mp4" type="video/mp4" />
-                  </video>
+                    src="/videos/hero-brand.mp4"
+                    suppressHydrationWarning
+                  />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
