@@ -1,11 +1,30 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Users, IndianRupee, Star } from "@/lib/icons";
 import { HeroTitle, HeroAnimationConfig, HeroGradientsConfig } from "@/components/sections/HeroTitle";
+
+const heroSlides = [
+  {
+    src: "/images/hero/hero-learn.jpg",
+    alt: "Students and professionals engaged in a collaborative learning workshop",
+    label: "Learn",
+  },
+  {
+    src: "/images/hero/hero-earn.jpg",
+    alt: "Professional working on laptop, building skills and earning opportunities",
+    label: "Earn",
+  },
+  {
+    src: "/images/hero/hero-grow.jpg",
+    alt: "Team celebrating success and career growth together",
+    label: "Grow",
+  },
+];
 
 interface SiteSettings {
   heroTitle?: string;
@@ -42,6 +61,17 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
     siteSettings?.heroSubtitle ||
     "A powerful ecosystem built for students and professionals to gain in-demand skills, convert their talents into real earning opportunities, and accelerate career growth through structured learning, expert guidance, and a strong, opportunity-driven community.";
   const cta = siteSettings?.heroCTA || "Get Started";
+
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const nextSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(nextSlide, 4000);
+    return () => clearInterval(timer);
+  }, [nextSlide]);
 
   return (
     <section
@@ -147,6 +177,7 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.15 }}
             className="w-full lg:w-[45%] xl:w-1/2 relative hidden sm:block"
+            data-testid="hero-image-slider"
           >
             <div className="relative lg:pl-4 xl:pl-8">
               <motion.div
@@ -156,18 +187,29 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
                 transition={{ duration: 0.3 }}
               >
                 <div className="relative aspect-[4/3] lg:aspect-[16/11] w-full">
-                  <Image
-                    src={siteSettings?.heroImage || "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800"}
-                    alt="Diverse group of students and professionals collaborating on learning projects at Next Leap Pro"
-                    fill
-                    className="object-cover"
-                    priority
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                  />
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentSlide}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.8, ease: "easeInOut" }}
+                      className="absolute inset-0"
+                    >
+                      <Image
+                        src={heroSlides[currentSlide].src}
+                        alt={heroSlides[currentSlide].alt}
+                        fill
+                        className="object-cover"
+                        priority={currentSlide === 0}
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                      />
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent pointer-events-none" />
 
-                <div className="absolute bottom-4 left-4 sm:bottom-5 sm:left-5">
+                <div className="absolute bottom-4 left-4 sm:bottom-5 sm:left-5 z-10">
                   <div className="flex items-center gap-2 text-white">
                     <div className="h-8 w-8 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
                       <Users className="h-4 w-4 text-white" />
@@ -177,6 +219,22 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
                       <p className="text-white/70 text-xs">Join the community</p>
                     </div>
                   </div>
+                </div>
+
+                <div className="absolute bottom-4 right-4 sm:bottom-5 sm:right-5 flex gap-1.5 z-10">
+                  {heroSlides.map((slide, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentSlide(idx)}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        idx === currentSlide
+                          ? "w-6 bg-white"
+                          : "w-1.5 bg-white/50 hover:bg-white/70"
+                      }`}
+                      aria-label={`Go to slide: ${slide.label}`}
+                      data-testid={`slider-dot-${idx}`}
+                    />
+                  ))}
                 </div>
               </motion.div>
 
