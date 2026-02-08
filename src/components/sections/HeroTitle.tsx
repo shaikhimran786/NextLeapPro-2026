@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import { motion, useReducedMotion, Variants } from "framer-motion";
 import useSWR from "swr";
 
@@ -179,7 +179,6 @@ export function HeroTitle({
   isPreview = false,
 }: HeroTitleProps) {
   const shouldReduceMotion = useReducedMotion();
-  const [isClient, setIsClient] = useState(false);
 
   // Fetch settings from API (skip if preview mode with overrides)
   const { data: settings } = useSWR(
@@ -191,11 +190,6 @@ export function HeroTitle({
       suspense: false,
     }
   );
-
-  // Ensure client-side rendering for Framer Motion
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   // Parse animation config
   const animationConfig = useMemo<HeroAnimationConfig>(() => {
@@ -244,24 +238,11 @@ export function HeroTitle({
     },
   };
 
-  // Render static version on server
-  if (!isClient) {
-    return (
-      <h1
-        className={`text-4xl md:text-5xl lg:text-6xl font-heading font-bold leading-tight ${className}`}
-        data-testid="hero-title"
-      >
-        {tokenizeHeroText(titleText, gradientsConfig)}
-      </h1>
-    );
-  }
-
-  // Render animated version on client
   return (
     <motion.h1
       className={`text-4xl md:text-5xl lg:text-6xl font-heading font-bold leading-tight ${className}`}
       variants={containerVariants}
-      initial="hidden"
+      initial={false}
       animate="visible"
       key={isPreview ? "preview" : "hero-title"}
       data-testid="hero-title"
@@ -270,6 +251,7 @@ export function HeroTitle({
         <motion.span
           key={`word-${wordIndex}`}
           variants={variants}
+          initial={false}
           className="inline-block mr-[0.25em]"
           style={{ whiteSpace: "pre" }}
         >
