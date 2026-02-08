@@ -1,5 +1,5 @@
 import { build as esbuild } from "esbuild";
-import { rm, readFile } from "fs/promises";
+import { readFile } from "fs/promises";
 import { spawn } from "child_process";
 
 // server deps to bundle to reduce openat(2) syscalls
@@ -50,7 +50,7 @@ function runCommand(command: string, args: string[]): Promise<void> {
 }
 
 async function buildAll() {
-  await rm("dist", { recursive: true, force: true });
+  await runCommand("rm", ["-rf", "dist", ".next"]);
 
   console.log("Building Next.js application...");
   await runCommand("npx", ["next", "build"]);
