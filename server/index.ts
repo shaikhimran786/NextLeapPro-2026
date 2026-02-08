@@ -9,24 +9,21 @@ let nextProcess: ChildProcess | null = null;
 function killProcessOnPort(targetPort: number): void {
   try {
     const result = execSync(
-      `lsof -ti tcp:${targetPort}`,
+      `fuser ${targetPort}/tcp 2>/dev/null`,
       { encoding: "utf-8" }
     ).trim();
     if (result) {
-      const pids = result.split("\n").filter(Boolean);
+      const pids = result.split(/\s+/).filter(Boolean);
       for (const pid of pids) {
-        // Don't kill ourselves
         if (pid === String(process.pid)) continue;
         try {
           process.kill(parseInt(pid, 10), "SIGKILL");
           console.log(`Killed stale process ${pid} on port ${targetPort}`);
         } catch {
-          // Process may have already exited
         }
       }
     }
   } catch {
-    // lsof returns non-zero if no process found — that's fine
   }
 }
 

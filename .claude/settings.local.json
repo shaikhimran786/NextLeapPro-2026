@@ -5,7 +5,16 @@
       "Bash(git checkout:*)",
       "Bash(ss:*)",
       "Bash(kill:*)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(npx prisma db pull:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run build:*)",
+      "Bash(curl:*)",
+      "Bash(git -C /home/runner/workspace add:*)",
+      "Bash(git -C /home/runner/workspace commit -m \"$\\(cat <<''EOF''\nKill running dev server before build to prevent .next corruption\n\nBuilding while a dev server is running overwrites .next mid-use,\nleaving it in an inconsistent state that causes 500 errors.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(ls:*)"
     ]
   }
 }
