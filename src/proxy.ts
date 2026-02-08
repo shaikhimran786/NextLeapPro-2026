@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 const PROTECTED_ROUTES = ['/dashboard', '/profile', '/settings', '/onboarding'];
 const ADMIN_ROUTES = ['/admin'];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const sessionToken = request.cookies.get('session')?.value;
   const adminSessionToken = request.cookies.get('admin_session')?.value;
