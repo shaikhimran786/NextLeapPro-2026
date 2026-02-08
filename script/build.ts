@@ -1,6 +1,6 @@
 import { build as esbuild } from "esbuild";
 import { readFile } from "fs/promises";
-import { spawn } from "child_process";
+import { spawn, execSync } from "child_process";
 
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
@@ -50,6 +50,11 @@ function runCommand(command: string, args: string[]): Promise<void> {
 }
 
 async function buildAll() {
+  // Kill any running dev server to avoid corrupting .next mid-build
+  try {
+    execSync("pkill -f 'next dev'", { stdio: "ignore" });
+  } catch {}
+
   await runCommand("rm", ["-rf", "dist", ".next"]);
 
   console.log("Building Next.js application...");
