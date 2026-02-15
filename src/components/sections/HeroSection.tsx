@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -21,13 +21,45 @@ interface HeroSectionProps {
   siteSettings?: SiteSettings | null;
 }
 
-const overlayMessages = [
-  { text: "Laid off, but not left behind.", icon: "💪" },
-  { text: "Upgrade your skills.", icon: "📚" },
-  { text: "Monetize your expertise.", icon: "💰" },
-  { text: "Learn. Earn. Grow.", icon: "🚀" },
-  { text: "A Community That Lifts You Up.", icon: "🤝" },
+const storyPhases = [
+  {
+    video: "/videos/hero-clip-1-struggle.mp4",
+    overlay: "Laid off, but not left behind.",
+    subtext: "In today's uncertain job market, one email can change everything.",
+    icon: "💪",
+    phase: "struggle" as const,
+  },
+  {
+    video: "/videos/hero-clip-2-learning.mp4",
+    overlay: "Upgrade your skills.",
+    subtext: "Learn new in-demand skills from industry experts.",
+    icon: "📚",
+    phase: "learning" as const,
+  },
+  {
+    video: "/videos/hero-clip-3-community.mp4",
+    overlay: "Monetize your expertise.",
+    subtext: "Earn from your talents through micro-gigs and mentoring.",
+    icon: "💰",
+    phase: "community" as const,
+  },
+  {
+    video: "/videos/hero-clip-4-empowerment.mp4",
+    overlay: "Learn. Earn. Grow.",
+    subtext: "Grow with a powerful community that lifts you up.",
+    icon: "🚀",
+    phase: "empowerment" as const,
+  },
+  {
+    video: "/videos/hero-clip-4-empowerment.mp4",
+    overlay: "A Community That Lifts You Up.",
+    subtext: "You don't have to grow alone. Build skills. Build income. Build confidence.",
+    icon: "🤝",
+    phase: "empowerment" as const,
+  },
 ];
+
+const PHASE_DURATION = 6000;
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -50,53 +82,61 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
   const subtitle =
     siteSettings?.heroSubtitle ||
     "Join thousands of professionals who turned career setbacks into comebacks. Learn in-demand skills, monetize your expertise, and grow with a community that has your back.";
-  const cta = siteSettings?.heroCTA || "Start Your Comeback";
+  const cta = siteSettings?.heroCTA || "Join the Community";
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [currentOverlay, setCurrentOverlay] = useState(0);
+  const bgVideoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const cardVideoRef = useRef<HTMLVideoElement>(null);
+  const [currentPhase, setCurrentPhase] = useState(0);
+  const [logoRevealed, setLogoRevealed] = useState(false);
 
-  useEffect(() => {
-    const video = videoRef.current;
+  const tryPlayVideo = useCallback((video: HTMLVideoElement | null) => {
     if (!video) return;
-
     video.muted = true;
     video.setAttribute("muted", "");
     video.setAttribute("playsinline", "");
-    video.setAttribute("autoplay", "");
-
-    const tryPlay = () => {
-      if (video.paused) {
-        video.play().catch(() => {});
-      }
-    };
-
-    video.load();
-    tryPlay();
-
-    video.addEventListener("canplay", tryPlay);
-    video.addEventListener("loadeddata", tryPlay);
-
-    return () => {
-      video.removeEventListener("canplay", tryPlay);
-      video.removeEventListener("loadeddata", tryPlay);
-    };
+    if (video.paused) {
+      video.play().catch(() => {});
+    }
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentOverlay((prev) => (prev + 1) % overlayMessages.length);
-    }, 3000);
-
-    const handleVisibility = () => {
-      if (document.hidden) return;
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
-
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", handleVisibility);
-    };
+    const timer = setTimeout(() => setLogoRevealed(true), 300);
+    return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    bgVideoRefs.current.forEach((video) => {
+      if (video) {
+        video.muted = true;
+        video.setAttribute("muted", "");
+        video.setAttribute("playsinline", "");
+        video.load();
+        tryPlayVideo(video);
+        video.addEventListener("canplay", () => tryPlayVideo(video));
+      }
+    });
+  }, [tryPlayVideo]);
+
+  useEffect(() => {
+    const cardVideo = cardVideoRef.current;
+    if (cardVideo) {
+      cardVideo.muted = true;
+      cardVideo.setAttribute("muted", "");
+      cardVideo.setAttribute("playsinline", "");
+      cardVideo.src = storyPhases[currentPhase].video;
+      cardVideo.load();
+      tryPlayVideo(cardVideo);
+    }
+  }, [currentPhase, tryPlayVideo]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentPhase((prev) => (prev + 1) % storyPhases.length);
+    }, PHASE_DURATION);
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentStory = storyPhases[currentPhase];
 
   return (
     <section
@@ -105,20 +145,30 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
       data-testid="hero-section"
     >
       <div className="absolute inset-0 z-0" aria-hidden="true">
-        <video
-          ref={videoRef}
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto"
-          poster="/images/hero/hero-promo-poster.png"
-          className="absolute inset-0 w-full h-full object-cover"
-          data-testid="hero-video"
-          src="/videos/hero-promo.mp4"
-          aria-hidden="true"
-          suppressHydrationWarning
-        />
+        {storyPhases.map((phase, index) => {
+          const uniqueVideos = storyPhases.filter((p, i) => storyPhases.findIndex(s => s.video === p.video) === i);
+          const isUniqueIndex = uniqueVideos.findIndex(u => u.video === phase.video) === storyPhases.slice(0, index + 1).filter(p => p.video === phase.video).length - 1;
+          if (!isUniqueIndex && index !== storyPhases.findIndex(s => s.video === phase.video)) return null;
+
+          return (
+            <video
+              key={phase.video}
+              ref={(el) => { bgVideoRefs.current[index] = el; }}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+              poster="/images/hero/hero-promo-poster.png"
+              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
+              style={{ opacity: currentStory.video === phase.video ? 1 : 0 }}
+              src={phase.video}
+              aria-hidden="true"
+              suppressHydrationWarning
+            />
+          );
+        })}
+
         <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/70 to-black/50" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
@@ -126,6 +176,22 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
       </div>
 
       <div className="absolute inset-0 opacity-[0.02] z-[1]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
+
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2" data-testid="hero-phase-indicators">
+        {storyPhases.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentPhase(index)}
+            className={`h-1.5 rounded-full transition-all duration-500 ${
+              index === currentPhase
+                ? "w-8 bg-white"
+                : "w-2 bg-white/30 hover:bg-white/50"
+            }`}
+            aria-label={`Go to story phase ${index + 1}`}
+            data-testid={`hero-phase-dot-${index}`}
+          />
+        ))}
+      </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-10 sm:py-14 lg:py-0">
         <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16 xl:gap-24">
@@ -136,13 +202,17 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
             animate="visible"
             className="lg:w-[55%] xl:w-[52%] space-y-6 sm:space-y-7 text-center lg:text-left"
           >
-            <motion.div variants={itemVariants}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }}
+              animate={logoRevealed ? { opacity: 1, scale: 1, filter: "blur(0px)" } : {}}
+              transition={{ duration: 1.2, ease: "easeOut" }}
+            >
               <Image
                 src="/logos/nlp-logo-white.png"
                 alt="Next Leap Pro"
                 width={280}
                 height={70}
-                className="h-12 sm:h-14 lg:h-16 w-auto mx-auto lg:mx-0 drop-shadow-lg"
+                className="h-14 sm:h-16 lg:h-[72px] w-auto mx-auto lg:mx-0 drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
                 priority
                 data-testid="hero-logo"
               />
@@ -182,18 +252,25 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
             <motion.div variants={itemVariants}>
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={currentOverlay}
-                  initial={{ opacity: 0, y: 10 }}
+                  key={currentPhase}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.5 }}
-                  className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.1] backdrop-blur-md"
-                  data-testid="hero-overlay-message"
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.6 }}
+                  className="space-y-1.5"
                 >
-                  <span className="text-lg">{overlayMessages[currentOverlay].icon}</span>
-                  <span className="text-sm sm:text-base font-semibold text-white/95 italic">
-                    &ldquo;{overlayMessages[currentOverlay].text}&rdquo;
-                  </span>
+                  <div
+                    className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.1] backdrop-blur-md"
+                    data-testid="hero-overlay-message"
+                  >
+                    <span className="text-lg">{currentStory.icon}</span>
+                    <span className="text-sm sm:text-base font-semibold text-white/95 italic">
+                      &ldquo;{currentStory.overlay}&rdquo;
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-white/50 pl-1" data-testid="hero-overlay-subtext">
+                    {currentStory.subtext}
+                  </p>
                 </motion.div>
               </AnimatePresence>
             </motion.div>
@@ -266,45 +343,65 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
               <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/40 border border-white/[0.08] group">
                 <div className="relative aspect-[16/10] w-full bg-black/50 backdrop-blur-sm">
                   <video
+                    ref={cardVideoRef}
                     autoPlay
                     loop
                     muted
                     playsInline
                     preload="auto"
                     poster="/images/hero/hero-promo-poster.png"
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
                     data-testid="hero-video-card"
-                    src="/videos/hero-promo.mp4"
+                    src={storyPhases[0].video}
                     suppressHydrationWarning
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/15 pointer-events-none" />
 
-                  <div className="absolute top-4 left-4 z-10">
+                  <motion.div
+                    className="absolute top-4 left-4 z-10"
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
+                  >
                     <Image
                       src="/logos/nlp-icon-white.png"
-                      alt="NLP"
+                      alt="NextLeapPro"
                       width={48}
                       height={48}
-                      className="h-10 w-10 rounded-lg drop-shadow-md"
+                      className="h-10 w-10 rounded-lg drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
                     />
-                  </div>
+                  </motion.div>
 
                   <AnimatePresence mode="wait">
                     <motion.div
-                      key={`card-${currentOverlay}`}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 1.02 }}
-                      transition={{ duration: 0.6 }}
+                      key={`card-${currentPhase}`}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.7 }}
                       className="absolute inset-0 flex items-center justify-center pointer-events-none"
                     >
-                      <div className="bg-black/40 backdrop-blur-sm rounded-xl px-6 py-3 border border-white/10">
+                      <div className="bg-black/45 backdrop-blur-sm rounded-xl px-6 py-4 border border-white/10 max-w-[85%]">
                         <p className="text-white font-bold text-sm sm:text-base lg:text-lg text-center drop-shadow-md">
-                          {overlayMessages[currentOverlay].text}
+                          {currentStory.overlay}
+                        </p>
+                        <p className="text-white/60 text-xs sm:text-sm text-center mt-1">
+                          {currentStory.subtext}
                         </p>
                       </div>
                     </motion.div>
                   </AnimatePresence>
+
+                  <div className="absolute top-4 right-4 z-10 flex gap-1">
+                    {storyPhases.map((_, i) => (
+                      <div
+                        key={i}
+                        className={`h-1 rounded-full transition-all duration-500 ${
+                          i === currentPhase ? "w-5 bg-white" : "w-1.5 bg-white/30"
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </div>
 
                 <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
