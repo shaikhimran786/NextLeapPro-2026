@@ -61,6 +61,8 @@ const storyPhases = [
 
 const PHASE_DURATION = 6000;
 
+const uniqueVideos = Array.from(new Set(storyPhases.map(p => p.video)));
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -105,14 +107,16 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
   }, []);
 
   useEffect(() => {
-    bgVideoRefs.current.forEach((video) => {
+    uniqueVideos.forEach((_, i) => {
+      const video = bgVideoRefs.current[i];
       if (video) {
         video.muted = true;
         video.setAttribute("muted", "");
         video.setAttribute("playsinline", "");
         video.load();
+        const handler = () => tryPlayVideo(video);
+        video.addEventListener("canplay", handler);
         tryPlayVideo(video);
-        video.addEventListener("canplay", () => tryPlayVideo(video));
       }
     });
   }, [tryPlayVideo]);
@@ -145,29 +149,23 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
       data-testid="hero-section"
     >
       <div className="absolute inset-0 z-0" aria-hidden="true">
-        {storyPhases.map((phase, index) => {
-          const uniqueVideos = storyPhases.filter((p, i) => storyPhases.findIndex(s => s.video === p.video) === i);
-          const isUniqueIndex = uniqueVideos.findIndex(u => u.video === phase.video) === storyPhases.slice(0, index + 1).filter(p => p.video === phase.video).length - 1;
-          if (!isUniqueIndex && index !== storyPhases.findIndex(s => s.video === phase.video)) return null;
-
-          return (
-            <video
-              key={phase.video}
-              ref={(el) => { bgVideoRefs.current[index] = el; }}
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="auto"
-              poster="/images/hero/hero-promo-poster.png"
-              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
-              style={{ opacity: currentStory.video === phase.video ? 1 : 0 }}
-              src={phase.video}
-              aria-hidden="true"
-              suppressHydrationWarning
-            />
-          );
-        })}
+        {uniqueVideos.map((videoSrc, index) => (
+          <video
+            key={videoSrc}
+            ref={(el) => { bgVideoRefs.current[index] = el; }}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload={index === 0 ? "auto" : "metadata"}
+            poster={index === 0 ? "/images/hero/hero-promo-poster.png" : undefined}
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
+            style={{ opacity: currentStory.video === videoSrc ? 1 : 0 }}
+            src={videoSrc}
+            aria-hidden="true"
+            suppressHydrationWarning
+          />
+        ))}
 
         <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/70 to-black/50" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
