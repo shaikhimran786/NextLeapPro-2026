@@ -766,7 +766,7 @@ export function Navbar({
   return (
     <>
     <header
-      className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-xl border-b border-slate-200/60 supports-[backdrop-filter]:bg-white/80"
+      className="sticky top-0 z-[9998] w-full bg-white/95 backdrop-blur-xl border-b border-slate-200/60 supports-[backdrop-filter]:bg-white/80"
       role="banner"
     >
       <nav
