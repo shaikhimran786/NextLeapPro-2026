@@ -14,7 +14,21 @@
       "Bash(curl:*)",
       "Bash(git -C /home/runner/workspace add:*)",
       "Bash(git -C /home/runner/workspace commit -m \"$\\(cat <<''EOF''\nKill running dev server before build to prevent .next corruption\n\nBuilding while a dev server is running overwrites .next mid-use,\nleaving it in an inconsistent state that causes 500 errors.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git -C /home/runner/workspace status)",
+      "Bash(git -C /home/runner/workspace diff)",
+      "Bash(git -C /home/runner/workspace log --oneline -5)",
+      "Bash(git -C /home/runner/workspace commit -m \"$\\(cat <<''EOF''\nReplace killProcessOnPort with pure Node.js /proc parsing\n\nThe previous implementation used fuser/lsof which aren''t available in\nthis environment, causing silent failure and EADDRINUSE on startup.\nNow parses /proc/net/tcp\\(6\\) for listening socket inodes and scans\n/proc/[pid]/fd/ to find the owning PID — zero external dependencies.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C /home/runner/workspace push)",
+      "Bash(git -C /home/runner/workspace remote get-url:*)",
+      "Bash(git -C /home/runner/workspace remote set-url:*)",
+      "Bash(python3:*)",
+      "Bash(node -e:*)",
+      "Bash(npm i:*)",
+      "Bash(git -C /home/runner/workspace diff --name-only)",
+      "Bash(git -C /home/runner/workspace log --oneline -3)",
+      "Bash(git -C /home/runner/workspace commit -m \"$\\(cat <<''EOF''\nUpdate baseline-browser-mapping to silence outdated data warning\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }
