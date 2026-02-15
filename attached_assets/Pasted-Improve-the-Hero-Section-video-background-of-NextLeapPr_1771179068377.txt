@@ -1,0 +1,118 @@
+Improve the Hero Section video background of NextLeapPro with a professional and emotionally engaging promotional concept.
+
+1. Logo Correction
+
+Replace the current placeholder logo inside the hero video with the official NextLeapPro logo (attached asset).
+
+Ensure the logo is sharp, properly scaled, and positioned professionally.
+
+Add a subtle entrance animation (fade-in or smooth reveal) within the first 3 seconds.
+
+Maintain brand consistency in colours and typography.
+
+2. Storytelling Direction for Hero Video
+
+Create a short cinematic promotional video (30–45 seconds) with storytelling focused on professionals facing job uncertainty.
+
+Opening Scene (Problem)
+
+Visuals:
+
+A corporate employee receiving a layoff email.
+
+A professional sitting quietly after a job rejection.
+
+Someone staring at a laptop screen with worry.
+
+News headlines about layoffs and job market instability.
+
+Voiceover tone: Calm, realistic, relatable.
+
+Narration idea:
+"In today’s uncertain job market, one email can change everything. Layoffs. Restructuring. Unexpected career breaks."
+
+Middle Scene (Realisation)
+
+Visuals:
+
+A professional thinking deeply.
+
+Someone exploring skills online.
+
+A designer, developer, marketer working from home.
+
+Community discussions happening online.
+
+Narration idea:
+"What if your growth didn’t depend on just one job? What if your skills could create your own opportunities?"
+
+Transition to Solution (NextLeapPro Introduction)
+
+Visuals:
+
+Platform dashboard preview.
+
+Community interaction.
+
+Micro-gigs or earning opportunities.
+
+Mentorship sessions.
+
+Online events and collaboration.
+
+Narration idea:
+"NextLeapPro is built for people who believe in Plan B. A platform where you Learn. Earn. Grow."
+
+Show text on screen:
+Learn new in-demand skills
+Earn from your talents
+Grow with a powerful community
+
+Closing Scene (Empowerment)
+
+Visuals:
+
+Professionals collaborating.
+
+Someone receiving a payment notification.
+
+Mentors guiding learners.
+
+Confident smiles, working independently.
+
+Narration idea:
+"You don’t have to fully depend on one job. Build skills. Build income. Build confidence. Together."
+
+Final screen:
+NextLeapPro logo
+Tagline: Learn. Earn. Grow.
+CTA button: Join the Community
+
+3. Emotional Tone
+
+Inspirational but realistic
+
+Professional and enterprise-grade
+
+Not dramatic, not overhyped
+
+Focus on empowerment and self-reliance
+
+4. Technical Improvements
+
+Use smooth transitions
+
+Use subtle motion graphics
+
+Keep background music motivational but soft
+
+Ensure fast loading and optimized video size
+
+Maintain responsive scaling for desktop and mobile
+
+5. Core Message to Communicate
+
+Job uncertainty is real.
+Skills are permanent.
+Community makes growth faster.
+NextLeapPro helps professionals stay ready for Plan B by learning, earning, and growing together.
