@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Users, IndianRupee, Star, Sparkles, TrendingUp, BookOpen, Play } from "@/lib/icons";
+import { ArrowRight, Star, Sparkles } from "@/lib/icons";
 import type { HeroAnimationConfig, HeroGradientsConfig } from "@/components/sections/HeroTitle";
 
 interface SiteSettings {
@@ -23,39 +23,32 @@ interface HeroSectionProps {
 
 const storyPhases = [
   {
+    video: "/videos/hero-clip-2-learning.mp4",
+    overlay: "Every great career starts with learning.",
+    subtext: "From campus to career — your journey begins here.",
+    icon: "🎓",
+    phase: "student" as const,
+  },
+  {
     video: "/videos/hero-clip-1-struggle.mp4",
-    overlay: "Laid off, but not left behind.",
-    subtext: "In today's uncertain job market, one email can change everything.",
-    icon: "💪",
+    overlay: "Jobs are uncertain. Skills are not.",
+    subtext: "Layoffs happen. But your skills and community never leave you.",
+    icon: "💼",
     phase: "struggle" as const,
   },
   {
-    video: "/videos/hero-clip-2-learning.mp4",
-    overlay: "Upgrade your skills.",
-    subtext: "Learn new in-demand skills from industry experts.",
-    icon: "📚",
-    phase: "learning" as const,
-  },
-  {
     video: "/videos/hero-clip-3-community.mp4",
-    overlay: "Monetize your expertise.",
-    subtext: "Earn from your talents through micro-gigs and mentoring.",
+    overlay: "Turn your skills into real income.",
+    subtext: "Freelance, mentor, consult — earn from what you know.",
     icon: "💰",
-    phase: "community" as const,
+    phase: "earner" as const,
   },
   {
     video: "/videos/hero-clip-4-empowerment.mp4",
-    overlay: "Learn. Earn. Grow.",
-    subtext: "Grow with a powerful community that lifts you up.",
+    overlay: "Lead. Guide. Inspire others.",
+    subtext: "From learner to mentor — this is your full circle growth.",
     icon: "🚀",
-    phase: "empowerment" as const,
-  },
-  {
-    video: "/videos/hero-clip-4-empowerment.mp4",
-    overlay: "A Community That Lifts You Up.",
-    subtext: "You don't have to grow alone. Build skills. Build income. Build confidence.",
-    icon: "🤝",
-    phase: "empowerment" as const,
+    phase: "mentor" as const,
   },
 ];
 
@@ -83,11 +76,9 @@ const itemVariants = {
 export function HeroSection({ siteSettings }: HeroSectionProps) {
   const subtitle =
     siteSettings?.heroSubtitle ||
-    "Join thousands of professionals who turned career setbacks into comebacks. Learn in-demand skills, monetize your expertise, and grow with a community that has your back.";
-  const cta = siteSettings?.heroCTA || "Join the Community";
+    "Learn in-demand skills. Earn from real opportunities. Grow with a powerful community.";
 
   const bgVideoRefs = useRef<(HTMLVideoElement | null)[]>([]);
-  const cardVideoRef = useRef<HTMLVideoElement>(null);
   const [currentPhase, setCurrentPhase] = useState(0);
   const [logoRevealed, setLogoRevealed] = useState(false);
 
@@ -120,18 +111,6 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
       }
     });
   }, [tryPlayVideo]);
-
-  useEffect(() => {
-    const cardVideo = cardVideoRef.current;
-    if (cardVideo) {
-      cardVideo.muted = true;
-      cardVideo.setAttribute("muted", "");
-      cardVideo.setAttribute("playsinline", "");
-      cardVideo.src = storyPhases[currentPhase].video;
-      cardVideo.load();
-      tryPlayVideo(cardVideo);
-    }
-  }, [currentPhase, tryPlayVideo]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -167,7 +146,7 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
           />
         ))}
 
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/70 to-black/50" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-black/30" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-purple-600/8 via-transparent to-transparent" />
@@ -192,13 +171,13 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-10 sm:py-14 lg:py-0">
-        <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16 xl:gap-24">
+        <div className="flex flex-col items-center">
 
           <motion.div
             variants={containerVariants}
             initial={false}
             animate="visible"
-            className="lg:w-[55%] xl:w-[52%] space-y-6 sm:space-y-7 text-center lg:text-left"
+            className="w-full max-w-3xl mx-auto space-y-6 sm:space-y-7 text-center"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }}
@@ -210,13 +189,13 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
                 alt="Next Leap Pro"
                 width={280}
                 height={70}
-                className="h-14 sm:h-16 lg:h-[72px] w-auto mx-auto lg:mx-0 drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
+                className="h-14 sm:h-16 lg:h-[72px] w-auto mx-auto drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
                 priority
                 data-testid="hero-logo"
               />
             </motion.div>
 
-            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-2.5 justify-center lg:justify-start">
+            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-2.5 justify-center">
               <Link
                 href="/career"
                 className="group inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/[0.08] border border-white/[0.12] hover:border-primary/40 hover:bg-primary/10 transition-all text-xs sm:text-sm backdrop-blur-sm"
@@ -233,16 +212,14 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
 
             <motion.div variants={itemVariants}>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] xl:text-6xl font-heading font-bold leading-[1.08] tracking-tight">
-                <span className="text-white">Your Career Setback</span>
-                <br />
-                <span className="text-white">Is Your </span>
-                <span className="text-gradient-animated">Comeback Story</span>
+                <span className="text-white">The Career Ecosystem for </span>
+                <span className="text-gradient-animated">Every Stage of Growth</span>
               </h1>
             </motion.div>
 
             <motion.p
               variants={itemVariants}
-              className="text-sm sm:text-base lg:text-lg text-slate-300 max-w-xl leading-relaxed mx-auto lg:mx-0"
+              className="text-sm sm:text-base lg:text-lg text-slate-300 max-w-xl leading-relaxed mx-auto"
             >
               {subtitle}
             </motion.p>
@@ -273,7 +250,7 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
               </AnimatePresence>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-1">
+            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-3 justify-center pt-1">
               <Link href="/auth/register">
                 <Button
                   size="lg"
@@ -281,7 +258,7 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
                   className="w-full sm:w-auto rounded-full px-10 text-base h-13 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 hover:scale-[1.02] transition-all font-semibold"
                   data-testid="button-get-started"
                 >
-                  {cta} <ArrowRight className="ml-2 h-4 w-4" />
+                  Start Learning <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/events">
@@ -291,14 +268,14 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
                   className="w-full sm:w-auto rounded-full px-8 text-base h-13 border-white/20 text-white hover:bg-white/10 hover:border-white/30 bg-white/[0.05] backdrop-blur-sm font-medium"
                   data-testid="button-explore-events"
                 >
-                  <Play className="mr-2 h-4 w-4" /> Explore Events
+                  Explore Opportunities
                 </Button>
               </Link>
             </motion.div>
 
             <motion.div
               variants={itemVariants}
-              className="flex flex-wrap items-center gap-5 justify-center lg:justify-start pt-2"
+              className="flex flex-wrap items-center gap-5 justify-center pt-2"
             >
               <div className="flex items-center gap-3">
                 <div className="flex -space-x-2.5">
@@ -330,147 +307,6 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
             </motion.div>
           </motion.div>
 
-          <motion.div
-            initial={false}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.15 }}
-            className="w-full lg:w-[45%] xl:w-[48%] relative hidden sm:block"
-            data-testid="hero-video-container"
-          >
-            <div className="relative lg:pl-4 xl:pl-8">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/40 border border-white/[0.08] group">
-                <div className="relative aspect-[16/10] w-full bg-black/50 backdrop-blur-sm">
-                  <video
-                    ref={cardVideoRef}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    preload="auto"
-                    poster="/images/hero/hero-promo-poster.png"
-                    className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
-                    data-testid="hero-video-card"
-                    src={storyPhases[0].video}
-                    suppressHydrationWarning
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/15 pointer-events-none" />
-
-                  <motion.div
-                    className="absolute top-4 left-4 z-10"
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
-                  >
-                    <Image
-                      src="/logos/nlp-icon-white.png"
-                      alt="NextLeapPro"
-                      width={48}
-                      height={48}
-                      className="h-10 w-10 rounded-lg drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
-                    />
-                  </motion.div>
-
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={`card-${currentPhase}`}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.7 }}
-                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                    >
-                      <div className="bg-black/45 backdrop-blur-sm rounded-xl px-6 py-4 border border-white/10 max-w-[85%]">
-                        <p className="text-white font-bold text-sm sm:text-base lg:text-lg text-center drop-shadow-md">
-                          {currentStory.overlay}
-                        </p>
-                        <p className="text-white/60 text-xs sm:text-sm text-center mt-1">
-                          {currentStory.subtext}
-                        </p>
-                      </div>
-                    </motion.div>
-                  </AnimatePresence>
-
-                  <div className="absolute top-4 right-4 z-10 flex gap-1">
-                    {storyPhases.map((_, i) => (
-                      <div
-                        key={i}
-                        className={`h-1 rounded-full transition-all duration-500 ${
-                          i === currentPhase ? "w-5 bg-white" : "w-1.5 bg-white/30"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/10">
-                        <Users className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm text-white">10k+ Members</p>
-                        <p className="text-white/60 text-xs">Join the community</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-                      <span className="text-xs font-medium text-white/70">Live</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <motion.div
-                className="absolute -bottom-4 -left-2 lg:-bottom-5 lg:-left-4 bg-white/[0.95] backdrop-blur-xl rounded-2xl p-3.5 shadow-xl shadow-black/10 border border-white/60 z-20"
-                initial={false}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.4 }}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-md shadow-emerald-500/30">
-                    <IndianRupee className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-lg font-bold text-slate-900 leading-tight">&#8377;1,04,500</p>
-                    <p className="text-[11px] text-slate-500 font-medium">Earned this month</p>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                className="absolute -top-4 -right-2 lg:-top-5 lg:-right-4 bg-white/[0.95] backdrop-blur-xl rounded-2xl p-3 shadow-xl shadow-black/10 border border-white/60 z-20"
-                initial={false}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6, duration: 0.4 }}
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-md shadow-primary/30">
-                    <TrendingUp className="h-4 w-4 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm text-slate-900">85% Placement</p>
-                    <p className="text-[10px] text-slate-500 font-medium">Success rate</p>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ y: 0 }}
-                animate={{ y: [0, -8, 0] }}
-                transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                className="absolute top-1/3 -left-6 lg:-left-8 bg-white/[0.95] backdrop-blur-xl px-3.5 py-2.5 rounded-xl shadow-lg shadow-black/8 border border-white/60 z-20 hidden lg:flex items-center gap-2.5"
-              >
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm">
-                  <BookOpen className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-800">500+ Courses</p>
-                  <p className="text-[10px] text-slate-500">Expert-led content</p>
-                </div>
-              </motion.div>
-            </div>
-          </motion.div>
         </div>
       </div>
     </section>
