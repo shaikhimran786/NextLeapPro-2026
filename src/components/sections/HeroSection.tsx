@@ -98,6 +98,7 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
   }, []);
 
   useEffect(() => {
+    const handlers: { video: HTMLVideoElement; handler: () => void }[] = [];
     uniqueVideos.forEach((_, i) => {
       const video = bgVideoRefs.current[i];
       if (video) {
@@ -107,9 +108,15 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
         video.load();
         const handler = () => tryPlayVideo(video);
         video.addEventListener("canplay", handler);
+        handlers.push({ video, handler });
         tryPlayVideo(video);
       }
     });
+    return () => {
+      handlers.forEach(({ video, handler }) => {
+        video.removeEventListener("canplay", handler);
+      });
+    };
   }, [tryPlayVideo]);
 
   useEffect(() => {
