@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 export default function GlobalError({
   error,
   reset,
@@ -7,6 +9,21 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    const isHydrationError =
+      error.message?.includes("Hydration") ||
+      error.message?.includes("hydrat") ||
+      error.message?.includes("Invalid hook call") ||
+      error.message?.includes("server rendered HTML didn't match");
+
+    if (isHydrationError) {
+      const timer = setTimeout(() => {
+        reset();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [error, reset]);
+
   return (
     <html lang="en">
       <body style={{ margin: 0, fontFamily: "Inter, system-ui, sans-serif" }}>
@@ -29,6 +46,7 @@ export default function GlobalError({
           </p>
           <button
             onClick={reset}
+            data-testid="button-global-error-retry"
             style={{
               marginTop: "1.5rem",
               padding: "0.5rem 1rem",

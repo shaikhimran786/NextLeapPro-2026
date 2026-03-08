@@ -8,7 +8,24 @@ const withBundleAnalyzer = bundleAnalyzer({
 const nextConfig = {
   compress: true,
   poweredByHeader: false,
-  reactStrictMode: true,
+  reactStrictMode: false,
+
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: [
+          '**/node_modules/**',
+          '**/.next/**',
+          '**/.git/**',
+          '**/prisma/*.db*',
+        ],
+        poll: false,
+        aggregateTimeout: 1000,
+      };
+    }
+    return config;
+  },
   
   images: {
     dangerouslyAllowSVG: true,
