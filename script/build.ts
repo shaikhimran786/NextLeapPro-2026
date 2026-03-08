@@ -36,7 +36,6 @@ function runCommand(command: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
     const proc = spawn(command, args, {
       stdio: "inherit",
-      shell: true,
     });
     proc.on("close", (code) => {
       if (code === 0) {
