@@ -10,9 +10,6 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   
-  // Transpile lucide-react to fix HMR issues with Turbopack
-  transpilePackages: ['lucide-react'],
-  
   images: {
     dangerouslyAllowSVG: true,
     minimumCacheTTL: 60,

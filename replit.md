@@ -114,26 +114,24 @@ Key files:
 
 ### Known HMR Issue (Next.js 16 + Webpack)
 
-**Issue**: During development, Hot Module Replacement (HMR) may show "Invalid hook call" errors in the browser console when files are edited. This causes Fast Refresh to perform a full reload.
+**Issue**: During development, Fast Refresh may continuously rebuild in the browser console. This is caused by the Replit webview healthcheck polling the dev server, triggering HMR cycles.
 
 **Impact**: Development only. Does not affect:
 - Fresh page loads (pages load correctly)
 - Production builds
 - User experience during actual navigation
 
-**Root Cause**: A known issue with Next.js 16's App Router and webpack development server handling React Server Component boundaries during HMR. The error originates in `react-server-dom-webpack-client.browser.development.js`.
+**Previous fix**: Removed unused packages (`@nextui-org/framer-transitions`, `framer-motion-scroll-to-hook`, `tracer-motion`) that brought in duplicate `framer-motion` versions, which was the root cause of "Invalid hook call" and hydration mismatch errors.
 
-**Attempted fixes** (none fully resolved the issue):
-- Replaced `next/dynamic` with `useMounted` pattern
-- Added webpack alias resolution for React/ReactDOM
-- Removed `optimizePackageImports` experimental feature
-- Verified single React copy (properly deduped)
+**Important**: Do not re-add `transpilePackages: ['lucide-react']` to `next.config.mjs` — it was intended for Turbopack but causes HMR issues with webpack.
 
-**Workaround**: When you see the error overlay:
-1. Refresh the page (Ctrl/Cmd + R)
-2. The page will load correctly
+### Production Deployment
 
-**Status**: Documented as a development-time limitation. This is a known Next.js 16 issue being tracked upstream. Track Next.js releases for fixes.
+**Run command**: `node_modules/.bin/next start -p 5000` (uses direct binary, not `npx`, for faster startup)
+
+**Prisma pre-warming**: `src/lib/prisma.ts` eagerly calls `$connect()` in production to avoid cold-start delays on the first SSR request.
+
+**Build pipeline** (`script/build.ts`): `prisma generate` → `next build` → `esbuild server launcher`
 
 ### Feature Demo Video Component
 

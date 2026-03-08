@@ -15,4 +15,10 @@ export const prisma =
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
+if (process.env.NODE_ENV === "production") {
+  prisma.$connect().catch((err: unknown) => {
+    console.error("Prisma pre-connect failed:", err);
+  });
+}
+
 export default prisma;
