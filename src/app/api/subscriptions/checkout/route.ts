@@ -143,7 +143,6 @@ export async function POST(request: NextRequest) {
     }
 
     const activeGateway = siteSettings?.activePaymentGateway || "cashfree";
-    console.log("Payment gateway selection:", { activeGateway, razorpayConfigured: isRazorpayConfigured(), cashfreeConfigured: isCashfreeConfigured() });
 
     const isAnnual = plan.billingCycle === "yearly" || plan.tier.includes("annual");
     const periodDays = isAnnual ? 365 : 30;
