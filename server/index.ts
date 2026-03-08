@@ -1,6 +1,5 @@
 import { spawn, type ChildProcess } from "child_process";
 import * as fs from "fs";
-import * as net from "net";
 import * as path from "path";
 
 const port = parseInt(process.env.PORT || "5000", 10);
@@ -12,7 +11,6 @@ function findPidsOnPort(targetPort: number): number[] {
   const hexPort = targetPort.toString(16).toUpperCase().padStart(4, "0");
   const inodes = new Set<string>();
 
-  // Parse /proc/net/tcp and /proc/net/tcp6 for listening sockets on targetPort
   for (const procFile of ["/proc/net/tcp", "/proc/net/tcp6"]) {
     let content: string;
     try {
@@ -21,10 +19,8 @@ function findPidsOnPort(targetPort: number): number[] {
       continue;
     }
     const lines = content.trim().split("\n");
-    // Skip header line
     for (let i = 1; i < lines.length; i++) {
       const fields = lines[i].trim().split(/\s+/);
-      // fields[1] = local_address (hex_ip:hex_port), fields[3] = state (0A = LISTEN)
       if (fields.length < 10) continue;
       const localAddr = fields[1];
       const state = fields[3];
@@ -38,7 +34,6 @@ function findPidsOnPort(targetPort: number): number[] {
   if (inodes.size === 0) return [];
 
   const pids: number[] = [];
-  // Scan /proc/[pid]/fd/ for socket inodes
   let procEntries: string[];
   try {
     procEntries = fs.readdirSync("/proc");
@@ -65,11 +60,10 @@ function findPidsOnPort(targetPort: number): number[] {
       } catch {
         continue;
       }
-      // link looks like "socket:[12345]"
       const match = link.match(/^socket:\[(\d+)\]$/);
       if (match && inodes.has(match[1])) {
         pids.push(pid);
-        break; // Found this PID, no need to check more fds
+        break;
       }
     }
   }
@@ -88,31 +82,12 @@ function killProcessOnPort(targetPort: number): void {
   }
 }
 
-function isPortInUse(targetPort: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const server = net.createServer();
-    server.once("error", (err: NodeJS.ErrnoException) => {
-      if (err.code === "EADDRINUSE") {
-        resolve(true);
-      } else {
-        resolve(false);
-      }
-    });
-    server.once("listening", () => {
-      server.close(() => resolve(false));
-    });
-    server.listen(targetPort);
-  });
-}
-
 function gracefulShutdown(signal: string): void {
   console.log(`\nReceived ${signal}, shutting down...`);
   if (nextProcess && !nextProcess.killed) {
     nextProcess.kill("SIGTERM");
-    // Force kill after 5 seconds if still alive
     const forceKillTimer = setTimeout(() => {
       if (nextProcess && !nextProcess.killed) {
-        console.log("Force killing Next.js process...");
         nextProcess.kill("SIGKILL");
       }
     }, 5000);
@@ -125,23 +100,33 @@ function gracefulShutdown(signal: string): void {
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
-async function start(): Promise<void> {
-  // Check if port is already in use and kill stale processes
-  const portBusy = await isPortInUse(port);
-  if (portBusy) {
-    console.log(`Port ${port} is in use, killing stale processes...`);
-    killProcessOnPort(port);
-    // Brief delay to let the OS release the port
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+function resolveNextBin(): string {
+  try {
+    const localBin = path.resolve("node_modules", ".bin", "next");
+    if (fs.existsSync(localBin)) return localBin;
+  } catch {}
+  return "npx";
+}
+
+function start(): void {
+  if (!isProduction) {
+    const pids = findPidsOnPort(port);
+    if (pids.length > 0) {
+      console.log(`Port ${port} is in use, killing stale processes...`);
+      killProcessOnPort(port);
+    }
   }
 
   console.log(`Starting Next.js in ${isProduction ? "production" : "development"} mode on port ${port}...`);
 
-  const nextArgs = isProduction
-    ? ["next", "start", "-p", port.toString()]
-    : ["next", "dev", "--webpack", "-p", port.toString()];
+  const nextBin = resolveNextBin();
+  const useNpx = nextBin === "npx";
 
-  nextProcess = spawn("npx", nextArgs, {
+  const nextArgs = isProduction
+    ? (useNpx ? ["next", "start", "-p", port.toString()] : ["start", "-p", port.toString()])
+    : (useNpx ? ["next", "dev", "--webpack", "-p", port.toString()] : ["dev", "--webpack", "-p", port.toString()]);
+
+  nextProcess = spawn(nextBin, nextArgs, {
     cwd: process.cwd(),
     stdio: "inherit",
     env: { ...process.env },

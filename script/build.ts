@@ -49,12 +49,14 @@ function runCommand(command: string, args: string[]): Promise<void> {
 }
 
 async function buildAll() {
-  // Kill any running dev server to avoid corrupting .next mid-build
   try {
     spawn("pkill", ["-f", "next dev"], { stdio: "ignore" });
   } catch {}
 
   await runCommand("rm", ["-rf", "dist", ".next"]);
+
+  console.log("Generating Prisma client...");
+  await runCommand("npx", ["prisma", "generate"]);
 
   console.log("Building Next.js application...");
   await runCommand("npx", ["next", "build"]);
