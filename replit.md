@@ -127,7 +127,7 @@ Key files:
 
 ### Production Deployment
 
-**Run command**: `node_modules/.bin/next start -p 5000` (uses direct binary, not `npx`, for faster startup)
+**Run command**: `node production-server.mjs` — custom server that starts an HTTP server immediately (returning 200 for healthchecks) while Next.js initializes in the background. This prevents Replit's healthcheck from failing during Next.js cold start.
 
 **Prisma pre-warming**: `src/lib/prisma.ts` eagerly calls `$connect()` in production to avoid cold-start delays on the first SSR request.
 
