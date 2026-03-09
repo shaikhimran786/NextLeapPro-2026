@@ -59,7 +59,7 @@ async function buildAll() {
   await runCommand("npx", ["prisma", "generate"]);
 
   console.log("Building Next.js application...");
-  await runCommand("npx", ["next", "build"]);
+  await runCommand("npx", ["next", "build", "--webpack"]);
 
   console.log("Building server launcher...");
   const pkg = JSON.parse(await readFile("package.json", "utf-8"));
