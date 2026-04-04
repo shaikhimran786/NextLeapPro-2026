@@ -1,0 +1,26 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "XD-WQX6AEpUpRt7StH4DU"
+uri = "file://public/images/personas/avatar-1.png"
+type = "image"
+title = "south asian woman professional"
+
+[[generated]]
+id = "yjOtbzAaQT7tGOZ_Ucwzg"
+uri = "file://public/images/personas/avatar-2.png"
+type = "image"
+title = "black man professional"
+
+[[generated]]
+id = "3YkTtMBI0IAla3andVzqu"
+uri = "file://public/images/personas/avatar-3.png"
+type = "image"
+title = "east asian woman professional"
+
+[[generated]]
+id = "PYEn19I6zgDlP73lQUYYJ"
+uri = "file://public/images/personas/avatar-4.png"
+type = "image"
+title = "hispanic man professional"

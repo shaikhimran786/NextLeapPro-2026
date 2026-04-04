@@ -286,14 +286,24 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
             >
               <div className="flex items-center gap-3">
                 <div className="flex -space-x-2.5">
-                  {[0, 1, 2, 3].map((i) => (
+                  {[
+                    { src: "/images/personas/avatar-1.png", alt: "Member" },
+                    { src: "/images/personas/avatar-2.png", alt: "Member" },
+                    { src: "/images/personas/avatar-3.png", alt: "Member" },
+                    { src: "/images/personas/avatar-4.png", alt: "Member" },
+                  ].map((avatar, i) => (
                     <div
                       key={i}
-                      className="h-9 w-9 rounded-full border-2 border-black/30 shadow-sm ring-1 ring-white/15"
-                      style={{
-                        background: `linear-gradient(135deg, ${['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4'][i]}, ${['#ee5a24', '#009688', '#0077b6', '#52c41a'][i]})`
-                      }}
-                    />
+                      className="h-9 w-9 rounded-full border-2 border-black/40 shadow-sm ring-1 ring-white/20 overflow-hidden"
+                    >
+                      <Image
+                        src={avatar.src}
+                        alt={avatar.alt}
+                        width={36}
+                        height={36}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   ))}
                   <div className="h-9 w-9 rounded-full border-2 border-black/30 bg-white/10 backdrop-blur-sm flex items-center justify-center text-white text-[10px] font-bold shadow-sm ring-1 ring-white/15">
                     +9k
