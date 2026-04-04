@@ -130,7 +130,7 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
 
   return (
     <section
-      className="relative min-h-[calc(100dvh-4rem)] flex items-center overflow-hidden"
+      className="relative min-h-screen flex items-center overflow-hidden -mt-16 md:-mt-[4.5rem] lg:-mt-20"
       aria-label="Hero section - Welcome to Next Leap Pro"
       data-testid="hero-section"
     >
@@ -177,7 +177,7 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
         ))}
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-10 sm:py-14 lg:py-0">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-10 sm:py-14 lg:py-0 pt-20 sm:pt-24 lg:pt-28">
         <div className="flex flex-col items-center">
 
           <motion.div

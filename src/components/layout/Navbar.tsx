@@ -59,6 +59,7 @@ import useSWR from "swr";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_LOGO = "/logos/logo-dark.png";
+const WHITE_LOGO = "/logos/nlp-logo-white.png";
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 // TypeScript interface for the plans API response
@@ -254,7 +255,7 @@ function AuthLoadingSkeleton() {
   );
 }
 
-function GuestButtons({ variant = "desktop" }: { variant?: "desktop" | "mobile" }) {
+function GuestButtons({ variant = "desktop", transparent = false }: { variant?: "desktop" | "mobile"; transparent?: boolean }) {
   if (variant === "mobile") {
     return (
       <div className="space-y-3 p-4">
@@ -285,7 +286,12 @@ function GuestButtons({ variant = "desktop" }: { variant?: "desktop" | "mobile" 
       <Link href="/auth/login">
         <Button
           variant="ghost"
-          className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium px-5 h-11 rounded-full transition-all duration-200"
+          className={cn(
+            "font-medium px-5 h-11 rounded-full transition-all duration-200",
+            transparent
+              ? "text-white/90 hover:text-white hover:bg-white/15 border border-white/20 hover:border-white/30"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+          )}
           data-testid="button-login"
         >
           Sign In
@@ -549,24 +555,25 @@ function MobileUserSection({ userStatus, hasActiveSubscription, isLoggingOut, on
   );
 }
 
-function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
+function HamburgerIcon({ isOpen, transparent = false }: { isOpen: boolean; transparent?: boolean }) {
+  const lineClass = transparent ? "bg-white" : "bg-slate-700";
   return (
     <div className="relative w-6 h-5 flex flex-col justify-between">
       <span
         className={cn(
-          "block h-0.5 w-6 bg-slate-700 rounded-full transition-all duration-300 origin-center",
+          `block h-0.5 w-6 ${lineClass} rounded-full transition-all duration-300 origin-center`,
           isOpen && "rotate-45 translate-y-[9px]"
         )}
       />
       <span
         className={cn(
-          "block h-0.5 w-6 bg-slate-700 rounded-full transition-all duration-300",
+          `block h-0.5 w-6 ${lineClass} rounded-full transition-all duration-300`,
           isOpen ? "opacity-0 scale-0" : "opacity-100"
         )}
       />
       <span
         className={cn(
-          "block h-0.5 w-6 bg-slate-700 rounded-full transition-all duration-300 origin-center",
+          `block h-0.5 w-6 ${lineClass} rounded-full transition-all duration-300 origin-center`,
           isOpen && "-rotate-45 -translate-y-[9px]"
         )}
       />
@@ -594,11 +601,15 @@ export function Navbar({
 }: NavbarProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { userStatus, isLoading } = useUserStatus();
   const router = useRouter();
   const pathname = usePathname();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const menuToggleRef = useRef<HTMLButtonElement>(null);
+
+  const isHomePage = pathname === '/';
+  const isTransparent = isHomePage && !scrolled;
 
   const { data: siteSettings } = useSWR("/api/admin/settings", fetcher, {
     revalidateOnFocus: false,
@@ -680,6 +691,13 @@ export function Navbar({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, closeMenu]);
 
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const logoSrc = siteSettings?.logoDark || DEFAULT_LOGO;
 
   const isActiveLink = useCallback((href: string) => {
@@ -738,7 +756,7 @@ export function Navbar({
       );
     }
 
-    return <GuestButtons />;
+    return <GuestButtons transparent={isTransparent} />;
   };
 
   const renderMobileAuth = () => {
@@ -763,10 +781,19 @@ export function Navbar({
     return <GuestButtons variant="mobile" />;
   };
 
+  const triggerClass = isTransparent
+    ? "!text-white/90 hover:!text-white hover:!bg-white/15 focus:!text-white focus:!bg-white/15 data-[state=open]:!bg-white/10 data-[active]:!text-white"
+    : "";
+
   return (
     <>
     <header
-      className="sticky top-0 z-[9998] w-full bg-white/95 backdrop-blur-xl border-b border-slate-200/60 supports-[backdrop-filter]:bg-white/80"
+      className={cn(
+        "sticky top-0 z-[9998] w-full transition-all duration-300 ease-in-out",
+        isTransparent
+          ? "bg-transparent border-b border-transparent"
+          : "bg-white/95 backdrop-blur-xl border-b border-slate-200/60 shadow-sm supports-[backdrop-filter]:bg-white/80"
+      )}
       role="banner"
     >
       <nav
@@ -775,7 +802,7 @@ export function Navbar({
       >
         <Link href="/" className="flex items-center shrink-0 group relative z-10">
           <Image
-            src={DEFAULT_LOGO}
+            src={isTransparent ? WHITE_LOGO : DEFAULT_LOGO}
             alt="Next Leap Pro - Learn, Earn, and Grow"
             width={180}
             height={56}
@@ -790,7 +817,7 @@ export function Navbar({
             <NavigationMenuList className="gap-1">
               {/* Learn Menu */}
               <NavigationMenuItem>
-                <NavigationMenuTrigger>Learn</NavigationMenuTrigger>
+                <NavigationMenuTrigger className={triggerClass}>Learn</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <div className="grid gap-3 p-6 w-[500px] grid-cols-[1fr_1fr]">
                     <div className="space-y-1">
@@ -811,7 +838,7 @@ export function Navbar({
 
               {/* Earn Menu */}
               <NavigationMenuItem>
-                <NavigationMenuTrigger>Earn</NavigationMenuTrigger>
+                <NavigationMenuTrigger className={triggerClass}>Earn</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <div className="grid gap-3 p-6 w-[500px] grid-cols-[1fr_1fr]">
                     <div className="space-y-1">
@@ -832,7 +859,7 @@ export function Navbar({
 
               {/* Community Menu */}
               <NavigationMenuItem>
-                <NavigationMenuTrigger>Community</NavigationMenuTrigger>
+                <NavigationMenuTrigger className={triggerClass}>Community</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <div className="grid gap-3 p-6 w-[500px] grid-cols-[1fr_1fr]">
                     <div className="space-y-1">
@@ -853,7 +880,7 @@ export function Navbar({
 
               {/* Plans Menu */}
               <NavigationMenuItem>
-                <NavigationMenuTrigger>Plans</NavigationMenuTrigger>
+                <NavigationMenuTrigger className={triggerClass}>Plans</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <div className="p-6 w-[600px]">
                     <div className="grid grid-cols-3 gap-3">
@@ -875,7 +902,7 @@ export function Navbar({
 
               {/* Support Menu */}
               <NavigationMenuItem>
-                <NavigationMenuTrigger>Support</NavigationMenuTrigger>
+                <NavigationMenuTrigger className={triggerClass}>Support</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <div className="p-6 w-[400px]">
                     <div className="space-y-1">
@@ -905,9 +932,9 @@ export function Navbar({
           type="button"
           className={cn(
             "flex lg:hidden items-center justify-center h-12 w-12 rounded-xl transition-all duration-200",
-            isOpen
-              ? "bg-slate-200"
-              : "bg-slate-100 hover:bg-slate-200 active:scale-95"
+            isTransparent
+              ? isOpen ? "bg-white/20" : "bg-white/10 hover:bg-white/20 active:scale-95"
+              : isOpen ? "bg-slate-200" : "bg-slate-100 hover:bg-slate-200 active:scale-95"
           )}
           onClick={toggleMenu}
           aria-label={isOpen ? "Close menu" : "Open menu"}
@@ -915,7 +942,7 @@ export function Navbar({
           aria-controls="mobile-menu"
           data-testid="mobile-menu-toggle"
         >
-          <HamburgerIcon isOpen={isOpen} />
+          <HamburgerIcon isOpen={isOpen} transparent={isTransparent} />
         </button>
       </nav>
     </header>
