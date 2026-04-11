@@ -1,0 +1,184 @@
+Here’s a focused Replit prompt to fix the mismatch and improve authenticity of your Testimonials section:
+
+---
+
+### Replit Prompt
+
+**Objective:**
+Align testimonial avatar images with user names (especially Indian-origin names) to make the section feel authentic, relatable, and trustworthy. Improve emotional connection by ensuring users see “people like them”.
+
+---
+
+### 1. Problem to Fix
+
+* Current avatars are real images but **do not match the persona’s name or context**
+* Example: Indian names showing white/international faces
+* This creates **trust gap and breaks relatability**
+
+---
+
+### 2. Avatar Strategy (Critical)
+
+**Rule:**
+Avatar must align with:
+
+* Name origin (Indian vs global)
+* Gender
+* Professional context
+
+---
+
+### 3. Implementation Logic
+
+#### Update testimonial data structure:
+
+```ts
+{
+  name: string,
+  role: string,
+  testimonial: string,
+  avatarUrl?: string,
+  gender?: "male" | "female",
+  ethnicity?: "indian" | "global"
+}
+```
+
+---
+
+### 4. Avatar Source Logic
+
+#### Priority Order:
+
+1. **Real user image (if available)**
+2. **Curated realistic image (preferred for now)**
+3. **Fallback API (controlled, not random mismatch)**
+
+---
+
+### 5. Indian Persona Image Handling
+
+Use **realistic Indian faces** (avoid random western faces)
+
+**Recommended approach:**
+
+* Create a small curated set:
+
+```ts
+const indianMaleAvatars = [
+  "/avatars/indian/male1.jpg",
+  "/avatars/indian/male2.jpg"
+];
+
+const indianFemaleAvatars = [
+  "/avatars/indian/female1.jpg",
+  "/avatars/indian/female2.jpg"
+];
+```
+
+* Map based on name + gender:
+
+```ts
+const isIndianName = (name) => {
+  const indianNames = ["Patel", "Sharma", "Kumar", "Joshi", "Iyer"];
+  return indianNames.some(n => name.includes(n));
+};
+
+const avatar = avatarUrl 
+  ? avatarUrl
+  : isIndianName(name)
+    ? gender === "female"
+      ? indianFemaleAvatars[index % indianFemaleAvatars.length]
+      : indianMaleAvatars[index % indianMaleAvatars.length]
+    : globalAvatarFallback;
+```
+
+---
+
+### 6. UI Consistency
+
+```tsx
+<img
+  src={avatar}
+  alt={name}
+  className="w-12 h-12 rounded-full object-cover shadow-sm"
+/>
+```
+
+**Keep:**
+
+* Same size (w-12 h-12 or equivalent)
+* Rounded full
+* Subtle shadow
+* Proper alignment with text
+
+---
+
+### 7. Performance
+
+* Store avatars locally (`/public/avatars/...`)
+* Use compressed images (WEBP preferred)
+* Lazy load if needed:
+
+```tsx
+loading="lazy"
+```
+
+---
+
+### 8. Content Alignment (Very Important)
+
+Ensure testimonials emotionally connect with:
+
+#### A. Layoff Recovery
+
+* Loss → rebuilding → earning again
+
+#### B. Career Transition
+
+* Job dissatisfaction → meaningful work
+
+#### C. Second Income / Plan B
+
+* Salary dependency → multiple income streams
+
+#### D. Experienced Professionals (20+ yrs)
+
+* Sharing knowledge → mentoring / workshops / guest lectures
+
+---
+
+### 9. Tone Guidelines
+
+* Keep testimonials:
+
+  * Simple
+  * Human
+  * Real-life sounding
+* Avoid corporate language
+* Use conversational tone
+
+---
+
+### 10. Expected Outcome
+
+* Users feel: “Yeh mere jaisa hi hai”
+* Strong trust and relatability
+* Higher conversion from visitors → signups
+* Testimonials become a **decision trigger**, not just decoration
+
+---
+
+### 11. Important Constraints
+
+* Do NOT use cartoon/illustration avatars
+* Do NOT use random mismatched faces
+* Do NOT break carousel/slider functionality
+
+---
+
+If you want to push this further, next step I’d recommend:
+
+* Add **“Before → After” mini story under each testimonial**
+* Or show **earnings / outcomes (even ranges)** to make it more real
+
+This change alone can significantly improve how users emotionally connect with Next Leap Pro.
