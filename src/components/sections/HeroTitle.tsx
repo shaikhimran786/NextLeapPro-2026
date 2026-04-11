@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, useReducedMotion, Variants } from "framer-motion";
 import useSWR from "swr";
 
@@ -264,3 +264,84 @@ export function HeroTitle({
 
 // Export defaults for admin UI
 export { DEFAULT_ANIMATION, DEFAULT_GRADIENTS };
+
+interface HeroTitleTypingProps {
+  text: string;
+  className?: string;
+  typingSpeedMs?: number;
+  startDelayMs?: number;
+  pauseMs?: number;
+}
+
+export function HeroTitleTyping({
+  text,
+  className = "",
+  typingSpeedMs = 60,
+  startDelayMs = 500,
+  pauseMs = 1800,
+}: HeroTitleTypingProps) {
+  const shouldReduceMotion = useReducedMotion();
+  const [displayText, setDisplayText] = useState(shouldReduceMotion ? text : "");
+  const [cursorVisible, setCursorVisible] = useState(true);
+
+  useEffect(() => {
+    if (shouldReduceMotion) {
+      setDisplayText(text);
+      return;
+    }
+
+    let typingTimer: ReturnType<typeof setTimeout> | undefined;
+    let pauseTimer: ReturnType<typeof setTimeout> | undefined;
+    let restartTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const startTyping = () => {
+      let index = 0;
+      setDisplayText("");
+
+      const step = () => {
+        index += 1;
+        setDisplayText(text.slice(0, index));
+
+        if (index < text.length) {
+          typingTimer = setTimeout(step, typingSpeedMs);
+        } else {
+          pauseTimer = setTimeout(() => {
+            restartTimer = setTimeout(startTyping, pauseMs);
+          }, pauseMs);
+        }
+      };
+
+      typingTimer = setTimeout(step, typingSpeedMs);
+    };
+
+    const startDelayTimer = setTimeout(startTyping, startDelayMs);
+    const blinkTimer = setInterval(() => {
+      setCursorVisible((value) => !value);
+    }, 530);
+
+    return () => {
+      clearTimeout(startDelayTimer);
+      clearTimeout(typingTimer);
+      clearTimeout(pauseTimer);
+      clearTimeout(restartTimer);
+      clearInterval(blinkTimer);
+    };
+  }, [pauseMs, shouldReduceMotion, startDelayMs, text, typingSpeedMs]);
+
+  return (
+    <span
+      className={`inline-flex items-center justify-center min-h-[1.2em] whitespace-pre-wrap ${className}`}
+      data-testid="hero-title-typing"
+    >
+      <span className="inline-block">{displayText}</span>
+      {!shouldReduceMotion && (
+        <span
+          aria-hidden="true"
+          className={`ml-1 inline-block w-[0.65ch] text-current ${cursorVisible ? "opacity-100" : "opacity-0"}`}
+        >
+          |
+        </span>
+      )}
+    </span>
+  );
+}

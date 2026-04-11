@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Star, Sparkles } from "@/lib/icons";
+import { HeroTitleTyping } from "@/components/sections/HeroTitle";
 import type { HeroAnimationConfig, HeroGradientsConfig } from "@/components/sections/HeroTitle";
 
 interface SiteSettings {
@@ -199,11 +200,11 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <h1
-                className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] xl:text-6xl font-heading font-bold leading-[1.08] tracking-tight text-white"
-                data-testid="hero-title"
-              >
-                {title}
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] xl:text-6xl font-heading font-bold leading-[1.08] tracking-tight text-white">
+                <HeroTitleTyping
+                  text={title}
+                  className="text-center"
+                />
               </h1>
             </motion.div>
 
