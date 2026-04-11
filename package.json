@@ -130,5 +130,10 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "cashfree-pg": {
+      "axios": "1.15.0"
+    }
   }
 }
