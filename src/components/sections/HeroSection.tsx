@@ -2,7 +2,6 @@
 
 import { useRef, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Star, Sparkles } from "@/lib/icons";
@@ -80,8 +79,6 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
 
   const bgVideoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const [currentPhase, setCurrentPhase] = useState(0);
-  const [logoRevealed, setLogoRevealed] = useState(false);
-
   const tryPlayVideo = useCallback((video: HTMLVideoElement | null) => {
     if (!video) return;
     video.muted = true;
@@ -90,11 +87,6 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
     if (video.paused) {
       video.play().catch(() => {});
     }
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setLogoRevealed(true), 300);
-    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -186,21 +178,6 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
             animate="visible"
             className="w-full max-w-3xl mx-auto space-y-6 sm:space-y-7 text-center"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }}
-              animate={logoRevealed ? { opacity: 1, scale: 1, filter: "blur(0px)" } : {}}
-              transition={{ duration: 1.2, ease: "easeOut" }}
-            >
-              <Image
-                src="/logos/nlp-logo-white.png"
-                alt="Next Leap Pro"
-                width={280}
-                height={70}
-                className="h-14 sm:h-16 lg:h-[72px] w-auto mx-auto drop-shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
-                priority
-                data-testid="hero-logo"
-              />
-            </motion.div>
 
             <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-2.5 justify-center">
               <Link
