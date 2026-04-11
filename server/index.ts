@@ -173,7 +173,7 @@ async function start(): Promise<void> {
 
   const nextArgs = isProduction
     ? (useNpx ? ["next", "start", "-p", port.toString()] : ["start", "-p", port.toString()])
-    : (useNpx ? ["next", "dev", "--webpack", "-p", port.toString()] : ["dev", "--webpack", "-p", port.toString()]);
+    : (useNpx ? ["next", "dev", "-p", port.toString()] : ["dev", "-p", port.toString()]);
 
   nextProcess = spawn(nextBin, nextArgs, {
     cwd: process.cwd(),
