@@ -131,9 +131,9 @@ Key files:
 
 **Prisma pre-warming**: `src/lib/prisma.ts` eagerly calls `$connect()` in production to avoid cold-start delays on the first SSR request.
 
-**Build pipeline** (`script/build.ts`): `prisma generate` → `next build --webpack` → `esbuild server launcher`
+**Build pipeline** (`script/build.ts`): `prisma generate` → `next build` → `esbuild server launcher`
 
-**Important**: Next.js 16 defaults to Turbopack, but this project uses a custom webpack config. Always pass `--webpack` to both `next dev` and `next build` commands.
+**Important**: This project uses Next.js 15.5.15 (downgraded from 16.2.3 to fix React 18 compatibility). The `--webpack` flag is NOT supported in Next.js 15 — do not add it to `next dev` or `next build` commands.
 
 ### Feature Demo Video Component
 
