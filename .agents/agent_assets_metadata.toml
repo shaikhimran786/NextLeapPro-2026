@@ -24,3 +24,69 @@ id = "PYEn19I6zgDlP73lQUYYJ"
 uri = "file://public/images/personas/avatar-4.png"
 type = "image"
 title = "hispanic man professional"
+
+[[generated]]
+id = "QTDQA1yQvJs9Q0v5n_Huk"
+uri = "file://public/avatars/female-1.png"
+type = "image"
+title = "Indian female student avatar"
+
+[[generated]]
+id = "6BAieuZP-hdVvsnA9Y1Aj"
+uri = "file://public/avatars/male-2.png"
+type = "image"
+title = "Indian male engineer avatar"
+
+[[generated]]
+id = "ZhG3IoJ0PDNuHLzxW-MMj"
+uri = "file://public/avatars/female-3.png"
+type = "image"
+title = "Indian female coach avatar"
+
+[[generated]]
+id = "OjzqkzABZCPZZ4K-4MjDp"
+uri = "file://public/avatars/male-4.png"
+type = "image"
+title = "Indian male trainer avatar"
+
+[[generated]]
+id = "i7rNR86HJIizp30uvAVcT"
+uri = "file://public/avatars/female-5.png"
+type = "image"
+title = "Indian female marketing avatar"
+
+[[generated]]
+id = "m4KU1meuibXjB7isBQCCO"
+uri = "file://public/avatars/male-6.png"
+type = "image"
+title = "Indian male student avatar"
+
+[[generated]]
+id = "jvJApPD0M4jJ9l5-COIaz"
+uri = "file://public/avatars/male-7.png"
+type = "image"
+title = "Indian male manager avatar"
+
+[[generated]]
+id = "bV2V8IQHmZAUfwQU_PKjD"
+uri = "file://public/avatars/male-8.png"
+type = "image"
+title = "Indian male workshop host avatar"
+
+[[generated]]
+id = "RoYHkImbpHdNqE9p-YvNi"
+uri = "file://public/avatars/male-9.png"
+type = "image"
+title = "Indian male veteran avatar"
+
+[[generated]]
+id = "FXRBtMTvISrVmC1ragrFE"
+uri = "file://public/avatars/female-10.png"
+type = "image"
+title = "Indian female community builder"
+
+[[generated]]
+id = "hIZcwqEVHNqUBN8-vxvF-"
+uri = "file://public/avatars/female-11.png"
+type = "image"
+title = "Indian female facilitator avatar"
