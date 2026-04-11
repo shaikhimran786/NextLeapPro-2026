@@ -330,14 +330,14 @@ export function HeroTitleTyping({
 
   return (
     <span
-      className={`inline-flex items-center justify-center min-h-[1.2em] whitespace-pre-wrap ${className}`}
+      className={`hero-title-typing inline-flex items-center justify-center min-h-[clamp(90px,12vw,150px)] w-full max-w-full whitespace-normal break-words overflow-hidden text-balance ${className}`}
       data-testid="hero-title-typing"
     >
-      <span className="inline-block">{displayText}</span>
+      <span className="inline-block max-w-full">{displayText}</span>
       {!shouldReduceMotion && (
         <span
           aria-hidden="true"
-          className={`ml-1 inline-block w-[0.65ch] text-current ${cursorVisible ? "opacity-100" : "opacity-0"}`}
+          className={`ml-1 inline-block w-[0.65ch] shrink-0 text-current ${cursorVisible ? "opacity-100" : "opacity-0"}`}
         >
           |
         </span>

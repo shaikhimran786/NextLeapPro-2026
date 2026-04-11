@@ -1,0 +1,79 @@
+Objective:
+Fix the hero title layout to prevent height fluctuation, layout shifting, and readability issues across all screen sizes.
+
+Scope:
+- Apply fixes ONLY to the hero section and hero title.
+- Ensure stable height during animations (typing or dynamic text).
+- Maintain clean, responsive, and readable layout.
+
+Key Requirements:
+
+1. Fixed Height for Hero Title:
+- Set a minimum height (min-height) for the hero title container.
+- Height should accommodate 2–3 lines of text without resizing.
+- Prevent layout jump when text animates or wraps.
+
+Example:
+.hero-title {
+  min-height: 120px; /* adjust based on font size */
+}
+
+2. Prevent Layout Shift (CLS Fix):
+- Avoid dynamic pushing of elements below the hero section.
+- Reserve space before content loads or animates.
+- Ensure consistent spacing between title, subtitle, and CTA.
+
+3. Responsive Typography:
+- Use fluid typography (clamp) for better scaling.
+
+Example:
+.hero-title {
+  font-size: clamp(28px, 5vw, 52px);
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+4. Text Wrapping Control:
+- Ensure proper wrapping without breaking words awkwardly.
+- Use:
+  word-break: normal;
+  overflow-wrap: break-word;
+
+5. Center Alignment & Spacing:
+- Keep hero content vertically and horizontally centered.
+- Maintain consistent padding across devices.
+
+Example:
+.hero-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+6. Avoid Overflow & Floating Issues:
+- Prevent text from overflowing container on smaller screens.
+- Ensure no unwanted "floating" or shifting of elements.
+
+7. Mobile Optimization:
+- Reduce min-height slightly for smaller screens.
+- Maintain readability and spacing.
+
+Example:
+@media (max-width: 768px) {
+  .hero-title {
+    min-height: 90px;
+  }
+}
+
+UI/UX Expectations:
+- No visual jump when page loads or animation runs.
+- Title remains stable and easy to read at all times.
+- Clean SaaS-style layout with balanced spacing.
+- Smooth experience across desktop, tablet, and mobile.
+
+Deliverable:
+- Updated hero section styles with stable layout.
+- Reusable CSS/Component that prevents layout shift permanently.

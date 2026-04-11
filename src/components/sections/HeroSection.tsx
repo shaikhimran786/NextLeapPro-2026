@@ -199,11 +199,11 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
               </span>
             </motion.div>
 
-            <motion.div variants={itemVariants}>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] xl:text-6xl font-heading font-bold leading-[1.08] tracking-tight text-white">
+            <motion.div variants={itemVariants} className="w-full flex justify-center">
+              <h1 className="hero-title-stable w-full max-w-4xl text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] xl:text-6xl font-heading font-bold leading-[1.08] tracking-tight text-white">
                 <HeroTitleTyping
                   text={title}
-                  className="text-center"
+                  className="hero-title-typing-wrapper text-center"
                 />
               </h1>
             </motion.div>
