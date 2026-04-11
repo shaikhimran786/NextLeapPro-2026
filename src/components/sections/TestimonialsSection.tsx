@@ -12,7 +12,7 @@ interface Testimonial {
   name: string;
   role: string;
   persona: "student" | "mentor" | "coach" | "trainer" | "professional";
-  avatar?: string;
+  avatar: string;
   content: string;
   rating: number;
 }
