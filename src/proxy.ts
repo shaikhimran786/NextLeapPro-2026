@@ -21,9 +21,6 @@ export function proxy(request: NextRequest) {
   }
 
   if (isAdminAuthPage) {
-    if (adminSessionToken) {
-      return NextResponse.redirect(new URL('/admin', request.url));
-    }
     return NextResponse.next();
   }
 
