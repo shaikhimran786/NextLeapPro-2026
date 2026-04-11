@@ -17,12 +17,17 @@ interface Testimonial {
   rating: number;
 }
 
+function getDiceBearAvatar(name: string): string {
+  return `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}&backgroundColor=transparent`;
+}
+
 const testimonials: Testimonial[] = [
   {
     id: 1,
     name: "Priya Sharma",
     role: "Computer Science Student",
     persona: "student",
+    avatar: getDiceBearAvatar("Priya Sharma"),
     content: "Next Leap Pro helped me land my first internship! The workshops on resume building and mock interviews were exactly what I needed. The community support is incredible.",
     rating: 5,
   },
@@ -31,6 +36,7 @@ const testimonials: Testimonial[] = [
     name: "Rajesh Kumar",
     role: "Senior Software Engineer & Mentor",
     persona: "mentor",
+    avatar: getDiceBearAvatar("Rajesh Kumar"),
     content: "As a mentor, I love how easy it is to connect with eager learners. The platform's event management tools make hosting sessions seamless. Highly recommend for anyone looking to give back.",
     rating: 5,
   },
@@ -39,6 +45,7 @@ const testimonials: Testimonial[] = [
     name: "Ananya Patel",
     role: "Career Coach",
     persona: "coach",
+    avatar: getDiceBearAvatar("Ananya Patel"),
     content: "The creator tools are fantastic! I've built a thriving coaching practice through Next Leap Pro. The subscription model lets me focus on delivering value while the platform handles everything else.",
     rating: 5,
   },
@@ -47,6 +54,7 @@ const testimonials: Testimonial[] = [
     name: "Vikram Singh",
     role: "Corporate Trainer",
     persona: "trainer",
+    avatar: getDiceBearAvatar("Vikram Singh"),
     content: "Organizing bootcamps has never been easier. The event management, payment integration, and attendee tracking features are top-notch. My training business has grown 3x since joining.",
     rating: 5,
   },
@@ -55,6 +63,7 @@ const testimonials: Testimonial[] = [
     name: "Meera Joshi",
     role: "Marketing Professional",
     persona: "professional",
+    avatar: getDiceBearAvatar("Meera Joshi"),
     content: "I was looking to upskill in digital marketing. Found amazing workshops here and even connected with mentors who guided my career transition. Worth every rupee!",
     rating: 5,
   },
@@ -63,6 +72,7 @@ const testimonials: Testimonial[] = [
     name: "Arjun Reddy",
     role: "Final Year Engineering Student",
     persona: "student",
+    avatar: getDiceBearAvatar("Arjun Reddy"),
     content: "The bootcamps on Next Leap Pro are incredible. I learned more in one weekend workshop than I did in an entire semester. Plus, the networking opportunities are unmatched!",
     rating: 5,
   },
@@ -293,15 +303,19 @@ export function TestimonialsSection() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 }}
                       >
-                        <div className="relative">
+                        <motion.div
+                          className="relative"
+                          whileHover={{ scale: 1.1 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                        >
                           <div className={`absolute -inset-1 bg-gradient-to-r ${personaGradients[currentTestimonial.persona]} rounded-full blur-sm opacity-50`} />
-                          <Avatar className="h-14 w-14 relative ring-2 ring-white">
-                            <AvatarImage src={currentTestimonial.avatar} alt={`Profile photo of ${currentTestimonial.name}, ${currentTestimonial.role}`} />
+                          <Avatar className="h-14 w-14 relative ring-2 ring-white shadow-md">
+                            <AvatarImage src={currentTestimonial.avatar} alt={`Profile photo of ${currentTestimonial.name}, ${currentTestimonial.role}`} loading="lazy" />
                             <AvatarFallback className={`bg-gradient-to-br ${personaGradients[currentTestimonial.persona]} text-white font-semibold text-lg`}>
                               {currentTestimonial.name.split(" ").map(n => n[0]).join("")}
                             </AvatarFallback>
                           </Avatar>
-                        </div>
+                        </motion.div>
                         <div className="text-left">
                           <h4 className="font-semibold text-slate-900 text-lg">
                             {currentTestimonial.name}
@@ -409,8 +423,8 @@ export function TestimonialsSection() {
                 whileHover={{ scale: index === currentIndex ? 1.1 : 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={testimonial.avatar} alt={`${testimonial.name}'s photo`} />
+                <Avatar className="h-10 w-10 shadow-sm transition-transform duration-200 hover:scale-110">
+                  <AvatarImage src={testimonial.avatar} alt={`${testimonial.name}'s photo`} loading="lazy" />
                   <AvatarFallback className={`bg-gradient-to-br ${personaGradients[testimonial.persona]} text-white text-sm font-medium`}>
                     {testimonial.name.split(" ").map(n => n[0]).join("")}
                   </AvatarFallback>
