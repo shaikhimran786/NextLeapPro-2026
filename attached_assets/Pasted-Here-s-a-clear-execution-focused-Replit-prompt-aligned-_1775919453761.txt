@@ -1,0 +1,182 @@
+Here’s a clear, execution-focused Replit prompt aligned with your product vision and audience:
+
+---
+
+### Replit Prompt
+
+**Objective:**
+Upgrade the Testimonials section to feel more real, relatable, and high-trust by:
+
+1. Replacing avatar placeholders with natural human images aligned to gender
+2. Adding new testimonials from professionals facing layoffs or seeking alternate income
+3. Positioning Next Leap Pro as a platform that helps experienced professionals “Learn, Earn, and Grow” through real opportunities
+
+---
+
+### 1. Avatar Image Upgrade
+
+**Current Issue:**
+Testimonials are using initials (e.g., “AP”), which feels generic and low-trust.
+
+**Implementation:**
+
+* Add/update testimonial data structure:
+
+```ts
+{
+  name: string,
+  role: string,
+  title: string,
+  testimonial: string,
+  avatarUrl?: string,
+  gender?: "male" | "female"
+}
+```
+
+**Avatar Logic:**
+
+* If `avatarUrl` exists → show real image
+* Else → use realistic human avatar generator (not cartoonish)
+
+**Use natural human avatars:**
+
+* Prefer sources like:
+
+  * [https://randomuser.me/api/portraits/men/](https://randomuser.me/api/portraits/men/)
+  * [https://randomuser.me/api/portraits/women/](https://randomuser.me/api/portraits/women/)
+
+**Example fallback logic:**
+
+```ts
+const avatar = avatarUrl 
+  ? avatarUrl 
+  : gender === "female"
+    ? `https://randomuser.me/api/portraits/women/${index + 10}.jpg`
+    : `https://randomuser.me/api/portraits/men/${index + 10}.jpg`
+```
+
+**UI Update:**
+
+```tsx
+<img
+  src={avatar}
+  alt={name}
+  className="w-12 h-12 rounded-full object-cover shadow-sm"
+/>
+```
+
+**Constraints:**
+
+* Keep avatars realistic (avoid illustrations/cartoon avatars)
+* Maintain consistent size and alignment
+* Ensure fast loading
+
+---
+
+### 2. Add High-Impact Testimonials (New Personas)
+
+Add 4–6 new testimonials focused on real-life situations:
+
+#### A. Layoff Recovery Story
+
+```text
+"I was laid off after 12 years in a corporate role. It was a tough phase. Through Next Leap Pro, I started offering career guidance sessions and slowly rebuilt my confidence. Today, I earn independently and help others navigate their careers."
+```
+
+* Role: Former Corporate Manager → Career Coach
+
+---
+
+#### B. Mid-Career Professional Seeking Plan B
+
+```text
+"I always felt dependent on my salary. Next Leap Pro helped me start weekend workshops and consulting. Now I have a second income stream and peace of mind."
+```
+
+* Role: Senior Software Engineer → Mentor & Workshop Host
+
+---
+
+#### C. 20+ Years Experience Professional
+
+```text
+"After 20 years in the industry, I wanted to share my experience. Next Leap Pro made it easy to start mentoring and guest lectures. It gave me purpose beyond my job."
+```
+
+* Role: Industry Expert → Mentor / Guest Lecturer
+
+---
+
+#### D. Burnout / Job Dissatisfaction
+
+```text
+"I was not happy with my job anymore. I wanted to do something meaningful. Through Next Leap Pro, I started community sessions and coaching. It changed how I look at my career."
+```
+
+* Role: Marketing Professional → Community Builder
+
+---
+
+#### E. Education & Training Professional
+
+```text
+"I used to struggle finding the right audience for my workshops. With Next Leap Pro, I now connect directly with learners and institutions. It simplified everything."
+```
+
+* Role: Trainer → Workshop Facilitator
+
+---
+
+### 3. Messaging Alignment (Important)
+
+Ensure testimonials reflect:
+
+* Transition: Job → Independent earning
+* Identity shift: Employee → Mentor / Creator / Expert
+* Outcome:
+
+  * Earn from skills
+  * Build personal brand
+  * Connect with real demand
+  * No dependency on single income
+
+---
+
+### 4. UI/UX Enhancements
+
+* Add “Verified User” badge (optional but recommended)
+* Show role transformation:
+
+  ```
+  Former Role → Current Role
+  ```
+* Keep tone warm and human (not corporate)
+
+---
+
+### 5. Do Not Break
+
+* Existing carousel/slider functionality
+* Responsiveness
+* Typography and spacing system
+
+---
+
+### Expected Outcome
+
+* Testimonials feel authentic and relatable
+* Users see people like them (very important for conversion)
+* Strong emotional connection with:
+
+  * Layoff recovery
+  * Career transition
+  * Second income journey
+
+---
+
+If you want, next step I can help you:
+
+* Turn this into a conversion-focused testimonial section (headline + structure)
+* Or design a “Before → After” storytelling layout which will hit even harder psychologically
+
+This section is not just UI, it’s your trust engine.
