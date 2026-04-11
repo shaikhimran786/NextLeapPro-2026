@@ -2,8 +2,9 @@ import { spawn, type ChildProcess } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 
-const port = parseInt(process.env.PORT || "5000", 10);
 const isProduction = process.env.NODE_ENV === "production";
+const requestedPort = parseInt(process.env.PORT || "5000", 10);
+const isMacOS = process.platform === "darwin";
 
 let nextProcess: ChildProcess | null = null;
 
@@ -82,6 +83,61 @@ function killProcessOnPort(targetPort: number): void {
   }
 }
 
+async function isPortAvailable(targetPort: number): Promise<boolean> {
+  const net = await import("net");
+
+  return await new Promise((resolve) => {
+    const server = net.createServer();
+
+    server.once("error", (err: NodeJS.ErrnoException) => {
+      if (err.code === "EADDRINUSE") {
+        resolve(false);
+        return;
+      }
+      resolve(false);
+    });
+
+    server.once("listening", () => {
+      server.close(() => resolve(true));
+    });
+
+    server.listen(targetPort, "::");
+  });
+}
+
+async function resolvePort(): Promise<number> {
+  if (isProduction) {
+    return requestedPort;
+  }
+
+  const requestedPortAvailable = await isPortAvailable(requestedPort);
+  if (requestedPortAvailable) {
+    return requestedPort;
+  }
+
+  const pids = findPidsOnPort(requestedPort);
+  if (pids.length > 0) {
+    console.log(`Port ${requestedPort} is in use, killing stale processes...`);
+    killProcessOnPort(requestedPort);
+
+    const availableAfterCleanup = await isPortAvailable(requestedPort);
+    if (availableAfterCleanup) {
+      return requestedPort;
+    }
+  }
+
+  if (isMacOS) {
+    for (let fallbackPort = requestedPort + 1; fallbackPort < requestedPort + 20; fallbackPort++) {
+      if (await isPortAvailable(fallbackPort)) {
+        console.log(`Port ${requestedPort} is busy on macOS, using local fallback port ${fallbackPort} instead.`);
+        return fallbackPort;
+      }
+    }
+  }
+
+  return requestedPort;
+}
+
 function gracefulShutdown(signal: string): void {
   console.log(`\nReceived ${signal}, shutting down...`);
   if (nextProcess && !nextProcess.killed) {
@@ -108,15 +164,8 @@ function resolveNextBin(): string {
   return "npx";
 }
 
-function start(): void {
-  if (!isProduction) {
-    const pids = findPidsOnPort(port);
-    if (pids.length > 0) {
-      console.log(`Port ${port} is in use, killing stale processes...`);
-      killProcessOnPort(port);
-    }
-  }
-
+async function start(): Promise<void> {
+  const port = await resolvePort();
   console.log(`Starting Next.js in ${isProduction ? "production" : "development"} mode on port ${port}...`);
 
   const nextBin = resolveNextBin();
@@ -129,7 +178,16 @@ function start(): void {
   nextProcess = spawn(nextBin, nextArgs, {
     cwd: process.cwd(),
     stdio: "inherit",
-    env: { ...process.env },
+    env: {
+      ...process.env,
+      PORT: port.toString(),
+      ...(isProduction
+        ? {}
+        : {
+            NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || `http://localhost:${port}`,
+            NEXTAUTH_URL: process.env.NEXTAUTH_URL || `http://localhost:${port}`,
+          }),
+    },
   });
 
   nextProcess.on("error", (err) => {
@@ -144,4 +202,4 @@ function start(): void {
   });
 }
 
-start();
+void start();

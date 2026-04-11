@@ -13,7 +13,9 @@ coverage/
 .next/
 .env
 .env.*
+*.tsbuildinfo
 *.log
 *.zip
 *.mp4
 *.mov.next/
+tsconfig.tsbuildinfo
