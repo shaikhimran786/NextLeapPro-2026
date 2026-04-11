@@ -375,7 +375,10 @@ export function TestimonialsSection() {
                             <h4 className="font-semibold text-slate-900 text-lg" data-testid={`text-name-${currentTestimonial.id}`}>
                               {currentTestimonial.name}
                             </h4>
-                            <BadgeCheck className="w-5 h-5 text-blue-500 shrink-0" data-testid={`icon-verified-${currentTestimonial.id}`} />
+                            <span className="inline-flex items-center gap-0.5 text-blue-500 shrink-0" aria-label="Verified User" data-testid={`icon-verified-${currentTestimonial.id}`}>
+                              <BadgeCheck className="w-4.5 h-4.5" />
+                              <span className="text-xs font-medium hidden sm:inline">Verified</span>
+                            </span>
                           </div>
                           {currentTestimonial.formerRole ? (
                             <p className="text-sm text-slate-500 flex items-center gap-1" data-testid={`text-role-transition-${currentTestimonial.id}`}>
