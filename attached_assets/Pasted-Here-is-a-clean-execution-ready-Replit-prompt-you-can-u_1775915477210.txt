@@ -1,0 +1,96 @@
+Here is a clean, execution-ready Replit prompt you can use in your project context:
+
+---
+
+### Replit Prompt
+
+**Objective:**
+Improve the Testimonials section by replacing placeholder initials (like "AP") with real avatar images or generated avatar personas to make the UI more human, trustworthy, and engaging.
+
+**Requirements:**
+
+1. **Replace Initial-Based Avatars**
+
+   * Currently avatars are shown as initials (e.g., "AP").
+   * Replace these with:
+
+     * Either real user profile images (if available), OR
+     * Generated avatar images (fallback).
+
+2. **Avatar Image Handling**
+
+   * Add a new field in testimonial data:
+
+     ```ts
+     avatarUrl: string
+     ```
+   * If `avatarUrl` exists → show image
+   * If not → generate avatar using fallback service:
+
+     * Use DiceBear API or similar:
+
+       ```
+       https://api.dicebear.com/7.x/initials/svg?seed=Ananya%20Patel
+       ```
+
+       OR for more realistic personas:
+
+       ```
+       https://api.dicebear.com/7.x/adventurer/svg?seed=Ananya%20Patel
+       ```
+
+3. **UI Update**
+
+   * Replace current circular initials UI with:
+
+     ```tsx
+     <img
+       src={avatarUrl || generatedAvatarUrl}
+       alt={name}
+       className="w-12 h-12 rounded-full object-cover"
+     />
+     ```
+   * Maintain same size, alignment, and spacing
+   * Ensure it fits existing card design
+
+4. **Styling**
+
+   * Keep avatars:
+
+     * Rounded (full circle)
+     * Slight border or shadow for depth
+     * Consistent size across all testimonials
+
+5. **Performance**
+
+   * Lazy load images where possible
+   * Use optimized formats (SVG/WEBP)
+
+6. **Optional Enhancement**
+
+   * Add slight hover effect:
+
+     * scale or glow to make UI feel alive
+
+7. **Do Not Break**
+
+   * Existing testimonial layout
+   * Slider/carousel functionality
+   * Responsive design
+
+---
+
+**Expected Outcome:**
+
+* Testimonials feel more real and relatable
+* Higher trust and conversion (users see “people”, not placeholders)
+* Cleaner and more premium UI
+
+---
+
+If you want next step, I can help you:
+
+* Pick best avatar style (real photos vs illustrations based on your brand)
+* Or design a “verified user” visual system to increase trust even more
+
+This small change can directly improve signup conversion.
