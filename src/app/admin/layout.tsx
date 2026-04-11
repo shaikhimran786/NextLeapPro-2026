@@ -35,7 +35,6 @@ async function checkAdminAuth() {
       try {
         await prisma.session.delete({ where: { id: session.id } });
       } catch {
-        // Ignore deletion errors
       }
     }
     return null;

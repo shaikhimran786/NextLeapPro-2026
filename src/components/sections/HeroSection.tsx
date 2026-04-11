@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Star, Sparkles } from "@/lib/icons";
