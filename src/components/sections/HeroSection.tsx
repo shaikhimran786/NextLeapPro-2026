@@ -73,7 +73,10 @@ const itemVariants = {
   }
 };
 
+const DEFAULT_HERO_TITLE = "The Career Ecosystem for Every Stage of Growth";
+
 export function HeroSection({ siteSettings }: HeroSectionProps) {
+  const title = siteSettings?.heroTitle || DEFAULT_HERO_TITLE;
   const subtitle =
     siteSettings?.heroSubtitle ||
     "Learn in-demand skills. Earn from real opportunities. Grow with a powerful community.";
@@ -196,9 +199,11 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] xl:text-6xl font-heading font-bold leading-[1.08] tracking-tight">
-                <span className="text-white">The Career Ecosystem for </span>
-                <span className="text-gradient-animated">Every Stage of Growth</span>
+              <h1
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] xl:text-6xl font-heading font-bold leading-[1.08] tracking-tight text-white"
+                data-testid="hero-title"
+              >
+                {title}
               </h1>
             </motion.div>
 
