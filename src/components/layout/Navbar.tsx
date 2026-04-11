@@ -791,7 +791,7 @@ export function Navbar({
       className={cn(
         "sticky top-0 z-[9998] w-full transition-all duration-300 ease-in-out",
         isTransparent
-          ? "bg-transparent border-b border-transparent"
+          ? "bg-transparent border-b-0"
           : "bg-white/95 backdrop-blur-xl border-b border-slate-200/60 shadow-sm supports-[backdrop-filter]:bg-white/80"
       )}
       role="banner"
