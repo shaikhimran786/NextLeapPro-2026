@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { generateTicketCode, generateEventPaymentLink } from "@/lib/payment-link";
+import { generateTicketCode } from "@/lib/payment-link";
 
 export async function POST(
   request: NextRequest,
@@ -82,14 +82,6 @@ export async function POST(
             paymentStatus: existingRegistration.paymentStatus,
           },
           requiresPayment: true,
-          paymentUrl: generateEventPaymentLink({
-            eventId: event.id,
-            eventTitle: event.title,
-            amount: Number(event.price),
-            userId: user.id,
-            userName: `${firstName} ${lastName}`,
-            userEmail: email,
-          }),
           message: "You have a pending payment for this event",
         });
       }
@@ -156,15 +148,6 @@ export async function POST(
           paymentStatus: registration.paymentStatus,
         },
         requiresPayment: true,
-        paymentUrl: generateEventPaymentLink({
-          eventId: event.id,
-          eventTitle: event.title,
-          amount: Number(event.price),
-          userId: user.id,
-          userName: `${firstName} ${lastName}`,
-          userEmail: email,
-          registrationId: registration.id,
-        }),
         message: "Please complete payment to confirm your registration",
       });
     }

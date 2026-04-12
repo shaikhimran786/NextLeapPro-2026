@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getCurrentUserId } from "@/lib/auth-utils";
-import { generateTicketCode, generateEventPaymentLink } from "@/lib/payment-link";
+import { generateTicketCode } from "@/lib/payment-link";
 
 export async function registerForEvent(eventId: number, ticketType?: string) {
   const userId = await getCurrentUserId();
@@ -49,12 +49,6 @@ export async function registerForEvent(eventId: number, ticketType?: string) {
           paymentStatus: existingRegistration.paymentStatus,
         },
         requiresPayment: true,
-        paymentUrl: generateEventPaymentLink({
-          eventId: event.id,
-          eventTitle: event.title,
-          amount: Number(event.price),
-          userId,
-        }),
         message: "You have a pending payment for this event",
       };
     }
@@ -113,11 +107,6 @@ export async function registerForEvent(eventId: number, ticketType?: string) {
   revalidatePath("/dashboard/tickets");
 
   if (!isFreeEvent) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { firstName: true, lastName: true, email: true },
-    });
-
     return {
       success: true,
       registration: {
@@ -126,15 +115,6 @@ export async function registerForEvent(eventId: number, ticketType?: string) {
         paymentStatus: registration.paymentStatus,
       },
       requiresPayment: true,
-      paymentUrl: generateEventPaymentLink({
-        eventId: event.id,
-        eventTitle: event.title,
-        amount: Number(event.price),
-        userId,
-        userName: user ? `${user.firstName} ${user.lastName}` : undefined,
-        userEmail: user?.email,
-        registrationId: registration.id,
-      }),
       message: "Please complete payment to confirm your registration",
     };
   }

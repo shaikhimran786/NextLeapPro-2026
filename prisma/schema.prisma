@@ -221,25 +221,29 @@ model TicketType {
 }
 
 model EventRegistration {
-  id            Int         @id @default(autoincrement())
-  eventId       Int
-  event         Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  userId        Int
-  user          User        @relation(fields: [userId], references: [id])
-  ticketTypeId  Int?
-  ticketType    TicketType? @relation(fields: [ticketTypeId], references: [id], onDelete: SetNull)
-  status        String      @default("pending")
-  paidAmount    Decimal?    @db.Decimal(10, 2)
-  paymentStatus String      @default("pending")
-  qrCode        String?     @unique
-  checkedIn     Boolean     @default(false)
-  checkedInAt   DateTime?
-  checkedInBy   Int?
-  approvedAt    DateTime?
-  approvedBy    Int?
-  notes         String?
-  registeredAt  DateTime    @default(now())
-  updatedAt     DateTime    @default(now()) @updatedAt
+  id                  Int         @id @default(autoincrement())
+  eventId             Int
+  event               Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId              Int
+  user                User        @relation(fields: [userId], references: [id])
+  ticketTypeId        Int?
+  ticketType          TicketType? @relation(fields: [ticketTypeId], references: [id], onDelete: SetNull)
+  status              String      @default("pending")
+  paidAmount          Decimal?    @db.Decimal(10, 2)
+  paymentStatus       String      @default("pending")
+  paymentGateway      String?
+  razorpayOrderId     String?
+  razorpayPaymentId   String?
+  razorpaySignature   String?
+  qrCode              String?     @unique
+  checkedIn           Boolean     @default(false)
+  checkedInAt         DateTime?
+  checkedInBy         Int?
+  approvedAt          DateTime?
+  approvedBy          Int?
+  notes               String?
+  registeredAt        DateTime    @default(now())
+  updatedAt           DateTime    @default(now()) @updatedAt
 
   @@unique([eventId, userId])
 }

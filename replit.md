@@ -86,29 +86,43 @@ The platform incorporates comprehensive SEO features:
 - **Development Server**: tsx
 
 ### Third-Party Services
-- **Payment Processing**: Cashfree (sole payment gateway)
+- **Payment Processing**: Razorpay (primary, for events and subscriptions), Cashfree (legacy, subscriptions only)
 - **Session Management**: express-session with PostgreSQL storage (connect-pg-simple)
 - **AI**: Replit's OpenAI Integration (gpt-4o)
 
 ### Payment Gateway Configuration
-The platform uses Cashfree as the sole payment gateway.
+The platform uses Razorpay as the primary payment gateway for event payments and supports both Razorpay and Cashfree for subscriptions.
 
 Configuration requires:
-- `CASHFREE_APP_ID`: Cashfree App ID
-- `CASHFREE_SECRET_KEY`: Cashfree Secret Key
+- `RAZORPAY_KEY_ID`: Razorpay API Key ID
+- `RAZORPAY_KEY_SECRET`: Razorpay API Key Secret
+- `RAZORPAY_WEBHOOK_SECRET`: Razorpay Webhook Secret (optional, for webhook verification)
+- `CASHFREE_APP_ID`: Cashfree App ID (legacy, subscriptions only)
+- `CASHFREE_SECRET_KEY`: Cashfree Secret Key (legacy, subscriptions only)
 
 Key files:
-- `src/lib/cashfree.ts` - Cashfree SDK integration  
-- `src/app/api/payments/cashfree/webhook/route.ts` - Cashfree webhook handler
-- `src/app/api/subscriptions/checkout/route.ts` - Checkout flow (requires authentication)
-- `src/app/api/subscriptions/verify/route.ts` - Payment verification
+- `src/lib/razorpay.ts` - Razorpay SDK integration (order creation, signature verification)
+- `src/app/api/payments/create-order/route.ts` - Event payment order creation via Razorpay
+- `src/app/api/payments/verify/route.ts` - Event payment verification with signature check
+- `src/app/api/webhooks/razorpay/route.ts` - Razorpay webhook handler (subscriptions)
+- `src/app/api/subscriptions/checkout/route.ts` - Subscription checkout (supports both gateways)
+- `src/app/api/subscriptions/verify/route.ts` - Subscription payment verification
+- `src/components/events/EventRegistrationButton.tsx` - Event registration with Razorpay checkout modal
+- `src/lib/cashfree.ts` - Cashfree SDK integration (legacy, subscriptions)
+- `src/app/api/payments/cashfree/webhook/route.ts` - Cashfree webhook handler (legacy)
 
-**Implementation Notes**:
-- Uses Cashfree Orders API for one-time payments
-- Subscription periods are managed internally by the platform (not by gateway recurring billing)
-- Authentication required before checkout - users must be logged in
-- Subscription renewal: Users manually renew when their period expires
-- Webhook handles payment status updates (PAYMENT_SUCCESS, PAYMENT_FAILED, PAYMENT_USER_DROPPED)
+**Event Payment Flow**:
+1. User clicks "Buy Ticket" → backend creates pending EventRegistration
+2. Frontend calls `/api/payments/create-order` → creates Razorpay order, stores orderId on registration
+3. Razorpay checkout modal opens in-browser
+4. On success, frontend calls `/api/payments/verify` with razorpay_order_id, payment_id, signature
+5. Backend verifies signature cryptographically, marks registration as "registered"/"paid", generates ticket
+6. Payment proof (orderId, paymentId, signature) stored on EventRegistration record
+
+**Subscription Payment Flow**:
+- Uses site settings `activePaymentGateway` ("razorpay" or "cashfree") to determine which gateway to use
+- Subscription periods managed internally by the platform (not gateway recurring billing)
+- Authentication required before checkout
 
 ## Development Guidelines
 

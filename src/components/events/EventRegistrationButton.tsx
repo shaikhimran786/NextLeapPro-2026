@@ -7,11 +7,44 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CheckCircle, Loader2, Calendar, Video, Ticket, RotateCcw, LogIn, CreditCard, Clock, ExternalLink } from "@/lib/icons";
+import { CheckCircle, Loader2, Calendar, Video, Ticket, RotateCcw, LogIn, CreditCard, Clock, ExternalLink, ShieldCheck } from "@/lib/icons";
 import { formatINR } from "@/lib/utils";
 import { useUserStatus, revalidateUserStatus } from "@/hooks/useUserStatus";
-import { registerForEvent, cancelEventRegistration, getEventJoinLink, confirmEventPayment } from "@/lib/actions/event-actions";
+import { registerForEvent, cancelEventRegistration, getEventJoinLink } from "@/lib/actions/event-actions";
 import { cn } from "@/lib/utils";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+function loadRazorpayScript(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (window.Razorpay) {
+      resolve();
+      return;
+    }
+    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]') as HTMLScriptElement | null;
+    if (existing) {
+      if (window.Razorpay) { resolve(); return; }
+      const onLoad = () => { existing.removeEventListener("load", onLoad); resolve(); };
+      existing.addEventListener("load", onLoad);
+      setTimeout(() => {
+        existing.removeEventListener("load", onLoad);
+        if (window.Razorpay) resolve();
+        else reject(new Error("Timeout loading Razorpay"));
+      }, 10000);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load Razorpay SDK"));
+    document.body.appendChild(script);
+  });
+}
 
 interface EventRegistrationButtonProps {
   eventId: number;
@@ -36,7 +69,6 @@ export function EventRegistrationButton({
   const { userStatus, isLoading: isStatusLoading } = useUserStatus();
   const [isOpen, setIsOpen] = useState(false);
   const [isPaymentPending, setIsPaymentPending] = useState(false);
-  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const [registrationId, setRegistrationId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -140,6 +172,96 @@ export function EventRegistrationButton({
   const buttonConfig = getButtonConfig();
   const IconComponent = buttonConfig.icon;
 
+  async function openRazorpayCheckout(regId: number) {
+    setIsLoading(true);
+    try {
+      await loadRazorpayScript();
+
+      const orderRes = await fetch("/api/payments/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ registrationId: regId }),
+      });
+
+      if (!orderRes.ok) {
+        const err = await orderRes.json();
+        throw new Error(err.error || "Failed to create payment order");
+      }
+
+      const orderData = await orderRes.json();
+
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Next Leap Pro",
+        description: `Event: ${orderData.registration.eventTitle}`,
+        order_id: orderData.orderId,
+        prefill: {
+          name: orderData.user.name,
+          email: orderData.user.email,
+        },
+        handler: async function (response: any) {
+          try {
+            setIsLoading(true);
+            const verifyRes = await fetch("/api/payments/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                registrationId: regId,
+              }),
+            });
+
+            if (!verifyRes.ok) {
+              const err = await verifyRes.json();
+              throw new Error(err.error || "Payment verification failed");
+            }
+
+            setIsSuccess(true);
+            toast.success("Payment verified! Your ticket is ready.");
+            await revalidateUserStatus();
+
+            setTimeout(() => {
+              setIsOpen(false);
+              setIsSuccess(false);
+              setIsPaymentPending(false);
+              setRegistrationId(null);
+              router.push("/dashboard/tickets");
+              router.refresh();
+            }, 2000);
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Payment verification failed");
+          } finally {
+            setIsLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setIsLoading(false);
+            toast.info("Payment cancelled. You can try again anytime.");
+          },
+        },
+        theme: {
+          color: "#0066FF",
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", function (response: any) {
+        const desc = response?.error?.description || "Payment failed. Please try again.";
+        toast.error(desc);
+        setIsLoading(false);
+      });
+      rzp.open();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to initiate payment");
+      setIsLoading(false);
+    }
+  }
+
   const handleClick = async () => {
     if (buttonConfig.disabled) return;
 
@@ -182,11 +304,11 @@ export function EventRegistrationButton({
             setIsLoading(true);
             const result = await registerForEvent(eventId);
             if (result.success) {
-              if (result.requiresPayment && result.paymentUrl) {
-                setPaymentUrl(result.paymentUrl);
+              if (result.requiresPayment) {
                 setRegistrationId(result.registration.id);
                 setIsPaymentPending(true);
                 setIsOpen(true);
+                await openRazorpayCheckout(result.registration.id);
               } else {
                 toast.success("Registration successful!");
                 await revalidateUserStatus();
@@ -235,10 +357,10 @@ export function EventRegistrationButton({
       const data = await res.json();
 
       if (res.ok) {
-        if (data.requiresPayment && data.paymentUrl) {
-          setPaymentUrl(data.paymentUrl);
+        if (data.requiresPayment) {
           setRegistrationId(data.registration.id);
           setIsPaymentPending(true);
+          await openRazorpayCheckout(data.registration.id);
         } else {
           setIsSuccess(true);
           toast.success("Registration successful!");
@@ -257,48 +379,6 @@ export function EventRegistrationButton({
       toast.error("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
-    }
-  }
-
-  async function handlePaymentComplete() {
-    if (!registrationId) {
-      toast.error("Registration not found");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const result = await confirmEventPayment(registrationId);
-      if (result.success) {
-        setIsSuccess(true);
-        toast.success("Payment confirmed! Your ticket is ready.");
-        await revalidateUserStatus();
-        
-        setTimeout(() => {
-          setIsOpen(false);
-          setIsSuccess(false);
-          setIsPaymentPending(false);
-          setPaymentUrl(null);
-          setRegistrationId(null);
-          router.push("/dashboard/tickets");
-          router.refresh();
-        }, 2000);
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error("Failed to confirm payment. Please try again.");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  function handleOpenPaymentLink() {
-    if (paymentUrl) {
-      window.open(paymentUrl, "_blank");
     }
   }
 
@@ -338,7 +418,7 @@ export function EventRegistrationButton({
             <div className="py-8 text-center">
               <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
               <DialogTitle className="text-2xl mb-2">
-                {isFree ? "You're Registered!" : "Payment Confirmed!"}
+                {isFree ? "You're Registered!" : "Payment Verified!"}
               </DialogTitle>
               <DialogDescription>
                 {isFree 
@@ -368,53 +448,35 @@ export function EventRegistrationButton({
                     </span>
                   </div>
                   <p className="text-sm text-slate-500">
-                    Click the button below to complete your payment
+                    Secure payment powered by Razorpay
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   <Button
-                    onClick={handleOpenPaymentLink}
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    data-testid="button-open-payment"
-                  >
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Pay with Cashfree
-                  </Button>
-
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white px-2 text-slate-500">After payment</span>
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={handlePaymentComplete}
-                    disabled={isLoading}
-                    className="w-full"
-                    variant="default"
-                    data-testid="button-confirm-payment"
+                    onClick={() => registrationId && openRazorpayCheckout(registrationId)}
+                    disabled={isLoading || !registrationId}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    data-testid="button-pay-razorpay"
                   >
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Confirming...
+                        Processing...
                       </>
                     ) : (
                       <>
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        I've Completed Payment
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        Pay {formatINR(price)}
                       </>
                     )}
                   </Button>
-                </div>
 
-                <p className="text-xs text-slate-500 text-center">
-                  After completing your payment, click the button above to confirm and receive your ticket.
-                </p>
+                  <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
+                    <ShieldCheck className="h-3 w-3" />
+                    <span>Secured by Razorpay</span>
+                  </div>
+                </div>
               </div>
 
               <DialogFooter>
