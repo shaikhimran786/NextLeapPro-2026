@@ -1,0 +1,165 @@
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+prisma:error 
+Invalid `prisma.siteSettings.findFirst()` invocation:
+
+
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+Error fetching navbar plans data: Error [PrismaClientInitializationError]: 
+Invalid `prisma.subscriptionPlan.findMany()` invocation:
+
+
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+    at async getNavbarPlansData (src/lib/get-navbar-data.ts:23:19)
+    at async getHomeData (src/app/page.tsx:27:60)
+    at async HomePage (src/app/page.tsx:63:62)
+  21 | export async function getNavbarPlansData(): Promise<NavbarPlansData> {
+  22 |   try {
+> 23 |     const plans = await prisma.subscriptionPlan.findMany({
+     |                   ^
+  24 |       where: { active: true },
+  25 |       orderBy: { sortOrder: "asc" },
+  26 |       select: { {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+Failed to fetch site settings for layout: Error [PrismaClientInitializationError]: 
+Invalid `prisma.siteSettings.findFirst()` invocation:
+
+
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+    at async getSiteSettings (src/app/layout.tsx:42:22)
+    at async Module.generateMetadata (src/app/layout.tsx:55:20)
+  40 |     }
+  41 |     
+> 42 |     const settings = await prisma.siteSettings.findFirst();
+     |                      ^
+  43 |     cachedSettings = { 
+  44 |       data: settings as unknown as SiteSettingsWithExtras, 
+  45 |       timestamp: now  {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+ GET / 200 in 1094ms
+ ✓ Compiled in 4.9s (2450 modules)
+prisma:error 
+Invalid `prisma.event.findMany()` invocation:
+
+
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+prisma:error 
+Invalid `prisma.community.findMany()` invocation:
+
+
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+prisma:error 
+Invalid `prisma.siteSettings.findFirst()` invocation:
+
+
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+prisma:error 
+Invalid `prisma.subscriptionPlan.findMany()` invocation:
+
+
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+prisma:error 
+Invalid `prisma.siteSettings.findFirst()` invocation:
+
+
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+Error fetching navbar plans data: Error [PrismaClientInitializationError]: 
+Invalid `prisma.subscriptionPlan.findMany()` invocation:
+
+
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+    at async getNavbarPlansData (src/lib/get-navbar-data.ts:23:19)
+    at async getHomeData (src/app/page.tsx:27:60)
+    at async HomePage (src/app/page.tsx:63:62)
+  21 | export async function getNavbarPlansData(): Promise<NavbarPlansData> {
+  22 |   try {
+> 23 |     const plans = await prisma.subscriptionPlan.findMany({
+     |                   ^
+  24 |       where: { active: true },
+  25 |       orderBy: { sortOrder: "asc" },
+  26 |       select: { {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+Failed to fetch site settings for layout: Error [PrismaClientInitializationError]: 
+Invalid `prisma.siteSettings.findFirst()` invocation:
+
+
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+    at async getSiteSettings (src/app/layout.tsx:42:22)
+    at async Module.generateMetadata (src/app/layout.tsx:55:20)
+  40 |     }
+  41 |     
+> 42 |     const settings = await prisma.siteSettings.findFirst();
+     |                      ^
+  43 |     cachedSettings = { 
+  44 |       data: settings as unknown as SiteSettingsWithExtras, 
+  45 |       timestamp: now  {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+ GET / 200 in 1096ms
+ ✓ Compiled in 4.1s (2450 modules)
+prisma:error 
+Invalid `prisma.event.findMany()` invocation:
+
+
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+prisma:error 
+Invalid `prisma.community.findMany()` invocation:
+
+
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+prisma:error 
+Invalid `prisma.siteSettings.findFirst()` invocation:
+
+
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+prisma:error 
+Invalid `prisma.subscriptionPlan.findMany()` invocation:
+
+
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+prisma:error 
+Invalid `prisma.siteSettings.findFirst()` invocation:
+
+
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+Error fetching navbar plans data: Error [PrismaClientInitializationError]: 
+Invalid `prisma.subscriptionPlan.findMany()` invocation:
+
+
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+    at async getNavbarPlansData (src/lib/get-navbar-data.ts:23:19)
+    at async getHomeData (src/app/page.tsx:27:60)
+    at async HomePage (src/app/page.tsx:63:62)
+  21 | export async function getNavbarPlansData(): Promise<NavbarPlansData> {
+  22 |   try {
+> 23 |     const plans = await prisma.subscriptionPlan.findMany({
+     |                   ^
+  24 |       where: { active: true },
+  25 |       orderBy: { sortOrder: "asc" },
+  26 |       select: { {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+Failed to fetch site settings for layout: Error [PrismaClientInitializationError]: 
+Invalid `prisma.siteSettings.findFirst()` invocation:
+
+
+Error querying the database: ERROR: The endpoint has been disabled. Enable it using the API and retry.
+    at async getSiteSettings (src/app/layout.tsx:42:22)
+    at async Module.generateMetadata (src/app/layout.tsx:55:20)
+  40 |     }
+  41 |     
+> 42 |     const settings = await prisma.siteSettings.findFirst();
+     |                      ^
+  43 |     cachedSettings = { 
+  44 |       data: settings as unknown as SiteSettingsWithExtras, 
+  45 |       timestamp: now  {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
