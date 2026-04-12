@@ -4,6 +4,7 @@ import * as path from "path";
 
 const isProduction = process.env.NODE_ENV === "production";
 const requestedPort = parseInt(process.env.PORT || "5000", 10);
+const hasExplicitPort = typeof process.env.PORT === "string" && process.env.PORT.trim().length > 0;
 const isMacOS = process.platform === "darwin";
 
 let nextProcess: ChildProcess | null = null;
@@ -106,7 +107,7 @@ async function isPortAvailable(targetPort: number): Promise<boolean> {
 }
 
 async function resolvePort(): Promise<number> {
-  if (isProduction) {
+  if (isProduction && hasExplicitPort) {
     return requestedPort;
   }
 
@@ -129,7 +130,7 @@ async function resolvePort(): Promise<number> {
   if (isMacOS) {
     for (let fallbackPort = requestedPort + 1; fallbackPort < requestedPort + 20; fallbackPort++) {
       if (await isPortAvailable(fallbackPort)) {
-        console.log(`Port ${requestedPort} is busy on macOS, using local fallback port ${fallbackPort} instead.`);
+        console.log(`Port ${requestedPort} is busy on macOS, using fallback port ${fallbackPort} instead.`);
         return fallbackPort;
       }
     }

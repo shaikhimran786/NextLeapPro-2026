@@ -14,6 +14,22 @@ import {
   ProfileInfo,
 } from "@/lib/user-status";
 
+function isDynamicServerUsageError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const digest = "digest" in error ? error.digest : undefined;
+  const description = "description" in error ? error.description : undefined;
+  const message = "message" in error ? error.message : undefined;
+
+  return (
+    digest === "DYNAMIC_SERVER_USAGE" ||
+    (typeof description === "string" && description.includes("Dynamic server usage")) ||
+    (typeof message === "string" && message.includes("Dynamic server usage"))
+  );
+}
+
 function mapMembershipRole(role: string): MembershipStatus {
   switch (role) {
     case "admin":
@@ -321,6 +337,10 @@ export async function getUserStatusServer(): Promise<UserStatus> {
 
     return userStatus;
   } catch (error) {
+    if (isDynamicServerUsageError(error)) {
+      return defaultGuestStatus;
+    }
+
     console.error("Error fetching user status server-side:", error);
     return defaultGuestStatus;
   }
