@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { createOrder, getRazorpayKeyId, isRazorpayConfigured } from "@/lib/razorpay";
+import { createOrder, getRazorpayKeyId } from "@/lib/razorpay";
 import { getCurrentUserId } from "@/lib/auth-utils";
 import { getPaymentProvider, isEventPaymentEnabled } from "@/lib/payment-config";
 
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
 
     if (!isEventPaymentEnabled()) {
       return NextResponse.json(
-        { error: "Payment gateway is not configured. Please contact support." },
+        { error: "Razorpay is not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables." },
         { status: 503 }
       );
     }
