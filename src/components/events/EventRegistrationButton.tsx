@@ -46,6 +46,78 @@ function loadRazorpayScript(): Promise<void> {
   });
 }
 
+export function EventEndedBanner({ eventEndDate, serverEventStatus, formattedEndDate }: {
+  eventEndDate: string;
+  serverEventStatus: "upcoming" | "live" | "finished";
+  formattedEndDate: string;
+}) {
+  const isFinished = useMemo(() => {
+    if (serverEventStatus === "finished") return true;
+    return new Date() > new Date(eventEndDate);
+  }, [serverEventStatus, eventEndDate]);
+
+  if (!isFinished) return null;
+
+  return (
+    <div className="flex items-center gap-2 p-3 mb-4 bg-slate-100 border border-slate-200 rounded-lg" data-testid="banner-event-ended">
+      <Calendar className="h-5 w-5 text-slate-500 flex-shrink-0" />
+      <div>
+        <p className="text-sm font-semibold text-slate-700">This event has ended</p>
+        <p className="text-xs text-slate-500">Ended on {formattedEndDate}</p>
+      </div>
+    </div>
+  );
+}
+
+export function EventPriceDisplay({ price, isFree, eventEndDate, serverEventStatus }: {
+  price: number;
+  isFree: boolean;
+  eventEndDate: string;
+  serverEventStatus: "upcoming" | "live" | "finished";
+}) {
+  const isFinished = useMemo(() => {
+    if (serverEventStatus === "finished") return true;
+    return new Date() > new Date(eventEndDate);
+  }, [serverEventStatus, eventEndDate]);
+
+  if (isFree) {
+    return (
+      <span className={`text-3xl font-bold ${isFinished ? "text-slate-400 line-through" : "text-green-600"}`} data-testid="text-event-price">Free</span>
+    );
+  }
+
+  return (
+    <>
+      <span className={`text-3xl font-bold ${isFinished ? "text-slate-400 line-through" : "text-slate-900"}`} data-testid="text-event-price">
+        {formatINR(price)}
+      </span>
+      <span className="text-slate-500 ml-2">per ticket</span>
+    </>
+  );
+}
+
+export function EventSpotsLeft({ spotsLeft, eventEndDate, serverEventStatus }: {
+  spotsLeft: number | null;
+  eventEndDate: string;
+  serverEventStatus: "upcoming" | "live" | "finished";
+}) {
+  const isFinished = useMemo(() => {
+    if (serverEventStatus === "finished") return true;
+    return new Date() > new Date(eventEndDate);
+  }, [serverEventStatus, eventEndDate]);
+
+  if (spotsLeft === null || isFinished) return null;
+
+  return (
+    <div className="flex items-center gap-2 mb-4 text-sm">
+      <Ticket className="h-4 w-4 text-orange-500" />
+      <span className={spotsLeft < 10 ? "text-orange-500 font-medium" : "text-muted-foreground"}>
+        {spotsLeft > 0 ? `${spotsLeft} spots left` : "Fully booked"}
+      </span>
+    </div>
+  );
+}
+
 interface EventRegistrationButtonProps {
   eventId: number;
   eventTitle: string;
