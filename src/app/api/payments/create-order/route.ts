@@ -57,9 +57,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (registration.paymentStatus === "paid") {
+    if (registration.status === "cancelled") {
       return NextResponse.json(
-        { error: "Payment already completed for this registration" },
+        { error: "This registration has been cancelled" },
+        { status: 400 }
+      );
+    }
+
+    if (registration.status !== "pending" || registration.paymentStatus !== "pending") {
+      return NextResponse.json(
+        { error: "Payment already completed or registration is not in a payable state" },
         { status: 400 }
       );
     }

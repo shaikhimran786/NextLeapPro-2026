@@ -66,16 +66,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!registration.razorpayOrderId) {
+    if (registration.status === "cancelled") {
       return NextResponse.json(
-        { error: "No payment order found for this registration. Please initiate payment first." },
-        { status: 400 }
-      );
-    }
-
-    if (registration.razorpayOrderId !== razorpay_order_id) {
-      return NextResponse.json(
-        { error: "Order ID mismatch" },
+        { error: "This registration has been cancelled" },
         { status: 400 }
       );
     }
@@ -91,6 +84,27 @@ export async function POST(request: NextRequest) {
           ticketCode: registration.qrCode,
         },
       });
+    }
+
+    if (registration.status !== "pending" || registration.paymentStatus !== "pending") {
+      return NextResponse.json(
+        { error: "Registration is not in a payable state" },
+        { status: 400 }
+      );
+    }
+
+    if (!registration.razorpayOrderId) {
+      return NextResponse.json(
+        { error: "No payment order found for this registration. Please initiate payment first." },
+        { status: 400 }
+      );
+    }
+
+    if (registration.razorpayOrderId !== razorpay_order_id) {
+      return NextResponse.json(
+        { error: "Order ID mismatch" },
+        { status: 400 }
+      );
     }
 
     const payment = await fetchPayment(razorpay_payment_id);

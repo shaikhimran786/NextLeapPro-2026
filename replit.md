@@ -148,6 +148,8 @@ Key files:
 
 **Prisma pre-warming**: `src/lib/prisma.ts` eagerly calls `$connect()` in production to avoid cold-start delays on the first SSR request.
 
+**Payment Provider Config** (`src/lib/payment-config.ts`): `PAYMENT_PROVIDER` env var (default: `razorpay`), `REGION` env var (default: `india`). Event payments currently only support Razorpay.
+
 **Build pipeline** (`script/build.ts`): `prisma generate` → `next build` → `esbuild server launcher`
 
 **Important**: This project uses Next.js 15.5.15 (downgraded from 16.2.3 to fix React 18 compatibility). The `--webpack` flag is NOT supported in Next.js 15 — do not add it to `next dev` or `next build` commands.
