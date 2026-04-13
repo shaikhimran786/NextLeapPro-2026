@@ -268,7 +268,7 @@ export async function POST(request: NextRequest) {
         email: registration.user.email,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating payment order:", error);
     return NextResponse.json(
       { error: "Failed to create payment order. Please try again." },

@@ -217,8 +217,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const statusStr = String(payment.status);
+
+    if (statusStr === "cancelled") {
+      const cancelReason = "Payment was cancelled at the gateway";
+      await prisma.$transaction([
+        prisma.eventRegistration.update({
+          where: { id: registrationId },
+          data: {
+            paymentStatus: "failed",
+            paymentFailureReason: cancelReason,
+          },
+        }),
+        prisma.adminAuditLog.create({
+          data: {
+            userId: registration.userId,
+            action: "event_payment_cancelled_at_gateway",
+            target: `Event #${registration.eventId}: ${registration.event.title}`,
+            details: {
+              registrationId: registration.id,
+              razorpayPaymentId: razorpay_payment_id,
+              razorpayStatus: statusStr,
+              gateway: "razorpay",
+            },
+          },
+        }),
+      ]);
+
+      return NextResponse.json(
+        { error: "Payment was cancelled. You can retry the payment when you're ready.", code: "payment_cancelled" },
+        { status: 400 }
+      );
+    }
+
     if (payment.status !== "captured") {
-      const reason = `Unexpected Razorpay payment status: ${payment.status}`;
+      const reason = `Unexpected Razorpay payment status: ${statusStr}`;
       console.error("Razorpay unexpected payment status", {
         paymentStatus: payment.status,
         registrationId,
@@ -233,7 +266,7 @@ export async function POST(request: NextRequest) {
           details: {
             registrationId: registration.id,
             razorpayPaymentId: razorpay_payment_id,
-            razorpayStatus: payment.status,
+            razorpayStatus: statusStr,
             gateway: "razorpay",
           },
         },
@@ -295,7 +328,7 @@ export async function POST(request: NextRequest) {
         ticketCode,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error verifying payment:", error);
     return NextResponse.json(
       { error: "Failed to verify payment. Please try again." },
