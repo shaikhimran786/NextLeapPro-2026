@@ -9,7 +9,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, MapPin, Clock, Share2, Users } from "@/lib/icons";
+import { Calendar, MapPin, Clock, Share2 } from "@/lib/icons";
 import { formatINR, formatDate, formatDateTime } from "@/lib/utils";
 import { EventRegistrationButton, EventEndedBanner, EventPriceDisplay, EventSpotsLeft } from "@/components/events/EventRegistrationButton";
 import { getImageUrl, isValidImageSrc } from "@/lib/image-utils";

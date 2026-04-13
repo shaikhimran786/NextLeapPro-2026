@@ -46,16 +46,22 @@ function loadRazorpayScript(): Promise<void> {
   });
 }
 
+function useClientEventFinished(
+  serverEventStatus: "upcoming" | "live" | "finished",
+  eventEndDate: string
+): boolean {
+  return useMemo(() => {
+    if (serverEventStatus === "finished") return true;
+    return new Date() > new Date(eventEndDate);
+  }, [serverEventStatus, eventEndDate]);
+}
+
 export function EventEndedBanner({ eventEndDate, serverEventStatus, formattedEndDate }: {
   eventEndDate: string;
   serverEventStatus: "upcoming" | "live" | "finished";
   formattedEndDate: string;
 }) {
-  const isFinished = useMemo(() => {
-    if (serverEventStatus === "finished") return true;
-    return new Date() > new Date(eventEndDate);
-  }, [serverEventStatus, eventEndDate]);
-
+  const isFinished = useClientEventFinished(serverEventStatus, eventEndDate);
   if (!isFinished) return null;
 
   return (
@@ -75,10 +81,7 @@ export function EventPriceDisplay({ price, isFree, eventEndDate, serverEventStat
   eventEndDate: string;
   serverEventStatus: "upcoming" | "live" | "finished";
 }) {
-  const isFinished = useMemo(() => {
-    if (serverEventStatus === "finished") return true;
-    return new Date() > new Date(eventEndDate);
-  }, [serverEventStatus, eventEndDate]);
+  const isFinished = useClientEventFinished(serverEventStatus, eventEndDate);
 
   if (isFree) {
     return (
@@ -101,11 +104,7 @@ export function EventSpotsLeft({ spotsLeft, eventEndDate, serverEventStatus }: {
   eventEndDate: string;
   serverEventStatus: "upcoming" | "live" | "finished";
 }) {
-  const isFinished = useMemo(() => {
-    if (serverEventStatus === "finished") return true;
-    return new Date() > new Date(eventEndDate);
-  }, [serverEventStatus, eventEndDate]);
-
+  const isFinished = useClientEventFinished(serverEventStatus, eventEndDate);
   if (spotsLeft === null || isFinished) return null;
 
   return (
