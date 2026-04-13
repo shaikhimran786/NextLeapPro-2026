@@ -226,12 +226,21 @@ export function EventRegistrationButton({
         body: JSON.stringify({ registrationId: regId, paymentToken: activeToken }),
       });
 
+      const orderData = await orderRes.json();
+
       if (!orderRes.ok) {
-        const err = await orderRes.json();
-        throw new Error(err.error || "Failed to create payment order");
+        throw new Error(orderData.error || "Failed to create payment order");
       }
 
-      const orderData = await orderRes.json();
+      if (orderData.reconciled) {
+        setSuccessTicketCode(orderData.registration?.ticketCode || null);
+        setIsSuccess(true);
+        setIsPaymentPending(false);
+        toast.success(orderData.message || "Payment confirmed! Your ticket is ready.");
+        await revalidateUserStatus();
+        setIsLoading(false);
+        return;
+      }
 
       const options = {
         key: orderData.keyId,

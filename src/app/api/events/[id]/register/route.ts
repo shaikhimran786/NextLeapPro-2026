@@ -84,11 +84,13 @@ export async function POST(
     if (existingRegistration && existingRegistration.status !== "cancelled") {
       const isPendingPayment = (existingRegistration.paymentStatus === "pending" || existingRegistration.paymentStatus === "failed") && Number(event.price) > 0;
       if (isPendingPayment) {
-        const newToken = crypto.randomBytes(32).toString("hex");
-        await prisma.eventRegistration.update({
-          where: { id: existingRegistration.id },
-          data: { paymentToken: newToken },
-        });
+        const activeToken = existingRegistration.paymentToken || crypto.randomBytes(32).toString("hex");
+        if (!existingRegistration.paymentToken) {
+          await prisma.eventRegistration.update({
+            where: { id: existingRegistration.id },
+            data: { paymentToken: activeToken },
+          });
+        }
         return NextResponse.json({
           success: true,
           registration: {
@@ -97,7 +99,7 @@ export async function POST(
             paymentStatus: existingRegistration.paymentStatus,
           },
           requiresPayment: true,
-          paymentToken: newToken,
+          paymentToken: activeToken,
           message: existingRegistration.paymentStatus === "failed"
             ? "Your previous payment failed. You can try again."
             : "You have a pending payment for this event",

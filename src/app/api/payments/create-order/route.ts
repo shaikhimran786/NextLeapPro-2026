@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { createOrder, getRazorpayKeyId, fetchOrder } from "@/lib/razorpay";
+import { createOrder, getRazorpayKeyId, fetchOrder, getRazorpayInstance } from "@/lib/razorpay";
+import { generateTicketCode } from "@/lib/payment-link";
 import { getCurrentUserId } from "@/lib/auth-utils";
 import { getPaymentProvider, isEventPaymentEnabled } from "@/lib/payment-config";
 import { isEventExpired } from "@/lib/event-utils";
@@ -102,8 +103,62 @@ export async function POST(request: NextRequest) {
         const existingOrder = await fetchOrder(registration.razorpayOrderId);
 
         if (existingOrder && existingOrder.status === "paid") {
+          try {
+            const payments = await getRazorpayInstance().orders.fetchPayments(registration.razorpayOrderId);
+            const capturedPayment = Array.isArray(payments?.items)
+              ? payments.items.find((p: { status: string }) => p.status === "captured")
+              : null;
+
+            if (capturedPayment) {
+              const ticketCode = generateTicketCode();
+              await prisma.$transaction(async (tx) => {
+                await tx.eventRegistration.update({
+                  where: { id: registrationId },
+                  data: {
+                    status: "registered",
+                    paymentStatus: "paid",
+                    paymentGateway: "razorpay",
+                    razorpayPaymentId: String(capturedPayment.id),
+                    paidAmount: registration.event.price,
+                    qrCode: ticketCode,
+                    paymentToken: null,
+                    paymentFailureReason: null,
+                  },
+                });
+                await tx.adminAuditLog.create({
+                  data: {
+                    userId: registration.userId,
+                    action: "event_payment_reconciled",
+                    target: `Event #${registration.eventId}: ${registration.event.title}`,
+                    details: {
+                      registrationId: registration.id,
+                      orderId: registration.razorpayOrderId,
+                      paymentId: capturedPayment.id,
+                      ticketCode,
+                      gateway: "razorpay",
+                    },
+                  },
+                });
+              });
+
+              return NextResponse.json({
+                success: true,
+                reconciled: true,
+                message: "Payment was already captured. Your registration has been confirmed.",
+                registration: {
+                  id: registration.id,
+                  status: "registered",
+                  paymentStatus: "paid",
+                  ticketCode,
+                },
+              });
+            }
+          } catch (reconcileErr) {
+            console.error("Failed to reconcile paid order:", reconcileErr);
+          }
+
           return NextResponse.json(
-            { error: "A payment has already been captured for this registration. Please contact support if your ticket is not showing." },
+            { error: "A payment has already been processed for this registration. Please contact support if your ticket is not showing." },
             { status: 400 }
           );
         }
