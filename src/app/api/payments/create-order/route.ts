@@ -100,6 +100,14 @@ export async function POST(request: NextRequest) {
     if (registration.razorpayOrderId) {
       try {
         const existingOrder = await fetchOrder(registration.razorpayOrderId);
+
+        if (existingOrder && existingOrder.status === "paid") {
+          return NextResponse.json(
+            { error: "A payment has already been captured for this registration. Please contact support if your ticket is not showing." },
+            { status: 400 }
+          );
+        }
+
         if (
           existingOrder &&
           existingOrder.status === "created" &&

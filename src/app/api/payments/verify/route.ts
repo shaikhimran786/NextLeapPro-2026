@@ -155,8 +155,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (payment.status === "failed") {
-      const paymentRecord = payment as Record<string, unknown>;
-      const errorDesc = typeof paymentRecord.error_description === "string" ? paymentRecord.error_description : "unknown error";
+      const errorDesc = "error_description" in payment && typeof (payment as { error_description?: string }).error_description === "string"
+        ? (payment as { error_description: string }).error_description
+        : "unknown error";
       const failReason = `Razorpay payment failed: ${errorDesc}`;
       await prisma.$transaction([
         prisma.eventRegistration.update({

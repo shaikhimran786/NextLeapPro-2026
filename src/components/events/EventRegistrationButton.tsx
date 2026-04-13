@@ -280,7 +280,6 @@ export function EventRegistrationButton({
           } catch (error) {
             const msg = error instanceof Error ? error.message : "Payment verification failed";
             toast.error(msg);
-            await recordPaymentFailure(regId, msg, activeToken);
             await revalidateUserStatus();
           } finally {
             setIsLoading(false);
