@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { createOrder, getRazorpayKeyId } from "@/lib/razorpay";
 import { getCurrentUserId } from "@/lib/auth-utils";
 import { getPaymentProvider, isEventPaymentEnabled } from "@/lib/payment-config";
+import { isEventExpired } from "@/lib/event-utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,6 +58,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (isEventExpired(registration.event)) {
+      return NextResponse.json(
+        { error: "This event has already ended. Registration is no longer available." },
+        { status: 400 }
+      );
+    }
+
     if (registration.status === "cancelled") {
       return NextResponse.json(
         { error: "This registration has been cancelled" },
@@ -64,9 +72,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (registration.status !== "pending" || registration.paymentStatus !== "pending") {
+    if (registration.paymentStatus === "paid") {
       return NextResponse.json(
-        { error: "Payment already completed or registration is not in a payable state" },
+        { error: "Payment already completed for this registration" },
+        { status: 400 }
+      );
+    }
+
+    if (registration.status !== "pending") {
+      return NextResponse.json(
+        { error: "Registration is not in a payable state" },
         { status: 400 }
       );
     }
@@ -97,6 +112,8 @@ export async function POST(request: NextRequest) {
       data: {
         razorpayOrderId: order.id,
         paymentGateway: "razorpay",
+        paymentStatus: "pending",
+        paymentFailureReason: null,
       },
     });
 

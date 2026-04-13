@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (registration.status !== "pending" || registration.paymentStatus !== "pending") {
+    if (registration.status !== "pending" || (registration.paymentStatus !== "pending" && registration.paymentStatus !== "failed")) {
       return NextResponse.json(
         { error: "Registration is not in a payable state" },
         { status: 400 }
@@ -145,6 +145,7 @@ export async function POST(request: NextRequest) {
           paidAmount: registration.event.price,
           qrCode: ticketCode,
           paymentToken: null,
+          paymentFailureReason: null,
           updatedAt: new Date(),
         },
       });

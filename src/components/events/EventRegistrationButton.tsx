@@ -7,8 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CheckCircle, Loader2, Calendar, Video, Ticket, RotateCcw, LogIn, CreditCard, Clock, ExternalLink, ShieldCheck } from "@/lib/icons";
-import { formatINR } from "@/lib/utils";
+import { CheckCircle, Loader2, Calendar, Video, Ticket, RotateCcw, LogIn, CreditCard, Clock, ExternalLink, ShieldCheck, AlertTriangle, Bell, XCircle } from "@/lib/icons";
+import { formatINR, formatDate } from "@/lib/utils";
 import { useUserStatus, revalidateUserStatus } from "@/hooks/useUserStatus";
 import { registerForEvent, cancelEventRegistration, getEventJoinLink } from "@/lib/actions/event-actions";
 import { cn } from "@/lib/utils";
@@ -53,6 +53,8 @@ interface EventRegistrationButtonProps {
   spotsLeft: number | null;
   isFree: boolean;
   eventStatus?: "upcoming" | "live" | "finished";
+  eventStartDate?: string;
+  eventMode?: string;
   className?: string;
 }
 
@@ -63,6 +65,8 @@ export function EventRegistrationButton({
   spotsLeft,
   isFree,
   eventStatus = "upcoming",
+  eventStartDate,
+  eventMode,
   className,
 }: EventRegistrationButtonProps) {
   const router = useRouter();
@@ -82,7 +86,9 @@ export function EventRegistrationButton({
   const isLoggedIn = userStatus.authStatus === "logged_in";
   const registrationInfo = userStatus.eventRegistrations[eventId];
   const registrationStatus = registrationInfo?.status || "not_registered";
+  const paymentStatus = registrationInfo?.paymentStatus;
   const isDisabled = spotsLeft === 0;
+  const isPaymentFailed = registrationStatus === "pending" && paymentStatus === "failed";
 
   const getButtonConfig = useCallback(() => {
     if (eventStatus === "live" && registrationStatus === "registered") {
@@ -112,6 +118,16 @@ export function EventRegistrationButton({
         action: "none",
         style: "",
         disabled: true,
+      };
+    }
+
+    if (isPaymentFailed) {
+      return {
+        label: "Retry Payment",
+        icon: RotateCcw,
+        variant: "default" as const,
+        action: "retry_payment",
+        style: "bg-amber-500 hover:bg-amber-600 text-white",
       };
     }
 
@@ -168,10 +184,25 @@ export function EventRegistrationButton({
           style: "bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25",
         };
     }
-  }, [eventStatus, registrationStatus, isDisabled, isLoggedIn, isFree, price]);
+  }, [eventStatus, registrationStatus, isDisabled, isLoggedIn, isFree, price, isPaymentFailed]);
 
   const buttonConfig = getButtonConfig();
   const IconComponent = buttonConfig.icon;
+
+  async function recordPaymentFailure(regId: number, reason: string, token?: string | null) {
+    try {
+      await fetch("/api/payments/record-failure", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          registrationId: regId,
+          paymentToken: token,
+          reason,
+        }),
+      });
+    } catch {
+    }
+  }
 
   async function openRazorpayCheckout(regId: number, token?: string | null) {
     setIsLoading(true);
@@ -235,9 +266,12 @@ export function EventRegistrationButton({
               setPaymentToken(null);
               router.push("/dashboard/tickets");
               router.refresh();
-            }, 2000);
+            }, 3000);
           } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Payment verification failed");
+            const msg = error instanceof Error ? error.message : "Payment verification failed";
+            toast.error(msg);
+            await recordPaymentFailure(regId, msg, activeToken);
+            await revalidateUserStatus();
           } finally {
             setIsLoading(false);
           }
@@ -254,10 +288,13 @@ export function EventRegistrationButton({
       };
 
       const rzp = new window.Razorpay(options);
-      rzp.on("payment.failed", function (response: any) {
+      rzp.on("payment.failed", async function (response: any) {
         const desc = response?.error?.description || "Payment failed. Please try again.";
+        const reason = response?.error?.reason || "unknown";
         toast.error(desc);
         setIsLoading(false);
+        await recordPaymentFailure(regId, `${reason}: ${desc}`, activeToken);
+        await revalidateUserStatus();
       });
       rzp.open();
     } catch (error) {
@@ -294,6 +331,7 @@ export function EventRegistrationButton({
         router.push(`/dashboard/certificates`);
         break;
 
+      case "retry_payment":
       case "complete_payment":
         if (registrationInfo?.ticketId) {
           setRegistrationId(registrationInfo.ticketId);
@@ -376,7 +414,7 @@ export function EventRegistrationButton({
             setIsSuccess(false);
             setFormData({ email: "", firstName: "", lastName: "" });
             router.refresh();
-          }, 2000);
+          }, 3000);
         }
       } else {
         toast.error(data.error || "Registration failed");
@@ -418,6 +456,13 @@ export function EventRegistrationButton({
         )}
       </Button>
 
+      {isPaymentFailed && (
+        <div className="flex items-center gap-2 text-sm text-amber-600 mb-4 px-1" data-testid="text-payment-failed-hint">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span>Your previous payment didn't go through. Tap above to retry.</span>
+        </div>
+      )}
+
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md">
           {isSuccess ? (
@@ -426,11 +471,28 @@ export function EventRegistrationButton({
               <DialogTitle className="text-2xl mb-2">
                 {isFree ? "You're Registered!" : "Payment Verified!"}
               </DialogTitle>
-              <DialogDescription>
-                {isFree 
-                  ? "Check your email for event details and joining instructions."
-                  : "Your ticket is ready. Check your dashboard for details."
-                }
+              <DialogDescription className="space-y-3">
+                <p>
+                  {isFree 
+                    ? "Check your email for event details and joining instructions."
+                    : "Your ticket is ready. Redirecting to your dashboard..."
+                  }
+                </p>
+                <div className="mt-4 p-3 bg-slate-50 rounded-lg text-left text-sm text-slate-700 space-y-1">
+                  <p className="font-medium text-slate-900">{eventTitle}</p>
+                  {eventStartDate && (
+                    <p className="flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-slate-500" />
+                      {formatDate(eventStartDate)}
+                    </p>
+                  )}
+                  {eventMode && (
+                    <p className="flex items-center gap-1.5">
+                      <Video className="h-3.5 w-3.5 text-slate-500" />
+                      {eventMode === "online" ? "Online Event" : eventMode === "hybrid" ? "Hybrid Event" : "In-Person Event"}
+                    </p>
+                  )}
+                </div>
               </DialogDescription>
             </div>
           ) : isPaymentPending ? (
@@ -438,7 +500,7 @@ export function EventRegistrationButton({
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <CreditCard className="h-5 w-5 text-primary" />
-                  Complete Payment
+                  {isPaymentFailed ? "Retry Payment" : "Complete Payment"}
                 </DialogTitle>
                 <DialogDescription>
                   {eventTitle}
@@ -446,6 +508,15 @@ export function EventRegistrationButton({
               </DialogHeader>
 
               <div className="space-y-4 py-4">
+                {isPaymentFailed && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2" data-testid="text-payment-failed-banner">
+                    <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-amber-800">
+                      Your previous payment attempt was unsuccessful. No amount was charged. You can safely try again.
+                    </p>
+                  </div>
+                )}
+
                 <div className="p-4 bg-slate-50 rounded-lg">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-slate-600">Amount to Pay</span>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { generateTicketCode } from "@/lib/payment-link";
+import { isEventExpired } from "@/lib/event-utils";
 import crypto from "crypto";
 
 export async function POST(
@@ -35,6 +36,13 @@ export async function POST(
     if (event.status !== "published") {
       return NextResponse.json(
         { error: "This event is not accepting registrations" },
+        { status: 400 }
+      );
+    }
+
+    if (isEventExpired(event)) {
+      return NextResponse.json(
+        { error: "This event has already ended. Registration is no longer available." },
         { status: 400 }
       );
     }
@@ -74,14 +82,13 @@ export async function POST(
     });
 
     if (existingRegistration && existingRegistration.status !== "cancelled") {
-      if (existingRegistration.paymentStatus === "pending" && Number(event.price) > 0) {
-        const existingToken = existingRegistration.paymentToken || crypto.randomBytes(32).toString("hex");
-        if (!existingRegistration.paymentToken) {
-          await prisma.eventRegistration.update({
-            where: { id: existingRegistration.id },
-            data: { paymentToken: existingToken },
-          });
-        }
+      const isPendingPayment = (existingRegistration.paymentStatus === "pending" || existingRegistration.paymentStatus === "failed") && Number(event.price) > 0;
+      if (isPendingPayment) {
+        const newToken = crypto.randomBytes(32).toString("hex");
+        await prisma.eventRegistration.update({
+          where: { id: existingRegistration.id },
+          data: { paymentToken: newToken },
+        });
         return NextResponse.json({
           success: true,
           registration: {
@@ -90,8 +97,10 @@ export async function POST(
             paymentStatus: existingRegistration.paymentStatus,
           },
           requiresPayment: true,
-          paymentToken: existingToken,
-          message: "You have a pending payment for this event",
+          paymentToken: newToken,
+          message: existingRegistration.paymentStatus === "failed"
+            ? "Your previous payment failed. You can try again."
+            : "You have a pending payment for this event",
         });
       }
       return NextResponse.json(

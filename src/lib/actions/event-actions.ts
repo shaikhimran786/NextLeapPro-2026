@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getCurrentUserId } from "@/lib/auth-utils";
 import { generateTicketCode } from "@/lib/payment-link";
+import { isEventExpired } from "@/lib/event-utils";
 
 export async function registerForEvent(eventId: number, ticketType?: string) {
   const userId = await getCurrentUserId();
@@ -27,6 +28,10 @@ export async function registerForEvent(eventId: number, ticketType?: string) {
     throw new Error("This event is not accepting registrations");
   }
 
+  if (isEventExpired(event)) {
+    throw new Error("This event has already ended. Registration is no longer available.");
+  }
+
   if (event.capacity) {
     const registeredCount = event.registrations.filter(
       (r) => r.status !== "cancelled"
@@ -41,7 +46,8 @@ export async function registerForEvent(eventId: number, ticketType?: string) {
   });
 
   if (existingRegistration && existingRegistration.status !== "cancelled") {
-    if (existingRegistration.paymentStatus === "pending" && Number(event.price) > 0) {
+    const isPendingPayment = (existingRegistration.paymentStatus === "pending" || existingRegistration.paymentStatus === "failed") && Number(event.price) > 0;
+    if (isPendingPayment) {
       const existingToken = existingRegistration.paymentToken || crypto.randomBytes(32).toString("hex");
       if (!existingRegistration.paymentToken) {
         await prisma.eventRegistration.update({
@@ -58,7 +64,9 @@ export async function registerForEvent(eventId: number, ticketType?: string) {
         },
         requiresPayment: true,
         paymentToken: existingToken,
-        message: "You have a pending payment for this event",
+        message: existingRegistration.paymentStatus === "failed"
+          ? "Your previous payment failed. You can try again."
+          : "You have a pending payment for this event",
       };
     }
     throw new Error("Already registered for this event");

@@ -217,6 +217,9 @@ export default async function EventDetailPage({ params }: PageProps) {
                     price={Number(event.price)}
                     spotsLeft={spotsLeft}
                     isFree={isFree}
+                    eventStatus={eventStatus}
+                    eventStartDate={event.startDate.toISOString()}
+                    eventMode={event.mode}
                   />
 
                   <Button variant="outline" className="w-full rounded-full" data-testid="button-share">
