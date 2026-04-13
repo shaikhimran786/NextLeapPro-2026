@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -54,6 +54,7 @@ interface EventRegistrationButtonProps {
   isFree: boolean;
   eventStatus?: "upcoming" | "live" | "finished";
   eventStartDate?: string;
+  eventEndDate?: string;
   eventMode?: string;
   className?: string;
 }
@@ -64,8 +65,9 @@ export function EventRegistrationButton({
   price,
   spotsLeft,
   isFree,
-  eventStatus = "upcoming",
+  eventStatus: serverEventStatus = "upcoming",
   eventStartDate,
+  eventEndDate,
   eventMode,
   className,
 }: EventRegistrationButtonProps) {
@@ -90,6 +92,19 @@ export function EventRegistrationButton({
   const paymentStatus = registrationInfo?.paymentStatus;
   const isDisabled = spotsLeft === 0;
   const isPaymentFailed = registrationStatus === "pending" && paymentStatus === "failed";
+
+  const eventStatus = useMemo(() => {
+    if (eventEndDate) {
+      const now = new Date();
+      const end = new Date(eventEndDate);
+      if (now > end) return "finished" as const;
+      if (eventStartDate) {
+        const start = new Date(eventStartDate);
+        if (now >= start && now <= end) return "live" as const;
+      }
+    }
+    return serverEventStatus;
+  }, [serverEventStatus, eventStartDate, eventEndDate]);
 
   const getButtonConfig = useCallback(() => {
     if (eventStatus === "live" && registrationStatus === "registered") {

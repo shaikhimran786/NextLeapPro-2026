@@ -9,7 +9,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, MapPin, Clock, Share2, Users } from "@/lib/icons";
+import { Calendar, MapPin, Clock, Share2, Users, AlertCircle } from "@/lib/icons";
 import { formatINR, formatDate, formatDateTime } from "@/lib/utils";
 import { EventRegistrationButton } from "@/components/events/EventRegistrationButton";
 import { getImageUrl, isValidImageSrc } from "@/lib/image-utils";
@@ -189,12 +189,24 @@ export default async function EventDetailPage({ params }: PageProps) {
 
               <div className="lg:w-1/3 relative">
                 <div className="sticky top-24 bg-white p-6 rounded-2xl border shadow-lg">
+                  {eventStatus === "finished" && (
+                    <div className="flex items-center gap-2 p-3 mb-4 bg-slate-100 border border-slate-200 rounded-lg" data-testid="banner-event-ended">
+                      <AlertCircle className="h-5 w-5 text-slate-500 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-semibold text-slate-700">This event has ended</p>
+                        <p className="text-xs text-slate-500" suppressHydrationWarning>
+                          Ended on {formatDate(event.endDate)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="mb-6">
                     {isFree ? (
-                      <span className="text-3xl font-bold text-green-600" data-testid="text-event-price">Free</span>
+                      <span className={`text-3xl font-bold ${eventStatus === "finished" ? "text-slate-400 line-through" : "text-green-600"}`} data-testid="text-event-price">Free</span>
                     ) : (
                       <>
-                        <span className="text-3xl font-bold text-slate-900" data-testid="text-event-price">
+                        <span className={`text-3xl font-bold ${eventStatus === "finished" ? "text-slate-400 line-through" : "text-slate-900"}`} data-testid="text-event-price">
                           {formatINR(Number(event.price))}
                         </span>
                         <span className="text-slate-500 ml-2">per ticket</span>
@@ -202,7 +214,7 @@ export default async function EventDetailPage({ params }: PageProps) {
                     )}
                   </div>
 
-                  {spotsLeft !== null && (
+                  {spotsLeft !== null && eventStatus !== "finished" && (
                     <div className="flex items-center gap-2 mb-4 text-sm">
                       <Users className="h-4 w-4 text-orange-500" />
                       <span className={spotsLeft < 10 ? "text-orange-500 font-medium" : "text-muted-foreground"}>
@@ -219,6 +231,7 @@ export default async function EventDetailPage({ params }: PageProps) {
                     isFree={isFree}
                     eventStatus={eventStatus}
                     eventStartDate={event.startDate.toISOString()}
+                    eventEndDate={event.endDate.toISOString()}
                     eventMode={event.mode}
                   />
 
