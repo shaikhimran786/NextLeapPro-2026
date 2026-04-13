@@ -1,0 +1,236 @@
+Here’s a clean, structured Replit-ready prompt you can use to upgrade your **event + payment flow** with strong product thinking and user trust at the centre:
+
+---
+
+### 🔧 Replit Prompt: Improve Event & Payment Flow (Next Leap Pro)
+
+Improve the **event management and payment flow** across the application with a strong focus on **user trust, logical validation, and real-world UX standards**.
+
+---
+
+## 🎯 Core Objective
+
+Build a **smart, reliable, and trust-first payment system** for events and subscriptions where:
+
+* Users are never charged incorrectly
+* UI always reflects true state
+* Duplicate or unnecessary actions are avoided
+* System behaves predictably in all edge cases
+
+---
+
+## 🔍 Key Improvements Required
+
+### 1. 📅 Event Expiry Logic
+
+* If **event date/time is already expired**:
+
+  * Disable **“Pay / Register”** button
+  * Show status: `Event Expired`
+  * Enable **“Notify Me for Future Events”** CTA
+  * Prevent API call for payment initiation
+
+* If event is upcoming:
+
+  * Allow normal registration/payment flow
+
+---
+
+### 2. 💳 Payment Flow Validation
+
+Ensure **strict backend + frontend validation before initiating payment**:
+
+* Do NOT allow payment if:
+
+  * Event is expired
+  * User is already registered for the event
+  * User already has access via:
+
+    * Community membership
+    * Subscription plan
+    * Previous purchase
+
+* Show clear UI states:
+
+  * `Already Joined`
+  * `Included in Your Plan`
+  * `You’re Already Registered`
+
+---
+
+### 3. 🔁 Avoid Duplicate Purchases
+
+* Before showing payment CTA:
+
+  * Check:
+
+    * `user_event_registration`
+    * `user_subscription`
+    * `community_membership`
+
+* If already eligible:
+
+  * Hide payment button
+  * Show **“Access Event” / “Go to Event”**
+
+---
+
+### 4. 🧾 Subscription Plan Awareness
+
+* If user has an **active subscription**:
+
+  * Mark plan as: `Current Plan`
+  * Show validity: `Active till [date]`
+  * Disable re-purchase of same plan
+
+* If expired:
+
+  * Show: `Expired`
+  * Enable upgrade / renew CTA
+
+---
+
+### 5. ⚠️ Payment Status Handling (Critical)
+
+Handle all payment states correctly from Razorpay:
+
+#### حالات (States):
+
+* `created`
+* `pending`
+* `success`
+* `failed`
+* `cancelled`
+
+#### Expected Behaviour:
+
+* On **success**:
+
+  * Grant access
+  * Update DB
+  * Show success UI
+
+* On **failure or cancellation**:
+
+  * DO NOT mark as completed
+  * Show:
+
+    * `Payment Failed`
+    * `Retry Payment` button
+
+* On **pending/interrupted**:
+
+  * Keep status as pending
+  * Allow user to resume or retry
+
+* Ensure **no false success state is ever shown**
+
+---
+
+### 6. 🔁 Retry Payment Flow
+
+* If payment fails:
+
+  * Store failed attempt
+  * Allow retry using same event/session
+  * Avoid creating duplicate orders unnecessarily
+
+---
+
+### 7. 🔔 Smart CTA System
+
+Dynamic CTA based on user state:
+
+| Condition           | CTA              |
+| ------------------- | ---------------- |
+| Not registered      | Register / Pay   |
+| Already registered  | Go to Event      |
+| Event expired       | Notify Me        |
+| Payment failed      | Retry Payment    |
+| Subscription active | Included in Plan |
+
+---
+
+### 8. 🧠 UX Improvements (World-Class Standard)
+
+* Show **clear feedback at every step**
+* Avoid dead ends (always give next action)
+* Use loaders during payment processing
+* Show confirmation before payment
+* Show success screen with:
+
+  * Event details
+  * Access link
+  * Next steps
+
+---
+
+### 9. 🔐 Backend Safeguards
+
+* Validate all conditions server-side before:
+
+  * Creating order
+  * Capturing payment
+* Never trust frontend alone
+* Maintain idempotency for payment callbacks (webhooks)
+
+---
+
+### 10. 📊 Data Integrity & Trust
+
+* Maintain accurate records for:
+
+  * Payment attempts
+  * Payment status
+  * Event registrations
+* Log failures for debugging
+* Ensure consistency between Razorpay and DB
+
+---
+
+## 🚀 Additional Improvements (Recommended)
+
+* Add **“My Events” dashboard**:
+
+  * Upcoming
+  * Joined
+  * Expired
+
+* Add **email/notification triggers**:
+
+  * Payment success
+  * Payment failure
+  * Event reminders
+
+* Add **grace handling for network failures**
+
+---
+
+## 🧩 Expected Outcome
+
+A **frictionless, trustworthy event + payment experience** where:
+
+* Users feel confident while paying
+* No accidental or duplicate payments happen
+* System behaves intelligently based on user state
+* Clear actions guide the user at every step
+
+---
+
+## ⚠️ Important Note
+
+Focus on **real-world production reliability**, not just UI fixes.
+
+Think like:
+
+> “If this fails at scale, will users lose trust?”
+
+---
+
+If you want, next step I can help you convert this into:
+
+* API structure (routes + schema)
+* DB design (tables for payments, events, subscriptions)
+* Razorpay webhook handling flow
+
+This is exactly the kind of system that builds long-term trust.
