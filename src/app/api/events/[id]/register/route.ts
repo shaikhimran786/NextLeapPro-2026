@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { generateTicketCode } from "@/lib/payment-link";
+import crypto from "crypto";
 
 export async function POST(
   request: NextRequest,
@@ -74,6 +75,13 @@ export async function POST(
 
     if (existingRegistration && existingRegistration.status !== "cancelled") {
       if (existingRegistration.paymentStatus === "pending" && Number(event.price) > 0) {
+        const existingToken = existingRegistration.paymentToken || crypto.randomBytes(32).toString("hex");
+        if (!existingRegistration.paymentToken) {
+          await prisma.eventRegistration.update({
+            where: { id: existingRegistration.id },
+            data: { paymentToken: existingToken },
+          });
+        }
         return NextResponse.json({
           success: true,
           registration: {
@@ -82,6 +90,7 @@ export async function POST(
             paymentStatus: existingRegistration.paymentStatus,
           },
           requiresPayment: true,
+          paymentToken: existingToken,
           message: "You have a pending payment for this event",
         });
       }
@@ -93,6 +102,7 @@ export async function POST(
 
     const isFreeEvent = Number(event.price) === 0;
     const ticketCode = isFreeEvent ? generateTicketCode() : null;
+    const paymentToken = isFreeEvent ? null : crypto.randomBytes(32).toString("hex");
 
     const registration = await prisma.$transaction(async (tx) => {
       let reg;
@@ -105,6 +115,7 @@ export async function POST(
             paymentStatus: isFreeEvent ? "paid" : "pending",
             paidAmount: null,
             qrCode: ticketCode,
+            paymentToken,
             registeredAt: new Date(),
           },
         });
@@ -117,6 +128,7 @@ export async function POST(
             paymentStatus: isFreeEvent ? "paid" : "pending",
             paidAmount: null,
             qrCode: ticketCode,
+            paymentToken,
           },
         });
       }
@@ -148,6 +160,7 @@ export async function POST(
           paymentStatus: registration.paymentStatus,
         },
         requiresPayment: true,
+        paymentToken,
         message: "Please complete payment to confirm your registration",
       });
     }

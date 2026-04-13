@@ -232,6 +232,7 @@ model EventRegistration {
   paidAmount          Decimal?    @db.Decimal(10, 2)
   paymentStatus       String      @default("pending")
   paymentGateway      String?
+  paymentToken        String?     @unique
   razorpayOrderId     String?
   razorpayPaymentId   String?
   razorpaySignature   String?

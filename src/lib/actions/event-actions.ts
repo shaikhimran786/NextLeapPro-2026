@@ -1,5 +1,6 @@
 "use server";
 
+import crypto from "crypto";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getCurrentUserId } from "@/lib/auth-utils";
@@ -41,6 +42,13 @@ export async function registerForEvent(eventId: number, ticketType?: string) {
 
   if (existingRegistration && existingRegistration.status !== "cancelled") {
     if (existingRegistration.paymentStatus === "pending" && Number(event.price) > 0) {
+      const existingToken = existingRegistration.paymentToken || crypto.randomBytes(32).toString("hex");
+      if (!existingRegistration.paymentToken) {
+        await prisma.eventRegistration.update({
+          where: { id: existingRegistration.id },
+          data: { paymentToken: existingToken },
+        });
+      }
       return {
         success: true,
         registration: {
@@ -49,6 +57,7 @@ export async function registerForEvent(eventId: number, ticketType?: string) {
           paymentStatus: existingRegistration.paymentStatus,
         },
         requiresPayment: true,
+        paymentToken: existingToken,
         message: "You have a pending payment for this event",
       };
     }
@@ -57,6 +66,7 @@ export async function registerForEvent(eventId: number, ticketType?: string) {
 
   const isFreeEvent = Number(event.price) === 0;
   const ticketCode = isFreeEvent ? generateTicketCode() : null;
+  const paymentToken = isFreeEvent ? null : crypto.randomBytes(32).toString("hex");
 
   const registration = await prisma.$transaction(async (tx) => {
     let reg;
@@ -68,6 +78,7 @@ export async function registerForEvent(eventId: number, ticketType?: string) {
           paymentStatus: isFreeEvent ? "paid" : "pending",
           paidAmount: null,
           qrCode: ticketCode,
+          paymentToken,
           registeredAt: new Date(),
         },
       });
@@ -80,6 +91,7 @@ export async function registerForEvent(eventId: number, ticketType?: string) {
           paymentStatus: isFreeEvent ? "paid" : "pending",
           paidAmount: null,
           qrCode: ticketCode,
+          paymentToken,
         },
       });
     }
@@ -115,6 +127,7 @@ export async function registerForEvent(eventId: number, ticketType?: string) {
         paymentStatus: registration.paymentStatus,
       },
       requiresPayment: true,
+      paymentToken,
       message: "Please complete payment to confirm your registration",
     };
   }
@@ -132,84 +145,8 @@ export async function registerForEvent(eventId: number, ticketType?: string) {
   };
 }
 
-export async function confirmEventPayment(registrationId: number) {
-  const userId = await getCurrentUserId();
-  if (!userId) {
-    throw new Error("Authentication required");
-  }
-
-  const registration = await prisma.eventRegistration.findUnique({
-    where: { id: registrationId },
-    include: {
-      event: true,
-    },
-  });
-
-  if (!registration) {
-    throw new Error("Registration not found");
-  }
-
-  if (registration.userId !== userId) {
-    throw new Error("Unauthorized");
-  }
-
-  if (registration.paymentStatus === "paid") {
-    return {
-      success: true,
-      message: "Payment already confirmed",
-      registration: {
-        id: registration.id,
-        status: registration.status,
-        paymentStatus: registration.paymentStatus,
-      },
-    };
-  }
-
-  const ticketCode = generateTicketCode();
-  const eventPrice = registration.event.price;
-
-  const updated = await prisma.$transaction(async (tx) => {
-    const reg = await tx.eventRegistration.update({
-      where: { id: registrationId },
-      data: {
-        status: "registered",
-        paymentStatus: "paid",
-        paidAmount: eventPrice,
-        qrCode: ticketCode,
-        updatedAt: new Date(),
-      },
-    });
-
-    await tx.adminAuditLog.create({
-      data: {
-        userId,
-        action: "event_payment_confirmed",
-        target: `Event #${registration.eventId}: ${registration.event.title}`,
-        details: {
-          registrationId: registration.id,
-          ticketCode,
-          amount: registration.paidAmount,
-        },
-      },
-    });
-
-    return reg;
-  });
-
-  revalidatePath(`/events/${registration.eventId}`);
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/tickets");
-
-  return {
-    success: true,
-    message: "Payment confirmed! Your ticket is ready.",
-    registration: {
-      id: updated.id,
-      status: updated.status,
-      paymentStatus: updated.paymentStatus,
-      ticketCode,
-    },
-  };
+export async function confirmEventPayment(_registrationId: number) {
+  throw new Error("Self-confirmation is no longer supported. Please complete payment through the Razorpay checkout on the event page.");
 }
 
 export async function cancelEventRegistration(eventId: number) {

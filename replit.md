@@ -112,12 +112,15 @@ Key files:
 - `src/app/api/payments/cashfree/webhook/route.ts` - Cashfree webhook handler (legacy)
 
 **Event Payment Flow**:
-1. User clicks "Buy Ticket" → backend creates pending EventRegistration
-2. Frontend calls `/api/payments/create-order` → creates Razorpay order, stores orderId on registration
+1. User clicks "Buy Ticket" → backend creates pending EventRegistration with a unique `paymentToken`
+2. Frontend calls `/api/payments/create-order` with registrationId + paymentToken → creates Razorpay order, stores orderId on registration
 3. Razorpay checkout modal opens in-browser
-4. On success, frontend calls `/api/payments/verify` with razorpay_order_id, payment_id, signature
-5. Backend verifies signature cryptographically, marks registration as "registered"/"paid", generates ticket
-6. Payment proof (orderId, paymentId, signature) stored on EventRegistration record
+4. On success, frontend calls `/api/payments/verify` with razorpay_order_id, payment_id, signature, registrationId, paymentToken
+5. Backend verifies: signature cryptographically, server-side payment fetch (amount/status/currency - fail-closed), and ownership (session auth OR paymentToken)
+6. Registration marked as "registered"/"paid", ticket generated, paymentToken cleared from DB
+7. Payment proof (orderId, paymentId, signature) stored on EventRegistration record
+
+**Security**: Payment APIs require either authenticated session matching registration owner OR a valid `paymentToken` (64-char hex, unique per registration, generated at registration time, cleared after payment). This enables secure guest checkout without login while preventing unauthorized access.
 
 **Subscription Payment Flow**:
 - Uses site settings `activePaymentGateway` ("razorpay" or "cashfree") to determine which gateway to use

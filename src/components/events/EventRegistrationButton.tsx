@@ -70,6 +70,7 @@ export function EventRegistrationButton({
   const [isOpen, setIsOpen] = useState(false);
   const [isPaymentPending, setIsPaymentPending] = useState(false);
   const [registrationId, setRegistrationId] = useState<number | null>(null);
+  const [paymentToken, setPaymentToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [formData, setFormData] = useState({
@@ -172,15 +173,16 @@ export function EventRegistrationButton({
   const buttonConfig = getButtonConfig();
   const IconComponent = buttonConfig.icon;
 
-  async function openRazorpayCheckout(regId: number) {
+  async function openRazorpayCheckout(regId: number, token?: string | null) {
     setIsLoading(true);
+    const activeToken = token || paymentToken;
     try {
       await loadRazorpayScript();
 
       const orderRes = await fetch("/api/payments/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ registrationId: regId }),
+        body: JSON.stringify({ registrationId: regId, paymentToken: activeToken }),
       });
 
       if (!orderRes.ok) {
@@ -198,8 +200,8 @@ export function EventRegistrationButton({
         description: `Event: ${orderData.registration.eventTitle}`,
         order_id: orderData.orderId,
         prefill: {
-          name: orderData.user.name,
-          email: orderData.user.email,
+          name: orderData.prefill?.name || "",
+          email: orderData.prefill?.email || "",
         },
         handler: async function (response: any) {
           try {
@@ -212,6 +214,7 @@ export function EventRegistrationButton({
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 registrationId: regId,
+                paymentToken: activeToken,
               }),
             });
 
@@ -229,6 +232,7 @@ export function EventRegistrationButton({
               setIsSuccess(false);
               setIsPaymentPending(false);
               setRegistrationId(null);
+              setPaymentToken(null);
               router.push("/dashboard/tickets");
               router.refresh();
             }, 2000);
@@ -306,9 +310,10 @@ export function EventRegistrationButton({
             if (result.success) {
               if (result.requiresPayment) {
                 setRegistrationId(result.registration.id);
+                setPaymentToken(result.paymentToken || null);
                 setIsPaymentPending(true);
                 setIsOpen(true);
-                await openRazorpayCheckout(result.registration.id);
+                await openRazorpayCheckout(result.registration.id, result.paymentToken);
               } else {
                 toast.success("Registration successful!");
                 await revalidateUserStatus();
@@ -359,8 +364,9 @@ export function EventRegistrationButton({
       if (res.ok) {
         if (data.requiresPayment) {
           setRegistrationId(data.registration.id);
+          setPaymentToken(data.paymentToken || null);
           setIsPaymentPending(true);
-          await openRazorpayCheckout(data.registration.id);
+          await openRazorpayCheckout(data.registration.id, data.paymentToken);
         } else {
           setIsSuccess(true);
           toast.success("Registration successful!");
@@ -485,6 +491,7 @@ export function EventRegistrationButton({
                   onClick={() => {
                     setIsOpen(false);
                     setIsPaymentPending(false);
+                    setPaymentToken(null);
                   }}
                   disabled={isLoading}
                 >

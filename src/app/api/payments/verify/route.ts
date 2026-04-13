@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { verifyPaymentSignature } from "@/lib/razorpay";
+import { verifyPaymentSignature, fetchPayment } from "@/lib/razorpay";
 import { generateTicketCode } from "@/lib/payment-link";
+import { getCurrentUserId } from "@/lib/auth-utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,6 +12,7 @@ export async function POST(request: NextRequest) {
       razorpay_payment_id,
       razorpay_signature,
       registrationId,
+      paymentToken,
     } = body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !registrationId) {
@@ -53,7 +55,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (registration.razorpayOrderId && registration.razorpayOrderId !== razorpay_order_id) {
+    const currentUserId = await getCurrentUserId();
+    const isOwnerBySession = currentUserId && currentUserId === registration.userId;
+    const isOwnerByToken = paymentToken && registration.paymentToken && paymentToken === registration.paymentToken;
+
+    if (!isOwnerBySession && !isOwnerByToken) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 403 }
+      );
+    }
+
+    if (!registration.razorpayOrderId) {
+      return NextResponse.json(
+        { error: "No payment order found for this registration. Please initiate payment first." },
+        { status: 400 }
+      );
+    }
+
+    if (registration.razorpayOrderId !== razorpay_order_id) {
       return NextResponse.json(
         { error: "Order ID mismatch" },
         { status: 400 }
@@ -73,6 +93,29 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const payment = await fetchPayment(razorpay_payment_id);
+    const expectedAmountPaise = Math.round(Number(registration.event.price) * 100);
+    const paymentCurrency = (payment.currency || "INR").toUpperCase();
+    const expectedCurrency = (registration.event.currency || "INR").toUpperCase();
+
+    if (
+      payment.status !== "captured" ||
+      Number(payment.amount) !== expectedAmountPaise ||
+      paymentCurrency !== expectedCurrency
+    ) {
+      console.error("Razorpay payment validation failed", {
+        paymentStatus: payment.status,
+        paymentAmount: payment.amount,
+        expectedAmount: expectedAmountPaise,
+        paymentCurrency,
+        expectedCurrency,
+      });
+      return NextResponse.json(
+        { error: "Payment amount or status verification failed. Please contact support." },
+        { status: 400 }
+      );
+    }
+
     const ticketCode = generateTicketCode();
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -87,6 +130,7 @@ export async function POST(request: NextRequest) {
           razorpaySignature: razorpay_signature,
           paidAmount: registration.event.price,
           qrCode: ticketCode,
+          paymentToken: null,
           updatedAt: new Date(),
         },
       });
@@ -123,7 +167,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error("Error verifying payment:", error);
     return NextResponse.json(
-      { error: error?.message || "Failed to verify payment" },
+      { error: "Failed to verify payment. Please try again." },
       { status: 500 }
     );
   }

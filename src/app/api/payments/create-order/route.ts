@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { createOrder, getRazorpayKeyId, isRazorpayConfigured } from "@/lib/razorpay";
+import { getCurrentUserId } from "@/lib/auth-utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { registrationId } = body;
+    const { registrationId, paymentToken } = body;
 
     if (!registrationId) {
       return NextResponse.json(
@@ -33,6 +34,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Registration not found" },
         { status: 404 }
+      );
+    }
+
+    const currentUserId = await getCurrentUserId();
+    const isOwnerBySession = currentUserId && currentUserId === registration.userId;
+    const isOwnerByToken = paymentToken && registration.paymentToken && paymentToken === registration.paymentToken;
+
+    if (!isOwnerBySession && !isOwnerByToken) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 403 }
       );
     }
 
@@ -61,7 +73,6 @@ export async function POST(request: NextRequest) {
         eventId: registration.eventId.toString(),
         registrationId: registrationId.toString(),
         userId: registration.userId.toString(),
-        eventTitle: registration.event.title.substring(0, 100),
       },
     });
 
@@ -84,7 +95,7 @@ export async function POST(request: NextRequest) {
         eventId: registration.eventId,
         eventTitle: registration.event.title,
       },
-      user: {
+      prefill: {
         name: `${registration.user.firstName || ""} ${registration.user.lastName || ""}`.trim(),
         email: registration.user.email,
       },
@@ -92,7 +103,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error("Error creating payment order:", error);
     return NextResponse.json(
-      { error: error?.message || "Failed to create payment order" },
+      { error: "Failed to create payment order. Please try again." },
       { status: 500 }
     );
   }
