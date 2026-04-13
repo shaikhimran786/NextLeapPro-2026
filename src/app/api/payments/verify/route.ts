@@ -195,6 +195,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (payment.status === "refunded") {
+      await prisma.adminAuditLog.create({
+        data: {
+          userId: registration.userId,
+          action: "event_payment_already_refunded",
+          target: `Event #${registration.eventId}: ${registration.event.title}`,
+          details: {
+            registrationId: registration.id,
+            razorpayPaymentId: razorpay_payment_id,
+            razorpayStatus: payment.status,
+            gateway: "razorpay",
+          },
+        },
+      });
+
+      return NextResponse.json(
+        { error: "This payment has been refunded. Please initiate a new payment if you wish to register.", code: "payment_refunded" },
+        { status: 400 }
+      );
+    }
+
     if (payment.status !== "captured") {
       const reason = `Unexpected Razorpay payment status: ${payment.status}`;
       console.error("Razorpay unexpected payment status", {

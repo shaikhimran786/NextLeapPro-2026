@@ -77,6 +77,7 @@ export function EventRegistrationButton({
   const [paymentToken, setPaymentToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [successTicketCode, setSuccessTicketCode] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: "",
     firstName: "",
@@ -121,11 +122,12 @@ export function EventRegistrationButton({
         };
       }
       return {
-        label: "Notify Me of Future Events",
-        icon: Bell,
+        label: "Event Ended",
+        icon: Calendar,
         variant: "outline" as const,
-        action: "notify_me",
-        style: "",
+        action: "event_ended",
+        style: "opacity-60",
+        disabled: true,
       };
     }
 
@@ -270,19 +272,11 @@ export function EventRegistrationButton({
               throw new Error(verifyData.error || "Payment verification failed");
             }
 
+            setSuccessTicketCode(verifyData.registration?.ticketCode || null);
             setIsSuccess(true);
+            setIsPaymentPending(false);
             toast.success("Payment verified! Your ticket is ready.");
             await revalidateUserStatus();
-
-            setTimeout(() => {
-              setIsOpen(false);
-              setIsSuccess(false);
-              setIsPaymentPending(false);
-              setRegistrationId(null);
-              setPaymentToken(null);
-              router.push("/dashboard/tickets");
-              router.refresh();
-            }, 3000);
           } catch (error) {
             const msg = error instanceof Error ? error.message : "Payment verification failed";
             toast.error(msg);
@@ -347,13 +341,6 @@ export function EventRegistrationButton({
         router.push(`/dashboard/certificates`);
         break;
 
-      case "notify_me":
-        toast.success("We'll notify you about similar upcoming events!", {
-          description: "Keep an eye on your email for future event announcements.",
-          duration: 4000,
-        });
-        break;
-
       case "retry_payment":
       case "complete_payment":
         if (registrationInfo?.ticketId) {
@@ -374,12 +361,11 @@ export function EventRegistrationButton({
                 setPaymentToken(result.paymentToken || null);
                 setIsPaymentPending(true);
                 setIsOpen(true);
-                await openRazorpayCheckout(result.registration.id, result.paymentToken);
               } else {
+                setIsSuccess(true);
+                setIsOpen(true);
                 toast.success("Registration successful!");
                 await revalidateUserStatus();
-                router.push("/dashboard/tickets");
-                router.refresh();
               }
             }
           } catch (error) {
@@ -427,17 +413,10 @@ export function EventRegistrationButton({
           setRegistrationId(data.registration.id);
           setPaymentToken(data.paymentToken || null);
           setIsPaymentPending(true);
-          await openRazorpayCheckout(data.registration.id, data.paymentToken);
         } else {
+          setSuccessTicketCode(data.registration?.ticketCode || null);
           setIsSuccess(true);
           toast.success("Registration successful!");
-          
-          setTimeout(() => {
-            setIsOpen(false);
-            setIsSuccess(false);
-            setFormData({ email: "", firstName: "", lastName: "" });
-            router.refresh();
-          }, 3000);
         }
       } else {
         toast.error(data.error || "Registration failed");
@@ -486,35 +465,91 @@ export function EventRegistrationButton({
         </div>
       )}
 
+      {eventStatus === "finished" && registrationStatus !== "registered" && registrationStatus !== "attended" && (
+        <Button
+          variant="ghost"
+          className="w-full mb-4 text-sm"
+          data-testid="button-notify-me"
+          onClick={() => {
+            toast.success("We'll notify you about similar upcoming events!", {
+              description: "Keep an eye on your email for future event announcements.",
+              duration: 4000,
+            });
+          }}
+        >
+          <Bell className="mr-2 h-4 w-4" />
+          Notify Me of Future Events
+        </Button>
+      )}
+
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md">
           {isSuccess ? (
-            <div className="py-8 text-center">
+            <div className="py-6 text-center">
               <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
               <DialogTitle className="text-2xl mb-2">
                 {isFree ? "You're Registered!" : "Payment Verified!"}
               </DialogTitle>
-              <DialogDescription className="space-y-3">
-                <p>
-                  {isFree 
-                    ? "Check your email for event details and joining instructions."
-                    : "Your ticket is ready. Redirecting to your dashboard..."
-                  }
-                </p>
-                <div className="mt-4 p-3 bg-slate-50 rounded-lg text-left text-sm text-slate-700 space-y-1">
-                  <p className="font-medium text-slate-900">{eventTitle}</p>
-                  {eventStartDate && (
-                    <p className="flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5 text-slate-500" />
-                      {formatDate(eventStartDate)}
-                    </p>
-                  )}
-                  {eventMode && (
-                    <p className="flex items-center gap-1.5">
-                      <Video className="h-3.5 w-3.5 text-slate-500" />
-                      {eventMode === "online" ? "Online Event" : eventMode === "hybrid" ? "Hybrid Event" : "In-Person Event"}
-                    </p>
-                  )}
+              <DialogDescription asChild>
+                <div className="space-y-4">
+                  <p className="text-slate-600">
+                    {isFree 
+                      ? "You're all set! Check your email for event details."
+                      : "Your ticket is ready."
+                    }
+                  </p>
+                  <div className="p-3 bg-slate-50 rounded-lg text-left text-sm text-slate-700 space-y-1.5">
+                    <p className="font-medium text-slate-900">{eventTitle}</p>
+                    {eventStartDate && (
+                      <p className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-slate-500" />
+                        {formatDate(eventStartDate)}
+                      </p>
+                    )}
+                    {eventMode && (
+                      <p className="flex items-center gap-1.5">
+                        <Video className="h-3.5 w-3.5 text-slate-500" />
+                        {eventMode === "online" ? "Online Event" : eventMode === "hybrid" ? "Hybrid Event" : "In-Person Event"}
+                      </p>
+                    )}
+                    {successTicketCode && (
+                      <p className="flex items-center gap-1.5 font-mono text-xs mt-2 pt-2 border-t border-slate-200">
+                        <Ticket className="h-3.5 w-3.5 text-slate-500" />
+                        Ticket: {successTicketCode}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2 pt-2">
+                    <Button
+                      className="w-full"
+                      data-testid="button-view-ticket-success"
+                      onClick={() => {
+                        setIsOpen(false);
+                        setIsSuccess(false);
+                        setSuccessTicketCode(null);
+                        setRegistrationId(null);
+                        setPaymentToken(null);
+                        router.push("/dashboard/tickets");
+                        router.refresh();
+                      }}
+                    >
+                      <Ticket className="mr-2 h-4 w-4" />
+                      View Ticket
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      data-testid="button-browse-events-success"
+                      onClick={() => {
+                        setIsOpen(false);
+                        setIsSuccess(false);
+                        setSuccessTicketCode(null);
+                        router.push("/events");
+                      }}
+                    >
+                      Browse More Events
+                    </Button>
+                  </div>
                 </div>
               </DialogDescription>
             </div>
