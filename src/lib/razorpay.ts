@@ -116,3 +116,8 @@ export async function fetchPayment(paymentId: string) {
   const rz = getRazorpayInstance();
   return rz.payments.fetch(paymentId);
 }
+
+export async function fetchOrder(orderId: string) {
+  const rz = getRazorpayInstance();
+  return rz.orders.fetch(orderId);
+}

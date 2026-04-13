@@ -31,13 +31,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: "Payment already completed" });
     }
 
-    await prisma.eventRegistration.update({
-      where: { id: registrationId },
-      data: {
-        paymentStatus: "failed",
-        paymentFailureReason: (reason || "Payment failed").substring(0, 500),
-      },
-    });
+    const failureReason = (reason || "Payment failed").substring(0, 500);
+
+    await prisma.$transaction([
+      prisma.eventRegistration.update({
+        where: { id: registrationId },
+        data: {
+          paymentStatus: "failed",
+          paymentFailureReason: failureReason,
+        },
+      }),
+      prisma.adminAuditLog.create({
+        data: {
+          userId: registration.userId,
+          action: "event_payment_client_failure",
+          target: `Registration #${registrationId}`,
+          details: {
+            registrationId,
+            reason: failureReason,
+            gateway: "razorpay",
+          },
+        },
+      }),
+    ]);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

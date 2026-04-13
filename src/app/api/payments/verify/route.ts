@@ -112,20 +112,111 @@ export async function POST(request: NextRequest) {
     const paymentCurrency = (payment.currency || "INR").toUpperCase();
     const expectedCurrency = (registration.event.currency || "INR").toUpperCase();
 
-    if (
-      payment.status !== "captured" ||
-      Number(payment.amount) !== expectedAmountPaise ||
-      paymentCurrency !== expectedCurrency
-    ) {
-      console.error("Razorpay payment validation failed", {
-        paymentStatus: payment.status,
+    if (Number(payment.amount) !== expectedAmountPaise || paymentCurrency !== expectedCurrency) {
+      const mismatchReason = `Amount/currency mismatch: got ${payment.amount} ${paymentCurrency}, expected ${expectedAmountPaise} ${expectedCurrency}`;
+      console.error("Razorpay payment amount/currency mismatch", {
         paymentAmount: payment.amount,
         expectedAmount: expectedAmountPaise,
         paymentCurrency,
         expectedCurrency,
+        registrationId,
       });
+
+      await prisma.$transaction([
+        prisma.eventRegistration.update({
+          where: { id: registrationId },
+          data: {
+            paymentStatus: "failed",
+            paymentFailureReason: mismatchReason,
+          },
+        }),
+        prisma.adminAuditLog.create({
+          data: {
+            userId: registration.userId,
+            action: "event_payment_amount_mismatch",
+            target: `Event #${registration.eventId}: ${registration.event.title}`,
+            details: {
+              registrationId: registration.id,
+              razorpayPaymentId: razorpay_payment_id,
+              paymentAmount: payment.amount,
+              expectedAmount: expectedAmountPaise,
+              paymentCurrency,
+              expectedCurrency,
+              gateway: "razorpay",
+            },
+          },
+        }),
+      ]);
+
       return NextResponse.json(
-        { error: "Payment amount or status verification failed. Please contact support." },
+        { error: "Payment amount or currency does not match the event price. Please contact support.", code: "amount_mismatch" },
+        { status: 400 }
+      );
+    }
+
+    if (payment.status === "failed") {
+      const failReason = `Razorpay payment failed: ${(payment as any).error_description || "unknown error"}`;
+      await prisma.$transaction([
+        prisma.eventRegistration.update({
+          where: { id: registrationId },
+          data: {
+            paymentStatus: "failed",
+            paymentFailureReason: failReason,
+          },
+        }),
+        prisma.adminAuditLog.create({
+          data: {
+            userId: registration.userId,
+            action: "event_payment_failed",
+            target: `Event #${registration.eventId}: ${registration.event.title}`,
+            details: {
+              registrationId: registration.id,
+              razorpayPaymentId: razorpay_payment_id,
+              razorpayStatus: payment.status,
+              errorDescription: (payment as any).error_description,
+              gateway: "razorpay",
+            },
+          },
+        }),
+      ]);
+
+      return NextResponse.json(
+        { error: "Payment failed at the gateway. You can retry the payment.", code: "payment_failed" },
+        { status: 400 }
+      );
+    }
+
+    if (payment.status === "created" || (payment as any).status === "authorized") {
+      return NextResponse.json(
+        { error: "Payment is still being processed. Please wait a moment and try again.", code: "payment_pending" },
+        { status: 202 }
+      );
+    }
+
+    if (payment.status !== "captured") {
+      const reason = `Unexpected Razorpay payment status: ${payment.status}`;
+      console.error("Razorpay unexpected payment status", {
+        paymentStatus: payment.status,
+        registrationId,
+        razorpayPaymentId: razorpay_payment_id,
+      });
+
+      await prisma.adminAuditLog.create({
+        data: {
+          userId: registration.userId,
+          action: "event_payment_unexpected_status",
+          target: `Event #${registration.eventId}: ${registration.event.title}`,
+          details: {
+            registrationId: registration.id,
+            razorpayPaymentId: razorpay_payment_id,
+            razorpayStatus: payment.status,
+            gateway: "razorpay",
+          },
+        },
+      });
+
+      return NextResponse.json(
+        { error: "Payment could not be confirmed. Please contact support if amount was deducted.", code: "unexpected_status" },
         { status: 400 }
       );
     }
@@ -162,6 +253,7 @@ export async function POST(request: NextRequest) {
             razorpayOrderId: razorpay_order_id,
             razorpayPaymentId: razorpay_payment_id,
             gateway: "razorpay",
+            previousPaymentStatus: registration.paymentStatus,
           },
         },
       });

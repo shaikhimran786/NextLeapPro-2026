@@ -111,13 +111,21 @@ export function EventRegistrationButton({
           style: "",
         };
       }
+      if (registrationStatus === "registered") {
+        return {
+          label: "View Ticket",
+          icon: Ticket,
+          variant: "outline" as const,
+          action: "view_ticket",
+          style: "border-green-500 text-green-600",
+        };
+      }
       return {
-        label: "Event Ended",
-        icon: Calendar,
+        label: "Notify Me of Future Events",
+        icon: Bell,
         variant: "outline" as const,
-        action: "none",
+        action: "notify_me",
         style: "",
-        disabled: true,
       };
     }
 
@@ -329,6 +337,13 @@ export function EventRegistrationButton({
 
       case "certificate":
         router.push(`/dashboard/certificates`);
+        break;
+
+      case "notify_me":
+        toast.success("We'll notify you about similar upcoming events!", {
+          description: "Keep an eye on your email for future event announcements.",
+          duration: 4000,
+        });
         break;
 
       case "retry_payment":

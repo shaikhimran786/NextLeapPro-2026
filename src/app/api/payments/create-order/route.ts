@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { createOrder, getRazorpayKeyId } from "@/lib/razorpay";
+import { createOrder, getRazorpayKeyId, fetchOrder } from "@/lib/razorpay";
 import { getCurrentUserId } from "@/lib/auth-utils";
 import { getPaymentProvider, isEventPaymentEnabled } from "@/lib/payment-config";
 import { isEventExpired } from "@/lib/event-utils";
@@ -94,11 +94,68 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const expectedAmountPaise = Math.round(amount * 100);
+    const expectedCurrency = registration.event.currency || "INR";
+
+    if (registration.razorpayOrderId) {
+      try {
+        const existingOrder = await fetchOrder(registration.razorpayOrderId);
+        if (
+          existingOrder &&
+          existingOrder.status === "created" &&
+          Number(existingOrder.amount) === expectedAmountPaise &&
+          (existingOrder.currency || "INR").toUpperCase() === expectedCurrency.toUpperCase()
+        ) {
+          await prisma.adminAuditLog.create({
+            data: {
+              userId: registration.userId,
+              action: "event_payment_order_reused",
+              target: `Event #${registration.eventId}: ${registration.event.title}`,
+              details: {
+                registrationId: registration.id,
+                orderId: existingOrder.id,
+                amount,
+                gateway: "razorpay",
+              },
+            },
+          });
+
+          await prisma.eventRegistration.update({
+            where: { id: registrationId },
+            data: {
+              paymentStatus: "pending",
+              paymentFailureReason: null,
+            },
+          });
+
+          return NextResponse.json({
+            success: true,
+            orderId: existingOrder.id,
+            amount: expectedAmountPaise,
+            currency: expectedCurrency,
+            keyId: getRazorpayKeyId(),
+            registration: {
+              id: registration.id,
+              eventId: registration.eventId,
+              eventTitle: registration.event.title,
+            },
+            prefill: {
+              name: `${registration.user.firstName || ""} ${registration.user.lastName || ""}`.trim(),
+              email: registration.user.email,
+            },
+            reused: true,
+          });
+        }
+      } catch (err) {
+        console.warn("Could not fetch existing Razorpay order, creating new one:", err);
+      }
+    }
+
     const receipt = `evt_${registration.eventId}_reg_${registrationId}`.substring(0, 40);
 
     const order = await createOrder({
-      amount: Math.round(amount * 100),
-      currency: registration.event.currency || "INR",
+      amount: expectedAmountPaise,
+      currency: expectedCurrency,
       receipt,
       notes: {
         eventId: registration.eventId.toString(),
@@ -117,11 +174,26 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    await prisma.adminAuditLog.create({
+      data: {
+        userId: registration.userId,
+        action: "event_payment_order_created",
+        target: `Event #${registration.eventId}: ${registration.event.title}`,
+        details: {
+          registrationId: registration.id,
+          orderId: order.id,
+          amount,
+          currency: expectedCurrency,
+          gateway: "razorpay",
+        },
+      },
+    });
+
     return NextResponse.json({
       success: true,
       orderId: order.id,
-      amount: Math.round(amount * 100),
-      currency: registration.event.currency || "INR",
+      amount: expectedAmountPaise,
+      currency: expectedCurrency,
       keyId: getRazorpayKeyId(),
       registration: {
         id: registration.id,
