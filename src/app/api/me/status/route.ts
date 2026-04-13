@@ -239,7 +239,7 @@ export async function GET(request: NextRequest) {
         },
         subscriptions: {
           where: {
-            status: { in: ["active", "trialing", "cancelled", "past_due"] },
+            status: { in: ["active", "trialing", "cancelled", "past_due", "expired"] },
           },
           include: {
             plan: {

@@ -243,7 +243,12 @@ export async function getUserStatusServer(): Promise<UserStatus> {
         },
         subscriptions: {
           where: {
-            status: { in: ["active", "trialing", "cancelled", "past_due"] },
+            status: { in: ["active", "trialing", "cancelled", "past_due", "expired"] },
+          },
+          include: {
+            plan: {
+              select: { name: true, interval: true },
+            },
           },
           orderBy: { createdAt: "desc" },
           take: 1,
@@ -327,9 +332,11 @@ export async function getUserStatusServer(): Promise<UserStatus> {
       subscriptionStatus,
       subscriptionTier: user.subscriptionTier,
       subscriptionExpiry: user.subscriptionExpiry?.toISOString() || null,
-      subscriptionPlanName: null,
-      subscriptionInterval: null,
-      subscriptionDaysRemaining: null,
+      subscriptionPlanName: user.subscriptions[0]?.plan?.name || null,
+      subscriptionInterval: user.subscriptions[0]?.plan?.interval || null,
+      subscriptionDaysRemaining: user.subscriptionExpiry
+        ? Math.max(0, Math.ceil((new Date(user.subscriptionExpiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+        : null,
       roles: user.roles.map((r) => r.name),
       communityMemberships,
       eventRegistrations,

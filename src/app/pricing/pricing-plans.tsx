@@ -206,13 +206,12 @@ export function PricingPlans({ monthlyPlans, annualPlans }: PricingPlansProps) {
     const normalizedUserTier = normalizeTierForComparison(currentUserTier);
     
     const isSameTierLevel = normalizedPlanTier === normalizedUserTier;
-    
-    const userHasIntervalInTier = currentUserTier.includes("monthly") || currentUserTier.includes("annual");
-    const userInterval = currentUserTier.includes("annual") ? "year" : "month";
+
+    const userInterval = subscriptionInterval || (currentUserTier.includes("annual") ? "year" : "month");
     const isSameBillingInterval = plan.interval === userInterval;
     
-    const isCurrentPlan = hasActiveSubscription && isSameTierLevel && (!userHasIntervalInTier || isSameBillingInterval);
-    const isBillingSwitch = hasActiveSubscription && isSameTierLevel && userHasIntervalInTier && !isSameBillingInterval;
+    const isCurrentPlan = hasActiveSubscription && isSameTierLevel && isSameBillingInterval;
+    const isBillingSwitch = hasActiveSubscription && isSameTierLevel && !isSameBillingInterval;
     const isUpgrade = hasActiveSubscription && planTierLevel > currentUserTierLevel;
     const isDowngrade = hasActiveSubscription && planTierLevel < currentUserTierLevel;
     const isFreeAndHasPaid = plan.tier === "free" && hasActiveSubscription && currentUserTierLevel > 0;
