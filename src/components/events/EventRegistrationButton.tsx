@@ -257,9 +257,17 @@ export function EventRegistrationButton({
               }),
             });
 
-            if (!verifyRes.ok) {
-              const err = await verifyRes.json();
-              throw new Error(err.error || "Payment verification failed");
+            const verifyData = await verifyRes.json();
+
+            if (verifyRes.status === 202) {
+              toast.info(verifyData.error || "Payment is still being processed. Please wait and try again.");
+              await revalidateUserStatus();
+              setIsLoading(false);
+              return;
+            }
+
+            if (!verifyRes.ok || !verifyData.success) {
+              throw new Error(verifyData.error || "Payment verification failed");
             }
 
             setIsSuccess(true);

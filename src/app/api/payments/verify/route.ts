@@ -155,7 +155,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (payment.status === "failed") {
-      const failReason = `Razorpay payment failed: ${(payment as any).error_description || "unknown error"}`;
+      const paymentRecord = payment as Record<string, unknown>;
+      const errorDesc = typeof paymentRecord.error_description === "string" ? paymentRecord.error_description : "unknown error";
+      const failReason = `Razorpay payment failed: ${errorDesc}`;
       await prisma.$transaction([
         prisma.eventRegistration.update({
           where: { id: registrationId },
@@ -173,7 +175,7 @@ export async function POST(request: NextRequest) {
               registrationId: registration.id,
               razorpayPaymentId: razorpay_payment_id,
               razorpayStatus: payment.status,
-              errorDescription: (payment as any).error_description,
+              errorDescription: errorDesc,
               gateway: "razorpay",
             },
           },
@@ -186,7 +188,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (payment.status === "created" || (payment as any).status === "authorized") {
+    if (payment.status === "created" || payment.status === "authorized") {
       return NextResponse.json(
         { error: "Payment is still being processed. Please wait a moment and try again.", code: "payment_pending" },
         { status: 202 }
