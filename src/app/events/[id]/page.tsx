@@ -13,6 +13,7 @@ import { Calendar, MapPin, Clock, Share2, Users } from "@/lib/icons";
 import { formatINR, formatDate, formatDateTime } from "@/lib/utils";
 import { EventRegistrationButton } from "@/components/events/EventRegistrationButton";
 import { getImageUrl, isValidImageSrc } from "@/lib/image-utils";
+import { getEventStatus } from "@/lib/event-utils";
 
 export const revalidate = 300; // 5-minute ISR
 
@@ -69,8 +70,9 @@ export default async function EventDetailPage({ params }: PageProps) {
   }
 
   const isFree = Number(event.price) === 0;
-  const registeredCount = event.registrations.length;
+  const registeredCount = event.registrations.filter(r => r.status !== "cancelled").length;
   const spotsLeft = event.capacity ? event.capacity - registeredCount : null;
+  const eventStatus = getEventStatus(event);
 
   const structuredData = generateEventStructuredData({
     title: event.title,

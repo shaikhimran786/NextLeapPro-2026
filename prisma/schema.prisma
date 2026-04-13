@@ -236,6 +236,7 @@ model EventRegistration {
   razorpayOrderId     String?
   razorpayPaymentId   String?
   razorpaySignature   String?
+  paymentFailureReason String?
   qrCode              String?     @unique
   checkedIn           Boolean     @default(false)
   checkedInAt         DateTime?
