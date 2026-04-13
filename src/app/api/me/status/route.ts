@@ -241,6 +241,11 @@ export async function GET(request: NextRequest) {
           where: {
             status: { in: ["active", "trialing", "cancelled", "past_due"] },
           },
+          include: {
+            plan: {
+              select: { name: true, interval: true },
+            },
+          },
           orderBy: { createdAt: "desc" },
           take: 1,
         },
@@ -309,6 +314,23 @@ export async function GET(request: NextRequest) {
       effectiveTier = 'free';
     }
 
+    const activeSubscription = user.subscriptions[0];
+    let subscriptionPlanName: string | null = null;
+    let subscriptionInterval: string | null = null;
+    let subscriptionDaysRemaining: number | null = null;
+
+    if (activeSubscription?.plan) {
+      subscriptionPlanName = activeSubscription.plan.name;
+      subscriptionInterval = activeSubscription.plan.interval;
+    }
+
+    if (user.subscriptionExpiry) {
+      const now = new Date();
+      const expiry = new Date(user.subscriptionExpiry);
+      const diffMs = expiry.getTime() - now.getTime();
+      subscriptionDaysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    }
+
     const serviceAccess = getServiceAccess(effectiveTier, subscriptionStatus);
     
     const profileCompleteness = calculateProfileCompleteness({
@@ -343,6 +365,9 @@ export async function GET(request: NextRequest) {
       subscriptionStatus,
       subscriptionTier: effectiveTier,
       subscriptionExpiry: user.subscriptionExpiry?.toISOString() || null,
+      subscriptionPlanName,
+      subscriptionInterval,
+      subscriptionDaysRemaining,
       roles: user.roles.map((r) => r.name),
       communityMemberships,
       eventRegistrations,

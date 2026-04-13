@@ -46,14 +46,21 @@ export function useUserStatus() {
   const effectiveStatus = useMemo(() => {
     const status = data ?? defaultGuestStatus;
 
-    // Only perform client-side expiry check AFTER hydration is complete
-    // This prevents hydration mismatch from Date differences between server/client
-    if (isMounted && status.subscriptionExpiry && status.subscriptionStatus === 'active') {
+    if (isMounted && status.subscriptionExpiry) {
       const expiryDate = new Date(status.subscriptionExpiry);
       const now = new Date();
-      if (expiryDate < now) {
-        return { ...status, subscriptionStatus: 'expired' as const };
+      const diffMs = expiryDate.getTime() - now.getTime();
+      const daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+
+      if (status.subscriptionStatus === 'active' && expiryDate < now) {
+        return {
+          ...status,
+          subscriptionStatus: 'expired' as const,
+          subscriptionDaysRemaining: 0,
+        };
       }
+
+      return { ...status, subscriptionDaysRemaining: daysRemaining };
     }
 
     return status;

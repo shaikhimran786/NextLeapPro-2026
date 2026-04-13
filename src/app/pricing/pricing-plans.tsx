@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Star, Loader2, CheckCircle, Crown, ArrowUp } from "@/lib/icons";
-import { formatINR } from "@/lib/utils";
+import { Check, Star, Loader2, CheckCircle, Crown, ArrowUp, AlertCircle, Clock, Calendar, ArrowRight } from "@/lib/icons";
+import { formatINR, formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { useUserStatus, revalidateUserStatus } from "@/hooks/useUserStatus";
 
@@ -109,6 +109,11 @@ export function PricingPlans({ monthlyPlans, annualPlans }: PricingPlansProps) {
   const currentUserTier = userStatus.subscriptionTier?.toLowerCase() || "free";
   const currentUserTierLevel = getTierLevel(currentUserTier);
   const hasActiveSubscription = userStatus.subscriptionStatus === "active" || userStatus.subscriptionStatus === "trial";
+  const isExpiredSubscription = userStatus.subscriptionStatus === "expired";
+  const subscriptionPlanName = userStatus.subscriptionPlanName;
+  const subscriptionInterval = userStatus.subscriptionInterval;
+  const subscriptionDaysRemaining = userStatus.subscriptionDaysRemaining;
+  const subscriptionExpiry = userStatus.subscriptionExpiry;
 
   // Check payment gateway status on mount
   useEffect(() => {
@@ -211,8 +216,12 @@ export function PricingPlans({ monthlyPlans, annualPlans }: PricingPlansProps) {
     const isUpgrade = hasActiveSubscription && planTierLevel > currentUserTierLevel;
     const isDowngrade = hasActiveSubscription && planTierLevel < currentUserTierLevel;
     const isFreeAndHasPaid = plan.tier === "free" && hasActiveSubscription && currentUserTierLevel > 0;
+
+    const isExpiredSameTier = isExpiredSubscription && subscriptionPlanName
+      ? normalizedPlanTier === normalizeTierForComparison(subscriptionPlanName)
+      : false;
     
-    return { isCurrentPlan, isUpgrade, isDowngrade, isFreeAndHasPaid, isBillingSwitch };
+    return { isCurrentPlan, isUpgrade, isDowngrade, isFreeAndHasPaid, isBillingSwitch, isExpiredSameTier };
   }
 
   function handleBillingSwitch(plan: Plan) {
@@ -480,7 +489,7 @@ export function PricingPlans({ monthlyPlans, annualPlans }: PricingPlansProps) {
   }
 
   function renderButton(plan: Plan) {
-    const { isCurrentPlan, isUpgrade, isDowngrade, isFreeAndHasPaid, isBillingSwitch } = getPlanStatus(plan);
+    const { isCurrentPlan, isUpgrade, isDowngrade, isFreeAndHasPaid, isBillingSwitch, isExpiredSameTier } = getPlanStatus(plan);
     const isLoading = loadingPlan === plan.id;
     const isPopular = plan.isPopular || plan.tier === "pro";
 
@@ -493,16 +502,31 @@ export function PricingPlans({ monthlyPlans, annualPlans }: PricingPlansProps) {
       );
     }
 
+    if (isExpiredSameTier) {
+      return (
+        <Button
+          onClick={() => handleSubscribe(plan)}
+          variant="gradient"
+          className="w-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+          disabled={isAnyLoading}
+          data-testid={`button-renew-${plan.tier}`}
+        >
+          <ArrowRight className="h-4 w-4 mr-2" />
+          Renew Now
+        </Button>
+      );
+    }
+
     if (isCurrentPlan) {
       return (
         <Button 
           variant="outline"
-          className="w-full rounded-full bg-gradient-to-r from-green-50 to-emerald-50 border-green-300 text-green-700 hover:from-green-100 hover:to-emerald-100 hover:border-green-400 transition-all"
-          onClick={() => router.push("/profile")}
+          className="w-full rounded-full bg-gradient-to-r from-green-50 to-emerald-50 border-green-300 text-green-700 cursor-default opacity-90"
+          disabled
           data-testid={`button-current-${plan.tier}`}
         >
           <CheckCircle className="h-4 w-4 mr-2" />
-          View Plan Details
+          Your Current Plan
         </Button>
       );
     }
@@ -581,14 +605,61 @@ export function PricingPlans({ monthlyPlans, annualPlans }: PricingPlansProps) {
   return (
     <div className="container mx-auto px-4 py-12">
       {isLoggedIn && hasActiveSubscription && (
-        <div className="max-w-md mx-auto mb-8 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl text-center">
-          <div className="flex items-center justify-center gap-2 text-green-700 mb-1">
+        <div className="max-w-lg mx-auto mb-8 p-5 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl" data-testid="banner-active-subscription">
+          <div className="flex items-center justify-center gap-2 text-green-700 mb-2">
             <Crown className="h-5 w-5" />
-            <span className="font-semibold">You have an active subscription</span>
+            <span className="font-semibold text-lg">
+              {subscriptionPlanName || currentUserTier.replace("_", " ")}
+            </span>
+            <Badge className="bg-green-100 text-green-700 border-green-300 text-xs">Active</Badge>
           </div>
-          <p className="text-sm text-green-600">
-            Current plan: <span className="font-medium capitalize">{currentUserTier.replace("_", " ")}</span>
+          <div className="flex items-center justify-center gap-4 text-sm text-green-600" suppressHydrationWarning>
+            {subscriptionInterval && (
+              <span className="flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5" />
+                {subscriptionInterval === "year" ? "Annual" : "Monthly"} billing
+              </span>
+            )}
+            {subscriptionDaysRemaining !== null && subscriptionDaysRemaining > 0 && (
+              <span className="flex items-center gap-1">
+                <Calendar className="h-3.5 w-3.5" />
+                {subscriptionDaysRemaining} {subscriptionDaysRemaining === 1 ? "day" : "days"} remaining
+              </span>
+            )}
+          </div>
+          {subscriptionExpiry && (
+            <p className="text-xs text-green-500 text-center mt-2" suppressHydrationWarning>
+              Renews on {formatDate(subscriptionExpiry)}
+            </p>
+          )}
+        </div>
+      )}
+
+      {isLoggedIn && isExpiredSubscription && subscriptionPlanName && (
+        <div className="max-w-lg mx-auto mb-8 p-5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-xl" data-testid="banner-expired-subscription">
+          <div className="flex items-center justify-center gap-2 text-amber-700 mb-2">
+            <AlertCircle className="h-5 w-5" />
+            <span className="font-semibold">
+              Your {subscriptionPlanName} subscription expired{subscriptionExpiry ? ` on ${formatDate(subscriptionExpiry)}` : ""}
+            </span>
+          </div>
+          <p className="text-sm text-amber-600 text-center mb-3">
+            Renew your subscription to restore premium features and continue your learning journey.
           </p>
+          <div className="flex justify-center">
+            <Button
+              size="sm"
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-full px-6"
+              onClick={() => {
+                const card = document.querySelector('[data-testid^="pricing-card-"]');
+                card?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
+              data-testid="button-renew-from-banner"
+            >
+              <ArrowRight className="h-4 w-4 mr-1" />
+              Renew Now
+            </Button>
+          </div>
         </div>
       )}
 
@@ -627,35 +698,70 @@ export function PricingPlans({ monthlyPlans, annualPlans }: PricingPlansProps) {
       <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
         {plans.map((plan) => {
           const isPopular = plan.isPopular || plan.tier === "pro";
-          const { isCurrentPlan } = getPlanStatus(plan);
+          const { isCurrentPlan, isExpiredSameTier } = getPlanStatus(plan);
+          const hasTopBanner = isCurrentPlan || isExpiredSameTier || (!isCurrentPlan && !isExpiredSameTier && isPopular);
 
           return (
             <div
               key={plan.id}
               className={`relative bg-white rounded-2xl border overflow-hidden transition-all hover:shadow-xl ${
                 isCurrentPlan 
-                  ? "border-green-500 ring-2 ring-green-500 shadow-lg" 
-                  : isPopular 
-                    ? "border-primary ring-2 ring-primary shadow-lg" 
-                    : "shadow-md"
+                  ? "border-green-500 ring-2 ring-green-500 shadow-lg"
+                  : isExpiredSameTier
+                    ? "border-amber-400 ring-2 ring-amber-400 shadow-lg"
+                    : isPopular 
+                      ? "border-primary ring-2 ring-primary shadow-lg" 
+                      : "shadow-md"
               }`}
               data-testid={`pricing-card-${plan.tier}`}
             >
               {isCurrentPlan && (
                 <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-center py-2 text-sm font-semibold flex items-center justify-center gap-1">
                   <CheckCircle className="h-4 w-4" />
-                  Your Current Plan
+                  Current Plan
                 </div>
               )}
-              {!isCurrentPlan && isPopular && (
+              {isExpiredSameTier && !isCurrentPlan && (
+                <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center py-2 text-sm font-semibold flex items-center justify-center gap-1">
+                  <AlertCircle className="h-4 w-4" />
+                  Expired
+                </div>
+              )}
+              {!isCurrentPlan && !isExpiredSameTier && isPopular && (
                 <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-primary to-blue-600 text-white text-center py-2 text-sm font-semibold flex items-center justify-center gap-1">
                   <Star className="h-4 w-4 fill-current" />
                   Most Popular
                 </div>
               )}
-              <div className={`p-8 ${(isCurrentPlan || isPopular) ? "pt-14" : ""}`}>
+              <div className={`p-8 ${hasTopBanner ? "pt-14" : ""}`}>
                 <h3 className="text-2xl font-heading font-bold mb-2">{plan.name}</h3>
-                <p className="text-slate-600 text-sm mb-6">{plan.description}</p>
+                <p className="text-slate-600 text-sm mb-4">{plan.description}</p>
+
+                {isCurrentPlan && subscriptionExpiry && (
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg" data-testid={`status-active-${plan.tier}`}>
+                    <div className="flex items-center gap-2 text-green-700 text-sm font-medium">
+                      <Calendar className="h-3.5 w-3.5" />
+                      <span suppressHydrationWarning>Active till {formatDate(subscriptionExpiry)}</span>
+                    </div>
+                    {subscriptionDaysRemaining !== null && subscriptionDaysRemaining > 0 && (
+                      <p className="text-xs text-green-600 mt-1 ml-5.5" suppressHydrationWarning>
+                        {subscriptionDaysRemaining} {subscriptionDaysRemaining === 1 ? "day" : "days"} remaining
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {isExpiredSameTier && subscriptionExpiry && (
+                  <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg" data-testid={`status-expired-${plan.tier}`}>
+                    <div className="flex items-center gap-2 text-amber-700 text-sm font-medium">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      <span suppressHydrationWarning>Expired on {formatDate(subscriptionExpiry)}</span>
+                    </div>
+                    <p className="text-xs text-amber-600 mt-1 ml-5.5">
+                      Renew to restore your premium features
+                    </p>
+                  </div>
+                )}
 
                 <div className="mb-8">
                   {plan.price === 0 ? (

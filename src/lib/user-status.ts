@@ -45,6 +45,9 @@ export interface UserStatus {
   subscriptionStatus: SubscriptionStatus;
   subscriptionTier: string;
   subscriptionExpiry: string | null;
+  subscriptionPlanName: string | null;
+  subscriptionInterval: string | null;
+  subscriptionDaysRemaining: number | null;
   roles: string[];
   communityMemberships: Record<number, CommunityMembershipInfo>;
   eventRegistrations: Record<number, EventRegistrationInfo>;
@@ -64,6 +67,9 @@ export const defaultGuestStatus: UserStatus = {
   subscriptionStatus: "none",
   subscriptionTier: "free",
   subscriptionExpiry: null,
+  subscriptionPlanName: null,
+  subscriptionInterval: null,
+  subscriptionDaysRemaining: null,
   roles: [],
   communityMemberships: {},
   eventRegistrations: {},
