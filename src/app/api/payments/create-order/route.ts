@@ -2,10 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { createOrder, getRazorpayKeyId, isRazorpayConfigured } from "@/lib/razorpay";
 import { getCurrentUserId } from "@/lib/auth-utils";
+import { getPaymentProvider, isEventPaymentEnabled } from "@/lib/payment-config";
 
 export async function POST(request: NextRequest) {
   try {
-    if (!isRazorpayConfigured()) {
+    const provider = getPaymentProvider();
+    if (provider !== "razorpay") {
+      return NextResponse.json(
+        { error: `Event payments are only supported via Razorpay. Current provider: ${provider}` },
+        { status: 400 }
+      );
+    }
+
+    if (!isEventPaymentEnabled()) {
       return NextResponse.json(
         { error: "Payment gateway is not configured. Please contact support." },
         { status: 503 }
