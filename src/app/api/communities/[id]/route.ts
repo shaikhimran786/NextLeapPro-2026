@@ -27,7 +27,7 @@ export async function GET(
     }
 
     if (!community.isPublic) {
-      const isAdmin = await checkAdminAccess();
+      const { isAdmin } = await checkAdminAccess();
       if (!isAdmin) {
         const userId = await getCurrentUserId();
         if (!userId) {

@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     const userId = await getCurrentUserId();
-    const isAdmin = await checkAdminAccess();
+    const { isAdmin } = await checkAdminAccess();
 
     if (!community.isPublic && !isAdmin) {
       if (!userId) {
@@ -94,7 +94,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       where: { communityId, userId },
     });
 
-    const isAdmin = await checkAdminAccess();
+    const { isAdmin } = await checkAdminAccess();
 
     if (!isAdmin && (!requester || !["owner", "admin"].includes(requester.role))) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
