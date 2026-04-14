@@ -76,11 +76,15 @@ export async function leaveCommunity(communityId: number) {
     throw new Error("Not a member of this community");
   }
 
+  if (membership.role === "owner") {
+    throw new Error("Cannot leave as the community owner. Transfer ownership first.");
+  }
+
   if (membership.role === "admin") {
     const adminCount = await prisma.communityMember.count({
-      where: { communityId, role: "admin" },
+      where: { communityId, role: { in: ["admin", "owner"] } },
     });
-    if (adminCount === 1) {
+    if (adminCount <= 1) {
       throw new Error("Cannot leave as the only admin. Transfer ownership first.");
     }
   }

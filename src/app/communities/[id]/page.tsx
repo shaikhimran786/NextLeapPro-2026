@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { cache } from "react";
 import prisma from "@/lib/prisma";
+import { getCurrentUserId, checkAdminAccess } from "@/lib/auth-utils";
 import { generateMeta, generateCommunityStructuredData, generateBreadcrumbStructuredData } from "@/lib/metadata";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -90,6 +91,22 @@ export default async function CommunityDetailPage({ params }: PageProps) {
 
   if (!community) {
     notFound();
+  }
+
+  if (!community.isPublic) {
+    const isAdmin = await checkAdminAccess();
+    if (!isAdmin) {
+      const userId = await getCurrentUserId();
+      if (!userId) {
+        notFound();
+      }
+      const membership = await prisma.communityMember.findFirst({
+        where: { communityId: community.id, userId },
+      });
+      if (!membership) {
+        notFound();
+      }
+    }
   }
 
   const memberCount = community.members.length;
@@ -224,14 +241,16 @@ export default async function CommunityDetailPage({ params }: PageProps) {
                 )}
               </section>
 
-              {community.chapters.length > 0 && (
-                <section>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-heading font-bold">Chapters</h2>
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-heading font-bold">Chapters</h2>
+                  {community.chapters.length > 0 && (
                     <Link href={`/communities/${id}/chapters`} className="text-primary hover:underline flex items-center gap-1 text-sm font-medium">
                       View all <ArrowRight className="h-4 w-4" />
                     </Link>
-                  </div>
+                  )}
+                </div>
+                {community.chapters.length > 0 ? (
                   <div className="grid sm:grid-cols-2 gap-4">
                     {community.chapters.slice(0, 4).map((chapter) => (
                       <Link key={chapter.id} href={`/communities/${id}/chapters/${chapter.id}`}>
@@ -255,28 +274,44 @@ export default async function CommunityDetailPage({ params }: PageProps) {
                       </Link>
                     ))}
                   </div>
-                </section>
-              )}
+                ) : (
+                  <Card className="border-dashed">
+                    <CardContent className="p-8 text-center">
+                      <Building2 className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-muted-foreground">No chapters yet.</p>
+                      <p className="text-xs text-muted-foreground mt-1">Chapters help members connect locally.</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </section>
 
-              {upcomingEvents.length > 0 && (
-                <section>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-heading font-bold">Upcoming Events</h2>
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-heading font-bold">Upcoming Events</h2>
+                  {upcomingEvents.length > 0 && (
                     <Link href={`/communities/${id}/events`} className="text-primary hover:underline flex items-center gap-1 text-sm font-medium">
                       View all <ArrowRight className="h-4 w-4" />
                     </Link>
-                  </div>
+                  )}
+                </div>
+                {upcomingEvents.length > 0 ? (
                   <div className="grid sm:grid-cols-2 gap-4">
                     {upcomingEvents.slice(0, 4).map((ce) => (
                       <Link key={ce.id} href={`/events/${ce.event.id}`}>
                         <Card className="hover:shadow-md transition-shadow cursor-pointer overflow-hidden">
-                          <div className="relative h-32 w-full">
-                            <Image
-                              src={ce.event.coverImage}
-                              alt={`Cover image for ${ce.event.title} event`}
-                              fill
-                              className="object-cover"
-                            />
+                          <div className="relative h-32 w-full bg-gradient-to-br from-primary/10 to-blue-500/10">
+                            {isValidImageSrc(ce.event.coverImage) ? (
+                              <Image
+                                src={getImageUrl(ce.event.coverImage)}
+                                alt={`Cover image for ${ce.event.title} event`}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="flex items-center justify-center h-full">
+                                <Calendar className="h-8 w-8 text-primary/30" />
+                              </div>
+                            )}
                             {ce.isFeatured && (
                               <Badge className="absolute top-2 right-2 bg-yellow-500 text-white">
                                 Featured
@@ -295,8 +330,16 @@ export default async function CommunityDetailPage({ params }: PageProps) {
                       </Link>
                     ))}
                   </div>
-                </section>
-              )}
+                ) : (
+                  <Card className="border-dashed">
+                    <CardContent className="p-8 text-center">
+                      <Calendar className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-muted-foreground">No upcoming events.</p>
+                      <p className="text-xs text-muted-foreground mt-1">Events will appear here when scheduled.</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </section>
             </div>
 
             <div className="lg:w-1/3">

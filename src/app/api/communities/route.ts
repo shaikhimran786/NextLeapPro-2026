@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, description, logo, category, tags, location, website, isPublic } = body;
+    const { name, description, logo, coverImage, category, tags, location, website, isPublic, shortDescription, mode, membershipType, primaryColor } = body;
 
     if (!name || !description || !category) {
       return NextResponse.json(
@@ -111,33 +111,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    const trimmedName = String(name).trim();
+    const trimmedDesc = String(description).trim();
+
+    if (trimmedName.length > 100) {
+      return NextResponse.json({ error: "Community name must be 100 characters or less" }, { status: 400 });
+    }
+    if (trimmedDesc.length > 2000) {
+      return NextResponse.json({ error: "Description must be 2000 characters or less" }, { status: 400 });
+    }
+
+    let slug = trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
     const existingCommunity = await prisma.community.findFirst({
       where: { slug },
     });
 
     if (existingCommunity) {
-      return NextResponse.json(
-        { error: "A community with this name already exists" },
-        { status: 400 }
-      );
+      let suffix = 2;
+      while (await prisma.community.findFirst({ where: { slug: `${slug}-${suffix}` } })) {
+        suffix++;
+      }
+      slug = `${slug}-${suffix}`;
     }
+
+    const validModes = ["online", "hybrid", "in_person"];
+    const validMembershipTypes = ["open", "approval", "invite"];
 
     const community = await prisma.community.create({
       data: {
-        name,
+        name: trimmedName,
         slug,
-        description,
+        description: trimmedDesc,
+        shortDescription: shortDescription ? String(shortDescription).trim().slice(0, 200) : null,
         logo: logo || "",
+        coverImage: coverImage || null,
         category,
         tags: tags || [],
         location: location || null,
         website: website || null,
         isPublic: isPublic !== undefined ? isPublic : true,
+        mode: validModes.includes(mode) ? mode : "hybrid",
+        membershipType: validMembershipTypes.includes(membershipType) ? membershipType : "open",
+        primaryColor: primaryColor || null,
         creatorId: userId,
         createdByAdmin: isAdmin,
-      } as any,
+      },
     });
 
     await prisma.communityMember.create({

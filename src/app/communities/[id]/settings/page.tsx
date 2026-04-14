@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { ArrowLeft, Settings, Image as ImageIcon, Tag, X, Globe, MapPin, Link as LinkIcon, Lock, Unlock, Trash2, Save, Palette, Users } from "@/lib/icons";
+import { ArrowLeft, Settings, Image as ImageIcon, Tag, X, Globe, MapPin, Link as LinkIcon, Lock, Unlock, Trash2, Save, Palette, Users, Video, Laptop, UserPlus, Shield, Crown, MoreHorizontal, Ban } from "@/lib/icons";
 import { canManageCommunity, isAdmin as checkIsAdmin } from "@/lib/user-status";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import type { UserStatus } from "@/lib/user-status";
@@ -49,6 +49,7 @@ interface CommunityData {
   name: string;
   slug: string;
   description: string;
+  shortDescription: string | null;
   logo: string;
   coverImage: string | null;
   category: string;
@@ -57,7 +58,25 @@ interface CommunityData {
   website: string | null;
   socialLinks: SocialLinks | null;
   isPublic: boolean;
+  mode: string;
+  membershipType: string;
+  primaryColor: string | null;
+  maxMembers: number | null;
+  meetupFrequency: string | null;
   creatorId: number | null;
+}
+
+interface MemberData {
+  id: number;
+  userId: number;
+  role: string;
+  joinedAt: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    avatar: string | null;
+  };
 }
 
 interface PageProps {
@@ -74,9 +93,13 @@ export default function CommunitySettingsPage({ params }: PageProps) {
   const [canEdit, setCanEdit] = useState(false);
   const [tagInput, setTagInput] = useState("");
 
+  const [members, setMembers] = useState<MemberData[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    shortDescription: "",
     logo: "",
     coverImage: "",
     category: "technology",
@@ -85,6 +108,11 @@ export default function CommunitySettingsPage({ params }: PageProps) {
     website: "",
     socialLinks: {} as SocialLinks,
     isPublic: true,
+    mode: "hybrid",
+    membershipType: "open",
+    primaryColor: "",
+    maxMembers: "",
+    meetupFrequency: "",
   });
 
   useEffect(() => {
@@ -126,6 +154,7 @@ export default function CommunitySettingsPage({ params }: PageProps) {
         setFormData({
           name: commData.name || "",
           description: commData.description || "",
+          shortDescription: commData.shortDescription || "",
           logo: commData.logo || "",
           coverImage: commData.coverImage || "",
           category: commData.category || "technology",
@@ -134,7 +163,17 @@ export default function CommunitySettingsPage({ params }: PageProps) {
           website: commData.website || "",
           socialLinks: commData.socialLinks || {},
           isPublic: commData.isPublic ?? true,
+          mode: commData.mode || "hybrid",
+          membershipType: commData.membershipType || "open",
+          primaryColor: commData.primaryColor || "",
+          maxMembers: commData.maxMembers ? String(commData.maxMembers) : "",
+          meetupFrequency: commData.meetupFrequency || "",
         });
+
+        fetch(`/api/communities/${id}/members`)
+          .then(r => r.ok ? r.json() : [])
+          .then(data => setMembers(Array.isArray(data) ? data : []))
+          .catch(() => {});
       } catch (error) {
         console.error("Error loading data:", error);
         toast.error("Failed to load community data");
@@ -192,6 +231,9 @@ export default function CommunitySettingsPage({ params }: PageProps) {
           location: formData.location || null,
           website: formData.website || null,
           socialLinks: Object.keys(formData.socialLinks).length > 0 ? formData.socialLinks : null,
+          primaryColor: formData.primaryColor || null,
+          maxMembers: formData.maxMembers ? parseInt(formData.maxMembers) : null,
+          meetupFrequency: formData.meetupFrequency || null,
         }),
       });
 
@@ -206,6 +248,36 @@ export default function CommunitySettingsPage({ params }: PageProps) {
       toast.error("An error occurred while saving");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleMemberAction(memberId: number, action: string, role?: string) {
+    if (!communityId) return;
+    setMembersLoading(true);
+    try {
+      const res = await fetch(`/api/communities/${communityId}/members`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId, action, role }),
+      });
+
+      if (res.ok) {
+        if (action === "remove") {
+          setMembers(prev => prev.filter(m => m.id !== memberId));
+          toast.success("Member removed");
+        } else {
+          const updated = await res.json();
+          setMembers(prev => prev.map(m => m.id === memberId ? { ...m, role: updated.role } : m));
+          toast.success("Role updated");
+        }
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Action failed");
+      }
+    } catch {
+      toast.error("An error occurred");
+    } finally {
+      setMembersLoading(false);
     }
   }
 
@@ -305,7 +377,22 @@ export default function CommunitySettingsPage({ params }: PageProps) {
                     placeholder="What is your community about?"
                     rows={5}
                     className="mt-1"
+                    maxLength={2000}
                     data-testid="input-settings-description"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1 text-right">{formData.description.length}/2000</p>
+                </div>
+
+                <div>
+                  <Label htmlFor="shortDescription">Short Description</Label>
+                  <Input
+                    id="shortDescription"
+                    value={formData.shortDescription}
+                    onChange={(e) => updateField("shortDescription", e.target.value)}
+                    placeholder="A brief tagline shown on community cards"
+                    className="mt-1"
+                    maxLength={200}
+                    data-testid="input-settings-short-description"
                   />
                 </div>
 
@@ -491,6 +578,66 @@ export default function CommunitySettingsPage({ params }: PageProps) {
               </CardContent>
             </Card>
 
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" /> Members ({members.length})
+                </CardTitle>
+                <CardDescription>Manage community members and roles</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {members.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No members yet.</p>
+                ) : (
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {members.map((member) => (
+                      <div key={member.id} className="flex items-center justify-between p-3 rounded-lg border bg-white">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/20 to-blue-500/20 flex items-center justify-center shrink-0">
+                            <span className="text-xs font-semibold">{member.user.name?.charAt(0)?.toUpperCase() || "?"}</span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate" data-testid={`text-member-name-${member.id}`}>{member.user.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{member.user.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Badge variant={member.role === "owner" ? "default" : member.role === "admin" ? "secondary" : "outline"} className="text-xs">
+                            {member.role === "owner" && <Crown className="h-3 w-3 mr-1" />}
+                            {member.role === "admin" && <Shield className="h-3 w-3 mr-1" />}
+                            {member.role}
+                          </Badge>
+                          {member.role !== "owner" && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm" disabled={membersLoading} data-testid={`button-remove-member-${member.id}`}>
+                                  <Ban className="h-3 w-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Remove member?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Remove <strong>{member.user.name}</strong> from this community?
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleMemberAction(member.id, "remove")} className="bg-red-600 hover:bg-red-700">
+                                    Remove
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <Card className="border-red-200 bg-red-50/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-red-700">
@@ -544,10 +691,83 @@ export default function CommunitySettingsPage({ params }: PageProps) {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Visibility</CardTitle>
-                <CardDescription>Control who can see your community</CardDescription>
+                <CardTitle>Community Type</CardTitle>
+                <CardDescription>How your community operates</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="mode">Mode</Label>
+                  <Select
+                    value={formData.mode}
+                    onValueChange={(value) => updateField("mode", value)}
+                  >
+                    <SelectTrigger className="mt-1" data-testid="select-settings-mode">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="online">
+                        <span className="flex items-center gap-2"><Video className="h-3 w-3" /> Online</span>
+                      </SelectItem>
+                      <SelectItem value="hybrid">
+                        <span className="flex items-center gap-2"><Laptop className="h-3 w-3" /> Hybrid</span>
+                      </SelectItem>
+                      <SelectItem value="in_person">
+                        <span className="flex items-center gap-2"><MapPin className="h-3 w-3" /> In Person</span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="membershipType">Membership</Label>
+                  <Select
+                    value={formData.membershipType}
+                    onValueChange={(value) => updateField("membershipType", value)}
+                  >
+                    <SelectTrigger className="mt-1" data-testid="select-settings-membership">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="open">
+                        <span className="flex items-center gap-2"><Unlock className="h-3 w-3" /> Open</span>
+                      </SelectItem>
+                      <SelectItem value="approval">
+                        <span className="flex items-center gap-2"><Shield className="h-3 w-3" /> Approval</span>
+                      </SelectItem>
+                      <SelectItem value="invite">
+                        <span className="flex items-center gap-2"><UserPlus className="h-3 w-3" /> Invite Only</span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="maxMembers">Max Members</Label>
+                  <Input
+                    id="maxMembers"
+                    type="number"
+                    value={formData.maxMembers}
+                    onChange={(e) => updateField("maxMembers", e.target.value)}
+                    placeholder="Unlimited"
+                    className="mt-1"
+                    data-testid="input-settings-max-members"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="meetupFrequency">Meetup Frequency</Label>
+                  <Input
+                    id="meetupFrequency"
+                    value={formData.meetupFrequency}
+                    onChange={(e) => updateField("meetupFrequency", e.target.value)}
+                    placeholder="e.g., Weekly, Bi-weekly"
+                    className="mt-1"
+                    data-testid="input-settings-meetup-frequency"
+                  />
+                </div>
+
+                <Separator />
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {formData.isPublic ? (
@@ -556,11 +776,9 @@ export default function CommunitySettingsPage({ params }: PageProps) {
                       <Lock className="h-5 w-5 text-amber-500" />
                     )}
                     <div>
-                      <p className="font-medium">{formData.isPublic ? "Public" : "Private"}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formData.isPublic
-                          ? "Anyone can find and view"
-                          : "Only members can view"}
+                      <p className="font-medium text-sm">{formData.isPublic ? "Public" : "Private"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formData.isPublic ? "Visible in directory" : "Hidden from directory"}
                       </p>
                     </div>
                   </div>

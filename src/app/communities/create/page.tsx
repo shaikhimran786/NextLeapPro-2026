@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft, Users, Image as ImageIcon, Tag, X, Globe, MapPin, Link as LinkIcon, Lock, Unlock } from "@/lib/icons";
+import { ArrowLeft, Users, Image as ImageIcon, Tag, X, Globe, MapPin, Link as LinkIcon, Lock, Unlock, Video, Laptop, UserPlus, Shield } from "@/lib/icons";
 
 const COMMUNITY_CATEGORIES = [
   "technology",
@@ -33,6 +33,7 @@ const COMMUNITY_CATEGORIES = [
 interface CommunityFormData {
   name: string;
   description: string;
+  shortDescription: string;
   logo: string;
   coverImage: string;
   category: string;
@@ -40,11 +41,14 @@ interface CommunityFormData {
   location: string;
   website: string;
   isPublic: boolean;
+  mode: string;
+  membershipType: string;
 }
 
 const defaultFormData: CommunityFormData = {
   name: "",
   description: "",
+  shortDescription: "",
   logo: "",
   coverImage: "",
   category: "technology",
@@ -52,6 +56,8 @@ const defaultFormData: CommunityFormData = {
   location: "",
   website: "",
   isPublic: true,
+  mode: "hybrid",
+  membershipType: "open",
 };
 
 export default function CreateCommunityPage() {
@@ -265,7 +271,22 @@ export default function CreateCommunityPage() {
                       placeholder="Describe what your community is about, who should join, and what members can expect..."
                       rows={5}
                       className="mt-1"
+                      maxLength={2000}
                       data-testid="input-community-description"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1 text-right">{formData.description.length}/2000</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="shortDescription">Short Description</Label>
+                    <Input
+                      id="shortDescription"
+                      value={formData.shortDescription}
+                      onChange={(e) => updateField("shortDescription", e.target.value)}
+                      placeholder="A brief tagline for your community (shown on cards)"
+                      className="mt-1"
+                      maxLength={200}
+                      data-testid="input-community-short-description"
                     />
                   </div>
 
@@ -406,11 +427,57 @@ export default function CreateCommunityPage() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Visibility</CardTitle>
-                  <CardDescription>Control who can see your community</CardDescription>
+                  <CardTitle>Community Type</CardTitle>
+                  <CardDescription>How your community operates</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="mode">Mode</Label>
+                    <Select
+                      value={formData.mode}
+                      onValueChange={(value) => updateField("mode", value)}
+                    >
+                      <SelectTrigger className="mt-1" data-testid="select-community-mode">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="online">
+                          <span className="flex items-center gap-2"><Video className="h-3 w-3" /> Online</span>
+                        </SelectItem>
+                        <SelectItem value="hybrid">
+                          <span className="flex items-center gap-2"><Laptop className="h-3 w-3" /> Hybrid</span>
+                        </SelectItem>
+                        <SelectItem value="in_person">
+                          <span className="flex items-center gap-2"><MapPin className="h-3 w-3" /> In Person</span>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="membershipType">Membership</Label>
+                    <Select
+                      value={formData.membershipType}
+                      onValueChange={(value) => updateField("membershipType", value)}
+                    >
+                      <SelectTrigger className="mt-1" data-testid="select-community-membership">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="open">
+                          <span className="flex items-center gap-2"><Unlock className="h-3 w-3" /> Open (anyone can join)</span>
+                        </SelectItem>
+                        <SelectItem value="approval">
+                          <span className="flex items-center gap-2"><Shield className="h-3 w-3" /> Approval Required</span>
+                        </SelectItem>
+                        <SelectItem value="invite">
+                          <span className="flex items-center gap-2"><UserPlus className="h-3 w-3" /> Invite Only</span>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
                     <div className="flex items-center gap-2">
                       {formData.isPublic ? (
                         <Unlock className="h-5 w-5 text-green-500" />
@@ -418,11 +485,11 @@ export default function CreateCommunityPage() {
                         <Lock className="h-5 w-5 text-amber-500" />
                       )}
                       <div>
-                        <p className="font-medium">{formData.isPublic ? "Public" : "Private"}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="font-medium text-sm">{formData.isPublic ? "Public" : "Private"}</p>
+                        <p className="text-xs text-muted-foreground">
                           {formData.isPublic
-                            ? "Anyone can find and view this community"
-                            : "Only members can view this community"}
+                            ? "Visible in directory"
+                            : "Hidden from directory"}
                         </p>
                       </div>
                     </div>

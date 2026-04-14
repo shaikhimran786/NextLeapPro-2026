@@ -4,7 +4,7 @@ import { generateMeta } from "@/lib/metadata";
 import { getNavbarPlansData } from "@/lib/get-navbar-data";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { CommunityCard } from "@/components/shared/CommunityCard";
+import { CommunityListFilter } from "@/components/communities/CommunityListFilter";
 import { CreateCommunityButton } from "@/components/communities/CreateCommunityButton";
 
 export const dynamic = "force-dynamic";
@@ -17,12 +17,24 @@ export const metadata: Metadata = generateMeta({
 
 async function getCommunities() {
   const communities = await prisma.community.findMany({
-    include: { members: true },
-    orderBy: { createdAt: "desc" },
+    where: { isPublic: true },
+    include: {
+      _count: { select: { members: true } },
+    },
+    orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
   });
   return communities.map((c) => ({
-    ...c,
-    memberCount: c.members.length,
+    id: c.id,
+    name: c.name,
+    description: c.description,
+    shortDescription: c.shortDescription,
+    logo: c.logo,
+    category: c.category,
+    tags: c.tags,
+    location: c.location,
+    mode: c.mode,
+    membershipType: c.membershipType,
+    memberCount: c._count.members,
   }));
 }
 
@@ -47,28 +59,10 @@ export default async function CommunitiesPage() {
             <CreateCommunityButton />
           </div>
 
-          {communities.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {communities.map((community) => (
-                <CommunityCard
-                  key={community.id}
-                  id={community.id}
-                  name={community.name}
-                  description={community.description}
-                  logo={community.logo}
-                  category={community.category}
-                  memberCount={community.memberCount}
-                  location={community.location}
-                  tags={community.tags}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16 text-slate-500">
-              <p className="text-lg">No communities yet.</p>
-              <p className="mt-2">Be the first to create one!</p>
-            </div>
-          )}
+          <CommunityListFilter
+            communities={communities}
+            categories={[...new Set(communities.map((c) => c.category))]}
+          />
         </div>
       </main>
       <Footer />

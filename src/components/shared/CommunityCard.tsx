@@ -4,7 +4,7 @@ import Link from "next/link";
 import { memo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, MapPin, ArrowUpRight } from "@/lib/icons";
+import { Users, MapPin, ArrowUpRight, Video, Laptop, Lock } from "@/lib/icons";
 import { SmartImage } from "@/components/ui/smart-image";
 import { motion } from "framer-motion";
 
@@ -17,6 +17,8 @@ interface CommunityCardProps {
   memberCount: number;
   location?: string | null;
   tags?: string[];
+  mode?: string;
+  membershipType?: string;
   index?: number;
 }
 
@@ -53,6 +55,8 @@ function CommunityCardComponent({
   memberCount,
   location,
   tags = [],
+  mode,
+  membershipType,
   index = 0,
 }: CommunityCardProps) {
   const colorScheme = categoryColors[category] || categoryColors.default;
@@ -172,6 +176,24 @@ function CommunityCardComponent({
                   </span>
                 )}
               </motion.div>
+            )}
+
+            {/* Mode & Membership Badges */}
+            {(mode || membershipType) && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {mode && mode !== "hybrid" && (
+                  <span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full flex items-center gap-1">
+                    {mode === "online" ? <Video className="h-3 w-3" /> : <MapPin className="h-3 w-3" />}
+                    {mode === "online" ? "Online" : "In Person"}
+                  </span>
+                )}
+                {membershipType && membershipType !== "open" && (
+                  <span className="text-xs px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full flex items-center gap-1">
+                    <Lock className="h-3 w-3" />
+                    {membershipType === "approval" ? "Approval" : "Invite Only"}
+                  </span>
+                )}
+              </div>
             )}
 
             {/* Footer Stats */}
