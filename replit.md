@@ -52,7 +52,17 @@ The platform integrates Replit's OpenAI (`gpt-4o`) for AI capabilities:
 - **AI Career Coach**: Provides personalized career guidance for authenticated users based on their skills, interests, and goals.
 
 ### Community Ownership System
-Communities operate on a membership-based ownership model with a role hierarchy (owner > admin > moderator > member > pending/invited). Access control is enforced via `checkCommunityAccess()` for mutating API routes. Subscription tiers impose limits on community creation (Free: 0, Pro: 1, Creator: Unlimited), with site admins bypassing all limits.
+Communities operate on a membership-based ownership model with a role hierarchy (owner > admin > moderator > member > pending/invited). Access control is enforced via `checkCommunityAccess()` for mutating API routes and `getCurrentUserId()`/`checkAdminAccess()` for read access. Subscription tiers impose limits on community creation (Free: 0, Pro: 1, Creator: Unlimited), with site admins bypassing all limits.
+
+**Privacy & Access Control**: Private communities (`isPublic: false`) are hidden from the listing page, protected on the detail page (SSR), and gated on the `GET /api/communities/[id]` and `GET /api/communities/[id]/members` endpoints. Only members and admins can view private communities.
+
+**Community Fields**: Communities support `mode` (online/hybrid/in_person), `membershipType` (open/approval/invite), `shortDescription`, `primaryColor`, `maxMembers`, and `meetupFrequency`. These are exposed in create/settings forms and on community cards.
+
+**Member Management**: `GET/PATCH /api/communities/[id]/members` provides member listing and role management (remove, update_role). Member emails are only exposed to site admins. Owner role cannot be modified or leave.
+
+**Listing Features**: Client-side search (by name, description, tags) and category filter on the `/communities` page via `CommunityListFilter` component. Cards show mode and membership type badges.
+
+**Cascade Behavior**: `CommunityMember` and `CommunityEvent` both use `onDelete: Cascade` on their community FK, ensuring clean deletion.
 
 ### Engagement System
 A daily engagement feature supports polls and surveys. Database models include `EngagementTopic`, `Poll`, `PollOption`, `PollResponse`, and `DailySurveySchedule`. Admins can create/manage topics, polls, schedule them, and view analytics. Public users can view active polls, submit responses, and view results.
