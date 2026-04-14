@@ -1,0 +1,203 @@
+You are a senior full-stack engineer and product thinker.
+
+Your task is to audit, fix, and improve the existing Community Builder & Management system in this codebase.
+
+IMPORTANT:
+Do NOT build from scratch.
+Focus only on fixing broken functionality, completing missing logic, and improving UX to an enterprise-level standard.
+
+---
+
+## 🎯 PRIMARY GOAL
+
+Stabilize and enhance the Community Management system so that it is:
+
+- Fully functional (no broken flows)
+- Logically consistent
+- Easy to use (smooth UX)
+- Scalable and structured
+- Aligned with real-world community platforms
+
+---
+
+## 🔍 PHASE 1: DEBUG & ISSUE IDENTIFICATION (MANDATORY FIRST STEP)
+
+1. Scan the entire codebase related to:
+   - Community creation
+   - Community management dashboard
+   - Events inside communities
+   - Membership / join flows
+   - CRUD operations
+
+2. Analyze:
+   - Server logs
+   - API failures
+   - Console errors
+   - Broken UI states
+   - Incomplete API responses
+   - Validation issues
+
+3. Identify and list:
+   - Broken features
+   - Missing logic
+   - Incorrect state handling
+   - UX gaps
+   - Data inconsistencies
+
+4. Fix all critical and blocking issues FIRST before enhancements.
+
+---
+
+## 🧩 PHASE 2: FIX CORE FUNCTIONALITY (CRUD + LOGIC)
+
+Ensure all Community-related CRUD operations are working correctly:
+
+### Community CRUD:
+- Create community (fully functional with validations)
+- Read (listing + details page)
+- Update (edit community details)
+- Delete (safe deletion with confirmation)
+
+### Required Community Attributes:
+Ensure support for:
+- Community name
+- Description
+- Category / tags
+- Cover image & logo
+- Community type (free / paid / private / public)
+- Pricing (if paid)
+- Owner / admin roles
+- Member limit (optional)
+- Location (optional)
+- Skills / topics
+- Social links (optional)
+
+---
+
+## 📅 PHASE 3: EVENT MANAGEMENT IMPROVEMENT
+
+Fix and improve event flow inside communities:
+
+1. Create Event:
+   - Title, description
+   - Date & time (with validation)
+   - Expiry logic (past events should not accept actions)
+   - Paid / free toggle
+   - Event banner
+
+2. Fix issues:
+   - Prevent booking for expired events
+   - Avoid duplicate joins
+   - Handle already registered users properly
+
+3. Improve UX:
+   - Quick event creation (minimal steps)
+   - Clear CTA buttons (Join / Registered / Expired)
+   - Show event status clearly
+
+---
+
+## 👥 PHASE 4: MEMBERSHIP & ACCESS LOGIC
+
+Fix and standardize:
+
+- Join community flow
+- Prevent duplicate joins
+- Role-based access (admin / member)
+- Paid community logic:
+  - Do not re-ask payment if already active
+  - Show "Active Plan" correctly
+- Handle edge cases:
+  - Expired subscriptions
+  - Rejoining logic
+
+---
+
+## 🧠 PHASE 5: UX & PRODUCT IMPROVEMENT
+
+Improve overall usability:
+
+### Community Creation Flow:
+- Reduce friction (multi-step → simplified steps if needed)
+- Add progress indicators
+- Validate inputs properly
+- Prevent empty / broken submissions
+
+### Community Dashboard:
+- Clean layout
+- Clear sections:
+  - Members
+  - Events
+  - Settings
+- Fast loading and responsiveness
+
+### General UX:
+- No dead clicks
+- Proper loading states
+- Clear error messages
+- Consistent button states
+
+---
+
+## 🎨 PHASE 6: UI UPGRADE (ENTERPRISE LEVEL)
+
+Improve look & feel:
+
+- Consistent spacing and alignment
+- Clean typography
+- Modern UI components
+- Proper empty states
+- Professional dashboard experience
+
+Avoid:
+- Cluttered UI
+- Inconsistent styling
+- Confusing navigation
+
+---
+
+## ⚙️ PHASE 7: DATA & STATE CONSISTENCY
+
+- Ensure frontend and backend data sync correctly
+- Fix:
+  - Incorrect API mappings
+  - Broken state updates
+  - Stale UI issues
+- Validate all API responses before rendering
+
+---
+
+## 🚫 CONSTRAINTS
+
+- Do NOT introduce unnecessary features
+- Do NOT change working logic unnecessarily
+- Do NOT break existing flows while fixing others
+- Maintain backward compatibility
+
+---
+
+## ✅ FINAL OUTPUT EXPECTATION
+
+1. Fully working community management system
+2. Clean and bug-free CRUD operations
+3. Smooth and intuitive UX
+4. Stable event and membership flow
+5. Enterprise-level UI polish
+
+---
+
+## 🧪 BONUS (IF TIME PERMITS)
+
+- Add basic analytics (members count, event count)
+- Improve performance (lazy loading, API optimization)
+- Add safeguards for edge cases
+
+---
+
+Work step-by-step:
+1. Debug
+2. Fix
+3. Improve UX
+4. Polish UI
+
+Do not skip order.
