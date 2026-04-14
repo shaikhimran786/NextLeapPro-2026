@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft, Users, Image as ImageIcon, Tag, X, Globe, MapPin, Link as LinkIcon, Lock, Unlock, Video, Laptop, UserPlus, Shield } from "@/lib/icons";
+import { ArrowLeft, Users, Image as ImageIcon, Tag, X, Globe, MapPin, Link as LinkIcon, Lock, Unlock, Video, Laptop, UserPlus, Shield, Palette } from "@/lib/icons";
 
 const COMMUNITY_CATEGORIES = [
   "technology",
@@ -43,6 +43,7 @@ interface CommunityFormData {
   isPublic: boolean;
   mode: string;
   membershipType: string;
+  primaryColor: string;
 }
 
 const defaultFormData: CommunityFormData = {
@@ -58,6 +59,7 @@ const defaultFormData: CommunityFormData = {
   isPublic: true,
   mode: "hybrid",
   membershipType: "open",
+  primaryColor: "",
 };
 
 export default function CreateCommunityPage() {
@@ -381,6 +383,38 @@ export default function CreateCommunityPage() {
                       data-testid="input-community-cover"
                     />
                     <p className="text-xs text-muted-foreground mt-1">Recommended: 1200x400 pixels or larger</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Palette className="h-5 w-5" /> Brand Color
+                  </CardTitle>
+                  <CardDescription>Optional primary color for your community theme</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-3 items-center">
+                    <input
+                      type="color"
+                      value={formData.primaryColor || "#6366f1"}
+                      onChange={(e) => updateField("primaryColor", e.target.value)}
+                      className="w-10 h-10 rounded-lg border cursor-pointer"
+                      data-testid="input-community-primary-color"
+                    />
+                    <Input
+                      value={formData.primaryColor || ""}
+                      onChange={(e) => updateField("primaryColor", e.target.value)}
+                      placeholder="#6366f1"
+                      className="w-32"
+                      data-testid="input-community-primary-color-text"
+                    />
+                    {formData.primaryColor && (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => updateField("primaryColor", "")}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>

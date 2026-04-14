@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { ArrowLeft, Settings, Image as ImageIcon, Tag, X, Globe, MapPin, Link as LinkIcon, Lock, Unlock, Trash2, Save, Palette, Users, Video, Laptop, UserPlus, Shield, Crown, MoreHorizontal, Ban } from "@/lib/icons";
+import { ArrowLeft, Settings, Image as ImageIcon, Tag, X, Globe, MapPin, Link as LinkIcon, Lock, Unlock, Trash2, Save, Palette, Users, Video, Laptop, UserPlus, Shield, Crown, MoreHorizontal, Ban, Check } from "@/lib/icons";
 import { canManageCommunity, isAdmin as checkIsAdmin } from "@/lib/user-status";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import type { UserStatus } from "@/lib/user-status";
@@ -95,6 +95,9 @@ export default function CommunitySettingsPage({ params }: PageProps) {
 
   const [members, setMembers] = useState<MemberData[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
+
+  const pendingMembers = members.filter((m) => m.role === "pending");
+  const activeMembers = members.filter((m) => m.role !== "pending");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -262,9 +265,12 @@ export default function CommunitySettingsPage({ params }: PageProps) {
       });
 
       if (res.ok) {
-        if (action === "remove") {
+        if (action === "remove" || action === "reject") {
           setMembers(prev => prev.filter(m => m.id !== memberId));
-          toast.success("Member removed");
+          toast.success(action === "reject" ? "Request rejected" : "Member removed");
+        } else if (action === "approve") {
+          setMembers(prev => prev.map(m => m.id === memberId ? { ...m, role: "member" } : m));
+          toast.success("Member approved");
         } else {
           const updated = await res.json();
           setMembers(prev => prev.map(m => m.id === memberId ? { ...m, role: updated.role } : m));
@@ -492,6 +498,36 @@ export default function CommunitySettingsPage({ params }: PageProps) {
                     </p>
                   </>
                 )}
+
+                <Separator />
+
+                <div>
+                  <Label htmlFor="primaryColor" className="flex items-center gap-2">
+                    <Palette className="h-4 w-4" /> Primary Color
+                  </Label>
+                  <div className="flex gap-3 mt-1 items-center">
+                    <input
+                      type="color"
+                      id="primaryColor"
+                      value={formData.primaryColor || "#6366f1"}
+                      onChange={(e) => updateField("primaryColor", e.target.value)}
+                      className="w-10 h-10 rounded-lg border cursor-pointer"
+                      data-testid="input-settings-primary-color"
+                    />
+                    <Input
+                      value={formData.primaryColor}
+                      onChange={(e) => updateField("primaryColor", e.target.value)}
+                      placeholder="#6366f1"
+                      className="w-32"
+                      data-testid="input-settings-primary-color-text"
+                    />
+                    {formData.primaryColor && (
+                      <Button variant="ghost" size="sm" onClick={() => updateField("primaryColor", "")}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -578,19 +614,68 @@ export default function CommunitySettingsPage({ params }: PageProps) {
               </CardContent>
             </Card>
 
+            {pendingMembers.length > 0 && (
+              <Card className="border-amber-200 bg-amber-50/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-amber-700">
+                    <UserPlus className="h-5 w-5" /> Pending Requests ({pendingMembers.length})
+                  </CardTitle>
+                  <CardDescription>Members waiting for approval</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {pendingMembers.map((member) => (
+                      <div key={member.id} className="flex items-center justify-between p-3 rounded-lg border bg-white">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                            <span className="text-xs font-semibold text-amber-700">{member.user.name?.charAt(0)?.toUpperCase() || "?"}</span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{member.user.name}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-green-600 border-green-300 hover:bg-green-50"
+                            disabled={membersLoading}
+                            onClick={() => handleMemberAction(member.id, "approve")}
+                            data-testid={`button-approve-member-${member.id}`}
+                          >
+                            <Check className="h-3 w-3 mr-1" /> Approve
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 border-red-300 hover:bg-red-50"
+                            disabled={membersLoading}
+                            onClick={() => handleMemberAction(member.id, "reject")}
+                            data-testid={`button-reject-member-${member.id}`}
+                          >
+                            <X className="h-3 w-3 mr-1" /> Reject
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" /> Members ({members.length})
+                  <Users className="h-5 w-5" /> Members ({activeMembers.length})
                 </CardTitle>
                 <CardDescription>Manage community members and roles</CardDescription>
               </CardHeader>
               <CardContent>
-                {members.length === 0 ? (
+                {activeMembers.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No members yet.</p>
                 ) : (
                   <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {members.map((member) => (
+                    {activeMembers.map((member) => (
                       <div key={member.id} className="flex items-center justify-between p-3 rounded-lg border bg-white">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/20 to-blue-500/20 flex items-center justify-center shrink-0">
@@ -598,7 +683,9 @@ export default function CommunitySettingsPage({ params }: PageProps) {
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-medium truncate" data-testid={`text-member-name-${member.id}`}>{member.user.name}</p>
-                            <p className="text-xs text-muted-foreground truncate">{member.user.email}</p>
+                            {member.user.email && (
+                              <p className="text-xs text-muted-foreground truncate">{member.user.email}</p>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">

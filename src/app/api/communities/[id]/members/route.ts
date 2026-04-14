@@ -124,6 +124,25 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ success: true, message: "Member removed" });
     }
 
+    if (action === "approve") {
+      if (member.role !== "pending") {
+        return NextResponse.json({ error: "Member is not pending" }, { status: 400 });
+      }
+      const updated = await prisma.communityMember.update({
+        where: { id: member.id },
+        data: { role: "member" },
+      });
+      return NextResponse.json(updated);
+    }
+
+    if (action === "reject") {
+      if (member.role !== "pending") {
+        return NextResponse.json({ error: "Member is not pending" }, { status: 400 });
+      }
+      await prisma.communityMember.delete({ where: { id: member.id } });
+      return NextResponse.json({ success: true, message: "Request rejected" });
+    }
+
     if (action === "update_role") {
       const validRoles = ["member", "moderator", "admin"];
       if (!validRoles.includes(role)) {

@@ -35,7 +35,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    if (membership.role === "admin" || membership.role === "owner") {
+    if (membership.role === "owner") {
+      return NextResponse.json(
+        { error: "Cannot leave as the community owner. Transfer ownership first." },
+        { status: 400 }
+      );
+    }
+
+    if (membership.role === "admin") {
       const adminCount = await prisma.communityMember.count({
         where: {
           communityId,
