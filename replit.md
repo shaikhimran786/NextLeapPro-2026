@@ -32,6 +32,9 @@ The API adheres to RESTful conventions, includes consistent error handling, and 
 ### Deployment & Build
 Production builds utilize Vite for the frontend and esbuild for the Express server, with the server serving static frontend files. `DATABASE_URL` manages environment configuration.
 
+### End-to-End Tests
+Playwright drives the e2e suite under `tests/e2e/`. The community join/leave flow is covered by `community-join-leave.spec.ts`, which exercises the open/approval/invite-only join paths and the leave button against the real dev server (`http://localhost:5000`) and database. Test fixtures register a fresh user via `/api/auth/register` and create disposable communities directly through Prisma; everything is cleaned up in `afterAll`. Run with `npx playwright test`. Browser binaries live in `.cache/ms-playwright/`.
+
 ### Subscription System
 The platform offers Free, Pro (Monthly/Annual), and Creator (Monthly/Annual) plans. Database models include `SubscriptionPlan`, `UserSubscription`, `PaymentTransaction`, and `SubscriptionPriceHistory`. Razorpay handles payment processing, and the admin panel manages plans, prices, and subscribers. Custom payment URLs are also supported.
 
