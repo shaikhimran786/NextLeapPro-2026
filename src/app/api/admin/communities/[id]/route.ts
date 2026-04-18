@@ -7,6 +7,7 @@ import {
   writeCommunityFieldAudits,
   writeCommunityActionAudit,
 } from "@/lib/community-audit";
+import { buildCommunityUpdateData } from "@/lib/community-update";
 
 export async function GET(
   request: NextRequest,

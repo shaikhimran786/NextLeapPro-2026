@@ -8,6 +8,7 @@ import {
   writeCommunityFieldAudits,
   writeCommunityActionAudit,
 } from "@/lib/community-audit";
+import { buildCommunityUpdateData } from "@/lib/community-update";
 
 export async function GET(
   request: NextRequest,
@@ -103,34 +104,11 @@ export async function PATCH(
 
     const data = await request.json();
 
-    if (data.name && String(data.name).trim().length > 100) {
-      return NextResponse.json({ error: "Community name must be 100 characters or less" }, { status: 400 });
+    const validation = buildCommunityUpdateData(data);
+    if (!validation.ok) {
+      return NextResponse.json({ error: validation.message }, { status: validation.status });
     }
-    if (data.description && String(data.description).trim().length > 2000) {
-      return NextResponse.json({ error: "Description must be 2000 characters or less" }, { status: 400 });
-    }
-
-    const validModes = ["online", "hybrid", "in_person"];
-    const validMembershipTypes = ["open", "approval", "invite"];
-
-    const updateData: Record<string, unknown> = {};
-    if (data.name !== undefined) updateData.name = String(data.name).trim();
-    if (data.description !== undefined) updateData.description = String(data.description).trim();
-    if (data.shortDescription !== undefined) updateData.shortDescription = data.shortDescription ? String(data.shortDescription).trim().slice(0, 200) : null;
-    if (data.category !== undefined) updateData.category = data.category;
-    if (data.location !== undefined) updateData.location = data.location || null;
-    if (data.logo !== undefined) updateData.logo = data.logo;
-    if (data.coverImage !== undefined) updateData.coverImage = data.coverImage || null;
-    if (data.profileImage !== undefined) updateData.profileImage = data.profileImage || null;
-    if (data.tags !== undefined) updateData.tags = data.tags;
-    if (data.website !== undefined) updateData.website = data.website || null;
-    if (data.socialLinks !== undefined) updateData.socialLinks = data.socialLinks;
-    if (data.isPublic !== undefined) updateData.isPublic = data.isPublic;
-    if (data.mode !== undefined && validModes.includes(data.mode)) updateData.mode = data.mode;
-    if (data.membershipType !== undefined && validMembershipTypes.includes(data.membershipType)) updateData.membershipType = data.membershipType;
-    if (data.primaryColor !== undefined) updateData.primaryColor = data.primaryColor || null;
-    if (data.maxMembers !== undefined) updateData.maxMembers = data.maxMembers ? parseInt(data.maxMembers) : null;
-    if (data.meetupFrequency !== undefined) updateData.meetupFrequency = data.meetupFrequency || null;
+    const updateData = validation.updateData;
 
     // Slug change: validate, ensure uniqueness, and capture the previous slug
     // into the alias table inside the same transaction so old URLs keep working.
