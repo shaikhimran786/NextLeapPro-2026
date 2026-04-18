@@ -1,0 +1,237 @@
+You are working on Next Leap Pro (https://nextleappro.com/), a community-driven SaaS platform.
+
+Objective:
+Audit, fix, and enhance the COMPLETE community system across both Admin and User sides with a strong focus on:
+- Correctness (fix broken flows)
+- Clarity (user always knows their state)
+- Real-time UX (no page reload dependency)
+- Smart defaults (reduce friction)
+- Community-first experience
+
+--------------------------------------------------
+STEP 1: AUDIT EXISTING SYSTEM (MANDATORY)
+--------------------------------------------------
+
+Thoroughly review and identify issues in:
+
+ADMIN:
+https://nextleappro.com/admin/communities
+
+USER:
+https://nextleappro.com/communities/
+
+Check:
+- Broken UI states
+- Incorrect API responses
+- Missing validations
+- Inconsistent CTA states
+- Duplicate or unnecessary flows
+- Data mismatch between backend and frontend
+- Poor UX in join/leave flows
+
+Log all issues clearly before fixing.
+
+--------------------------------------------------
+STEP 2: FIX CORE FUNCTIONAL ISSUES
+--------------------------------------------------
+
+Ensure all CRUD operations work correctly:
+
+ADMIN SIDE:
+- Create community (with all required attributes)
+- Edit/update community
+- Delete community
+- Publish/unpublish states
+- Add metadata (category, tags, pricing, type, etc.)
+
+USER SIDE:
+- View community list
+- View community detail page
+- Join community
+- Leave community
+- Access joined communities
+
+Fix:
+- Any broken API calls
+- Incorrect state handling
+- Missing edge cases
+- Duplicate joins
+- Invalid joins (expired, restricted, etc.)
+
+--------------------------------------------------
+STEP 3: MEMBERSHIP STATE VISIBILITY (VERY IMPORTANT)
+--------------------------------------------------
+
+Problem:
+User cannot clearly see if they have already joined a community.
+
+Fix:
+
+On COMMUNITY LISTING PAGE:
+- If user is already a member:
+  Show clear visual indicator:
+    Example:
+      - "Joined" badge
+      - Disabled button with label "Already Joined"
+      - Or "View Community" CTA instead of "Join"
+
+- This should be visible WITHOUT opening community detail page
+
+On COMMUNITY DETAIL PAGE:
+- Show:
+  - Joined status
+  - Join date (optional)
+  - "Go to Community" or "Open Community" CTA
+  - Remove "Join" CTA if already joined
+
+--------------------------------------------------
+STEP 4: SMART AUTO-FILL (REDUCE USER FRICTION)
+--------------------------------------------------
+
+Problem:
+User has to re-enter data unnecessarily.
+
+Fix:
+
+When user is logged in:
+- Auto-fill:
+  - Name
+  - Email
+  - Profile details
+
+- Do NOT ask again unless required
+
+- Use backend session/auth data
+
+- Ensure:
+  - No duplicate user creation
+  - No duplicate membership records
+
+--------------------------------------------------
+STEP 5: REAL-TIME UI STATE UPDATES (CRITICAL UX FIX)
+--------------------------------------------------
+
+Problem:
+User must refresh page to see updated status.
+
+Fix:
+
+After any action:
+- Join community
+- Leave community
+- Update community (admin)
+
+UI should update instantly WITHOUT reload
+
+Implement:
+- Optimistic UI updates OR
+- State management (React state / global store)
+
+Ensure:
+- Button state updates immediately
+  Example:
+    "Join" → "Joined"
+    "Join" → "View Community"
+
+- Sync with backend response
+
+- Handle failure rollback properly
+
+--------------------------------------------------
+STEP 6: CTA & STATE STANDARDIZATION
+--------------------------------------------------
+
+Define clear CTA states:
+
+For non-member:
+- "Join Community"
+
+For member:
+- "Joined" (disabled) OR
+- "View Community"
+
+For admin preview:
+- "Edit"
+- "Manage Members"
+
+Ensure:
+- No conflicting CTAs
+- No duplicate buttons
+- No misleading actions
+
+--------------------------------------------------
+STEP 7: EDGE CASE HANDLING
+--------------------------------------------------
+
+Handle:
+
+- User already joined → prevent duplicate join
+- Community is private → restrict access
+- Paid community:
+    - Prevent re-payment if already active
+- Expired membership:
+    - Show "Renew" instead of "Join"
+- Backend failure:
+    - Show proper error messages
+
+--------------------------------------------------
+STEP 8: PERFORMANCE & UX IMPROVEMENTS
+--------------------------------------------------
+
+Improve:
+
+- Fast loading community list
+- Skeleton loaders instead of blank screens
+- Clear empty states:
+    - "You haven’t joined any community yet"
+
+- Mobile responsiveness
+- Clean layout hierarchy
+
+--------------------------------------------------
+STEP 9: DATA CONSISTENCY
+--------------------------------------------------
+
+Ensure:
+
+- Backend = source of truth
+- Frontend state always synced
+- Membership table integrity:
+    - One user → one community → one active record
+
+--------------------------------------------------
+STEP 10: FINAL VALIDATION
+--------------------------------------------------
+
+Test full flow:
+
+USER:
+- Visit community list
+- See joined status clearly
+- Join community
+- See instant update
+- Revisit page → state persists
+
+ADMIN:
+- Create community
+- Edit community
+- Publish/unpublish
+- User sees correct state instantly
+
+--------------------------------------------------
+EXPECTED OUTCOME
+--------------------------------------------------
+
+After implementation:
+
+- User always knows:
+  → "Am I part of this community or not?"
+
+- No unnecessary clicks
+- No repeated data entry
+- No page reload dependency
+- Smooth, modern, real-time experience
+
+This should feel like a polished SaaS product, not a broken flow.
+
+Focus on clarity, system, and seamless user experience.
