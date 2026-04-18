@@ -1,0 +1,252 @@
+You are working on Next Leap Pro (https://nextleappro.com/), a community-driven SaaS platform.
+
+Objective:
+Enable COMMUNITY OWNERS (creators) to fully manage their community identity, including:
+- Custom URL (slug)
+- Display name
+- Branding assets (logo, profile image, cover image)
+- Share functionality
+
+At the same time:
+- Maintain system integrity
+- Ensure Admin (Super Admin) has full override control
+
+--------------------------------------------------
+STEP 1: DEFINE ROLES & PERMISSIONS
+--------------------------------------------------
+
+ROLES:
+
+1. SUPER ADMIN
+- Full control over all communities
+- Can edit/delete/override any community
+
+2. COMMUNITY OWNER (CREATOR PRIVILEGE)
+- Can manage ONLY their own community
+- Full branding control (within constraints)
+
+3. USER
+- Can view/join communities only
+
+--------------------------------------------------
+STEP 2: CUSTOM COMMUNITY URL (SLUG SYSTEM)
+--------------------------------------------------
+
+Problem:
+Currently community URL is system-generated (ID-based).
+No branding, no recall, no shareability.
+
+Fix:
+
+Allow COMMUNITY OWNER to:
+- Create custom URL slug
+  Example:
+    /communities/design-club
+    /communities/nextjs-builders
+
+Rules:
+- Must be unique across platform
+- Lowercase only
+- No spaces → use hyphens
+- Allowed chars: a-z, 0-9, -
+- Length limit: 3–50 chars
+
+Validation:
+- Real-time availability check
+- Show:
+    ✔ Available
+    ✖ Already taken
+
+Fallback:
+- If no custom URL set:
+    → Use system-generated ID-based URL
+    → BUT do NOT show share CTA for this
+
+--------------------------------------------------
+STEP 3: COMMUNITY BRANDING CONTROL
+--------------------------------------------------
+
+Allow COMMUNITY OWNER to edit:
+
+1. Display Name
+   - Human-readable name
+   - Example: "Next Leap Design Circle"
+
+2. URL Slug
+   - Unique identity
+
+3. Logo (small icon)
+4. Profile Image
+5. Cover Image (banner)
+
+UI Requirements:
+- Clean edit panel (like “Edit Community”)
+- Live preview before saving
+- Image upload with:
+    - Crop
+    - Resize
+    - Compression (optimize performance)
+
+Constraints:
+- File size limits
+- Supported formats (jpg, png, webp)
+
+--------------------------------------------------
+STEP 4: ACTIVATE / DEACTIVATE CUSTOM URL
+--------------------------------------------------
+
+Add toggle:
+
+[ Enable Custom Community URL ]
+
+If OFF:
+- System uses default ID-based URL
+
+If ON:
+- Use custom slug
+
+Allow user to:
+- Edit slug anytime (with validation)
+- Deactivate slug (revert to system URL)
+
+IMPORTANT:
+- Handle redirects:
+    If slug changes:
+        Old URL → redirect to new URL (SEO safe)
+
+--------------------------------------------------
+STEP 5: SHARE CTA (CRITICAL FIX)
+--------------------------------------------------
+
+Problem:
+Share button exists but is broken/useless if no proper URL.
+
+Fix:
+
+Show SHARE BUTTON ONLY IF:
+- Valid URL exists (custom OR system)
+
+BUT:
+
+If using system ID URL:
+- Optional: hide share OR show limited share
+
+If custom slug exists:
+- Enable full share experience
+
+Share CTA:
+- Copy link
+- WhatsApp share
+- LinkedIn share
+
+If NO URL:
+- DO NOT SHOW share button
+
+--------------------------------------------------
+STEP 6: CLICKABLE URL BEHAVIOR
+--------------------------------------------------
+
+Fix:
+
+- All community URLs must be clickable
+- No broken links
+- No empty redirects
+
+Validate:
+- Route exists
+- Community exists
+- Proper 404 if invalid
+
+--------------------------------------------------
+STEP 7: REAL-TIME UX IMPROVEMENTS
+--------------------------------------------------
+
+After update:
+- Display name updates instantly
+- URL updates instantly
+- Images reflect immediately
+
+No page reload required
+
+Use:
+- Optimistic UI OR
+- State sync after API success
+
+--------------------------------------------------
+STEP 8: ADMIN OVERRIDE CONTROL
+--------------------------------------------------
+
+SUPER ADMIN PANEL:
+https://nextleappro.com/admin/communities
+
+Admin can:
+- Edit any slug
+- Remove custom URL
+- Reset to default
+- Update branding
+- Delete community
+
+Add warning logs:
+- Track changes (audit trail)
+
+--------------------------------------------------
+STEP 9: EDGE CASE HANDLING
+--------------------------------------------------
+
+Handle:
+
+- Duplicate slug attempt → reject
+- Reserved keywords:
+    admin, login, signup, api, etc.
+- Empty slug → fallback to system ID
+- Slug update while shared → ensure redirect works
+- Image upload failure → show error + retry
+
+--------------------------------------------------
+STEP 10: PERFORMANCE & SEO
+--------------------------------------------------
+
+- Use clean URLs for SEO
+- Lazy load images
+- Optimize image delivery (CDN if possible)
+
+Meta:
+- Use display name in page title
+- Use cover image for preview (Open Graph)
+
+--------------------------------------------------
+STEP 11: FINAL VALIDATION
+--------------------------------------------------
+
+Test:
+
+CREATOR:
+- Create community
+- Set custom URL
+- Upload branding
+- Share link
+- Update slug → old link redirects
+
+USER:
+- Click shared link → lands correctly
+- Sees proper branding
+
+ADMIN:
+- Override slug
+- Delete community
+- System remains stable
+
+--------------------------------------------------
+EXPECTED OUTCOME
+--------------------------------------------------
+
+- Community feels OWNED by creator
+- URL becomes shareable asset
+- Branding builds trust
+- No broken share experience
+- Clean, smooth UX
+
+This transforms community from a “feature”
+into a “brand identity layer” inside the platform.
+
+Focus on simplicity, clarity, and control.

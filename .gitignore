@@ -19,3 +19,8 @@ coverage/
 *.mp4
 *.mov.next/
 tsconfig.tsbuildinfo
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
