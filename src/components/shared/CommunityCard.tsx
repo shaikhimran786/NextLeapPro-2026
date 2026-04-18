@@ -10,7 +10,7 @@ import { Users, MapPin, ArrowUpRight, Video, Lock, CheckCircle, Clock, Settings,
 import { SmartImage } from "@/components/ui/smart-image";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { useUserStatus, performOptimisticAction } from "@/hooks/useUserStatus";
+import { useUserStatus, performOptimisticAction, revalidateUserStatus } from "@/hooks/useUserStatus";
 import { joinCommunity, acceptCommunityInvite } from "@/lib/actions/community-actions";
 import { cn } from "@/lib/utils";
 import { CommunityGuestJoinDialog } from "@/components/communities/CommunityGuestJoinDialog";
@@ -184,10 +184,23 @@ function CommunityCardComponent({
     if ("action" in ctaConfig && ctaConfig.action === "accept") {
       try {
         setIsActionLoading(true);
-        await acceptCommunityInvite(id);
-        toast.success(`Welcome to ${name}!`);
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to accept invite");
+        await performOptimisticAction(
+          (current) => ({
+            ...current,
+            communityMemberships: {
+              ...current.communityMemberships,
+              [id]: {
+                status: "member",
+                role: "member",
+                joinedAt: new Date().toISOString(),
+              },
+            },
+          }),
+          async () => acceptCommunityInvite(id),
+          () => toast.success(`Welcome to ${name}!`),
+          (err) => toast.error(err.message || "Failed to accept invite"),
+        );
+        await revalidateUserStatus();
       } finally {
         setIsActionLoading(false);
       }

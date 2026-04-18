@@ -142,7 +142,7 @@ export function CommunityJoinButton({
   }, [membershipStatus, variant, joinIntent]);
 
   const buttonConfig = getButtonConfig();
-  const IconComponent = buttonConfig.icon;
+  const IconComponent = buttonConfig.icon ?? Users;
 
   // Owner/admin already get a dedicated CommunitySettingsButton on the detail page,
   // so suppress this CTA for those roles to avoid duplicate "Manage" buttons.
