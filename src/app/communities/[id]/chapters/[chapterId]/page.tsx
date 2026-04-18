@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { generateMeta } from "@/lib/metadata";
+import { resolveCommunityIdForPage } from "@/lib/community-page-resolver";
+import { resolveCommunitySegment } from "@/lib/community-resolver";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,10 +39,11 @@ async function getChapter(communityId: number, chapterId: number) {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id, chapterId } = await params;
-  const communityId = parseInt(id);
   const chapterIdNum = parseInt(chapterId);
-  if (isNaN(communityId) || isNaN(chapterIdNum)) return {};
-  const chapter = await getChapter(communityId, chapterIdNum);
+  if (isNaN(chapterIdNum)) return {};
+  const resolution = await resolveCommunitySegment(id);
+  if (resolution.kind !== "found") return {};
+  const chapter = await getChapter(resolution.communityId, chapterIdNum);
   if (!chapter) return {};
 
   return generateMeta({
@@ -52,11 +55,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ChapterDetailPage({ params }: PageProps) {
   const { id, chapterId } = await params;
-  const communityId = parseInt(id);
   const chapterIdNum = parseInt(chapterId);
-  if (isNaN(communityId) || isNaN(chapterIdNum)) {
+  if (isNaN(chapterIdNum)) {
     notFound();
   }
+  const communityId = await resolveCommunityIdForPage(id, `/chapters/${chapterId}`);
   const chapter = await getChapter(communityId, chapterIdNum);
 
   if (!chapter) {

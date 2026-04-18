@@ -1,10 +1,12 @@
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { cache } from "react";
 import prisma from "@/lib/prisma";
 import { getCurrentUserId, checkAdminAccess } from "@/lib/auth-utils";
+import { resolveCommunitySegment } from "@/lib/community-resolver";
+import { buildCommunityUrl } from "@/lib/community-slug";
 import { generateMeta, generateCommunityStructuredData, generateBreadcrumbStructuredData } from "@/lib/metadata";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -68,26 +70,33 @@ const getCommunity = cache(async (id: number) => {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const numericId = parseInt(id);
-  if (isNaN(numericId)) return {};
-  const community = await getCommunity(numericId);
+  const resolution = await resolveCommunitySegment(id);
+  if (resolution.kind === "not_found") return {};
+  const community = await getCommunity(resolution.communityId);
   if (!community) return {};
 
   return generateMeta({
     title: community.name,
     description: community.description.slice(0, 160),
     image: community.coverImage || community.logo,
-    path: `/communities/${community.id}`,
+    path: buildCommunityUrl(community),
   });
 }
 
 export default async function CommunityDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const numericId = parseInt(id);
-  if (isNaN(numericId)) {
+  const resolution = await resolveCommunitySegment(id);
+
+  if (resolution.kind === "not_found") {
     notFound();
   }
-  const community = await getCommunity(numericId);
+
+  if (resolution.kind === "redirect") {
+    // Old slug → permanent redirect to current canonical slug URL.
+    permanentRedirect(`/communities/${resolution.canonicalSlug}`);
+  }
+
+  const community = await getCommunity(resolution.communityId);
 
   if (!community) {
     notFound();
@@ -118,6 +127,7 @@ export default async function CommunityDetailPage({ params }: PageProps) {
 
   const structuredData = generateCommunityStructuredData({
     id: community.id,
+    slug: community.slug,
     name: community.name,
     description: community.description,
     memberCount: memberCount,
@@ -129,7 +139,7 @@ export default async function CommunityDetailPage({ params }: PageProps) {
   const breadcrumbData = generateBreadcrumbStructuredData([
     { name: "Home", url: "/" },
     { name: "Communities", url: "/communities" },
-    { name: community.name, url: `/communities/${community.id}` },
+    { name: community.name, url: buildCommunityUrl(community) },
   ]);
 
   return (

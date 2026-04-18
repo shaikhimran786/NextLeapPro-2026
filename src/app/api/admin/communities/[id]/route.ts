@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { checkAdminAccess } from "@/lib/auth-utils";
+import { prepareSlugChange, revalidateCommunityPaths } from "@/lib/community-slug-write";
 
 export async function GET(
   request: NextRequest,
@@ -70,23 +70,51 @@ export async function PATCH(
     if (data.verified !== undefined) updateData.verified = data.verified;
     if (data.isPublic !== undefined) updateData.isPublic = data.isPublic;
     if (data.creatorId !== undefined) updateData.creatorId = data.creatorId;
+    if (data.profileImage !== undefined) updateData.profileImage = data.profileImage || null;
 
-    const community = await prisma.community.update({
-      where: { id: parseInt(id) },
-      data: updateData,
+    const communityId = parseInt(id);
+    const existing = await prisma.community.findUnique({ where: { id: communityId } });
+    if (!existing) {
+      return NextResponse.json({ error: "Community not found" }, { status: 404 });
+    }
+
+    let previousSlugForAlias: string | null = null;
+    if (data.slug !== undefined) {
+      const slugChange = await prepareSlugChange(communityId, existing.slug, data.slug);
+      if (!slugChange.ok) {
+        return NextResponse.json({ error: slugChange.message }, { status: slugChange.status });
+      }
+      if (slugChange.newSlug) {
+        updateData.slug = slugChange.newSlug;
+        previousSlugForAlias = slugChange.previousSlug;
+      }
+    }
+
+    const community = await prisma.$transaction(async (tx) => {
+      const updated = await tx.community.update({
+        where: { id: communityId },
+        data: updateData,
+      });
+      if (previousSlugForAlias) {
+        await tx.communitySlugAlias.upsert({
+          where: { oldSlug: previousSlugForAlias },
+          create: { oldSlug: previousSlugForAlias, communityId },
+          update: { communityId },
+        });
+        await tx.communitySlugAlias.deleteMany({ where: { oldSlug: updated.slug } });
+      }
+      await tx.adminAuditLog.create({
+        data: {
+          userId: adminId,
+          action: "update_community",
+          target: `Community #${communityId}: ${updated.name}`,
+          details: { changes: data },
+        },
+      });
+      return updated;
     });
 
-    await prisma.adminAuditLog.create({
-      data: {
-        userId: adminId,
-        action: "update_community",
-        target: `Community #${id}: ${community.name}`,
-        details: { changes: data },
-      },
-    });
-
-    revalidatePath(`/communities/${id}`);
-    revalidatePath("/communities");
+    revalidateCommunityPaths(community.id, community.slug, existing.slug);
 
     return NextResponse.json(community);
   } catch (error) {
@@ -126,8 +154,7 @@ export async function DELETE(
       },
     });
 
-    revalidatePath(`/communities/${id}`);
-    revalidatePath("/communities");
+    revalidateCommunityPaths(community.id, community.slug, null);
 
     return NextResponse.json({ success: true });
   } catch (error) {

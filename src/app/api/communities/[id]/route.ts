@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { checkCommunityAccess, checkAdminAccess, getCurrentUserId } from "@/lib/auth-utils";
+import { resolveCommunitySegment } from "@/lib/community-resolver";
+import { prepareSlugChange, revalidateCommunityPaths } from "@/lib/community-slug-write";
 
 export async function GET(
   request: NextRequest,
@@ -8,8 +10,19 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
+    const resolution = await resolveCommunitySegment(id);
+    if (resolution.kind === "not_found") {
+      return NextResponse.json({ error: "Community not found" }, { status: 404 });
+    }
+    if (resolution.kind === "redirect") {
+      // Mirror the page's 308 redirect for the public detail API.
+      return NextResponse.redirect(
+        new URL(`/api/communities/${resolution.canonicalSlug}`, request.url),
+        308,
+      );
+    }
     const community = await prisma.community.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: resolution.communityId },
       include: {
         members: {
           include: { user: { select: { id: true, firstName: true, lastName: true, avatar: true } } }
@@ -56,8 +69,12 @@ export async function PATCH(
 ) {
   const { id } = await params;
   try {
-    const communityId = parseInt(id);
-    
+    const resolution = await resolveCommunitySegment(id);
+    if (resolution.kind === "not_found") {
+      return NextResponse.json({ error: "Community not found" }, { status: 404 });
+    }
+    const communityId = resolution.communityId;
+
     const community = await prisma.community.findUnique({
       where: { id: communityId },
     });
@@ -67,7 +84,7 @@ export async function PATCH(
     }
 
     const { canManage, userId } = await checkCommunityAccess(communityId);
-    
+
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -99,6 +116,7 @@ export async function PATCH(
     if (data.location !== undefined) updateData.location = data.location || null;
     if (data.logo !== undefined) updateData.logo = data.logo;
     if (data.coverImage !== undefined) updateData.coverImage = data.coverImage || null;
+    if (data.profileImage !== undefined) updateData.profileImage = data.profileImage || null;
     if (data.tags !== undefined) updateData.tags = data.tags;
     if (data.website !== undefined) updateData.website = data.website || null;
     if (data.socialLinks !== undefined) updateData.socialLinks = data.socialLinks;
@@ -109,11 +127,40 @@ export async function PATCH(
     if (data.maxMembers !== undefined) updateData.maxMembers = data.maxMembers ? parseInt(data.maxMembers) : null;
     if (data.meetupFrequency !== undefined) updateData.meetupFrequency = data.meetupFrequency || null;
 
-    const updatedCommunity = await prisma.community.update({
-      where: { id: parseInt(id) },
-      data: updateData,
+    // Slug change: validate, ensure uniqueness, and capture the previous slug
+    // into the alias table inside the same transaction so old URLs keep working.
+    let previousSlugForAlias: string | null = null;
+    if (data.slug !== undefined) {
+      const slugChange = await prepareSlugChange(community.id, community.slug, data.slug);
+      if (!slugChange.ok) {
+        return NextResponse.json({ error: slugChange.message }, { status: slugChange.status });
+      }
+      if (slugChange.newSlug) {
+        updateData.slug = slugChange.newSlug;
+        previousSlugForAlias = slugChange.previousSlug;
+      }
+    }
+
+    const updatedCommunity = await prisma.$transaction(async (tx) => {
+      const updated = await tx.community.update({
+        where: { id: communityId },
+        data: updateData,
+      });
+      if (previousSlugForAlias) {
+        await tx.communitySlugAlias.upsert({
+          where: { oldSlug: previousSlugForAlias },
+          create: { oldSlug: previousSlugForAlias, communityId },
+          update: { communityId },
+        });
+        // Drop any stale alias matching the new live slug to avoid loops.
+        await tx.communitySlugAlias.deleteMany({
+          where: { oldSlug: updated.slug },
+        });
+      }
+      return updated;
     });
 
+    revalidateCommunityPaths(updatedCommunity.id, updatedCommunity.slug, community.slug);
     return NextResponse.json(updatedCommunity);
   } catch (error) {
     console.error("Error updating community:", error);
@@ -127,8 +174,12 @@ export async function DELETE(
 ) {
   const { id } = await params;
   try {
-    const communityId = parseInt(id);
-    
+    const resolution = await resolveCommunitySegment(id);
+    if (resolution.kind === "not_found") {
+      return NextResponse.json({ error: "Community not found" }, { status: 404 });
+    }
+    const communityId = resolution.communityId;
+
     const community = await prisma.community.findUnique({
       where: { id: communityId },
     });
@@ -139,7 +190,7 @@ export async function DELETE(
 
     const { canManage, role, userId } = await checkCommunityAccess(communityId);
     const { isAdmin } = await checkAdminAccess();
-    
+
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -153,9 +204,10 @@ export async function DELETE(
     }
 
     await prisma.community.delete({
-      where: { id: parseInt(id) },
+      where: { id: communityId },
     });
 
+    revalidateCommunityPaths(communityId, community.slug, null);
     return NextResponse.json({ success: true, message: "Community deleted successfully" });
   } catch (error) {
     console.error("Error deleting community:", error);

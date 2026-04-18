@@ -121,7 +121,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Description must be 2000 characters or less" }, { status: 400 });
     }
 
-    let slug = trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    const { normalizeSlug, RESERVED_COMMUNITY_SLUGS, isNumericCommunityId } = await import("@/lib/community-slug");
+    let slug = normalizeSlug(trimmedName);
+    if (!slug || RESERVED_COMMUNITY_SLUGS.has(slug) || isNumericCommunityId(slug)) {
+      slug = `community-${Date.now().toString(36)}`;
+    }
 
     const existingCommunity = await prisma.community.findFirst({
       where: { slug },

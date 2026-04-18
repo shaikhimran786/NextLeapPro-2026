@@ -1,9 +1,9 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
 import { getCurrentUserId } from "@/lib/auth-utils";
 import { resolveJoinRole } from "@/lib/community-membership";
+import { revalidateCommunityPaths } from "@/lib/community-slug-write";
 
 export async function joinCommunity(communityId: number) {
   const userId = await getCurrentUserId();
@@ -58,8 +58,7 @@ export async function joinCommunity(communityId: number) {
     return member;
   });
 
-  revalidatePath(`/communities/${communityId}`);
-  revalidatePath("/communities");
+  revalidateCommunityPaths(communityId, community.slug, null);
 
   return {
     success: true,
@@ -79,6 +78,7 @@ export async function leaveCommunity(communityId: number) {
 
   const membership = await prisma.communityMember.findFirst({
     where: { communityId, userId },
+    include: { community: { select: { slug: true } } },
   });
 
   if (!membership) {
@@ -113,8 +113,7 @@ export async function leaveCommunity(communityId: number) {
     });
   });
 
-  revalidatePath(`/communities/${communityId}`);
-  revalidatePath("/communities");
+  revalidateCommunityPaths(communityId, membership.community.slug, null);
 
   return { success: true };
 }
@@ -127,6 +126,7 @@ export async function acceptCommunityInvite(communityId: number) {
 
   const membership = await prisma.communityMember.findFirst({
     where: { communityId, userId, role: "invited" },
+    include: { community: { select: { slug: true } } },
   });
 
   if (!membership) {
@@ -149,8 +149,7 @@ export async function acceptCommunityInvite(communityId: number) {
     });
   });
 
-  revalidatePath(`/communities/${communityId}`);
-  revalidatePath("/communities");
+  revalidateCommunityPaths(communityId, membership.community.slug, null);
 
   return { success: true };
 }

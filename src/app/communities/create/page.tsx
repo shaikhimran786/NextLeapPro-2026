@@ -159,7 +159,7 @@ export default function CreateCommunityPage() {
       if (res.ok) {
         const data = await res.json();
         toast.success(`Community "${formData.name}" created successfully!`);
-        router.push(`/communities/${data.community.id}`);
+        router.push(data.community.slug ? `/communities/${data.community.slug}` : `/communities/${data.community.id}`);
       } else {
         const data = await res.json();
         toast.error(data.error || "Failed to create community");

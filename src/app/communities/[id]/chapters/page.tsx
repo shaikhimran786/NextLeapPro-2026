@@ -4,6 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { generateMeta } from "@/lib/metadata";
+import { resolveCommunityIdForPage } from "@/lib/community-page-resolver";
+import { resolveCommunitySegment } from "@/lib/community-resolver";
+import { buildCommunityUrl } from "@/lib/community-slug";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,24 +38,21 @@ async function getCommunityWithChapters(id: number) {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const numericId = parseInt(id);
-  if (isNaN(numericId)) return {};
-  const community = await getCommunityWithChapters(numericId);
+  const resolution = await resolveCommunitySegment(id);
+  if (resolution.kind !== "found") return {};
+  const community = await getCommunityWithChapters(resolution.communityId);
   if (!community) return {};
 
   return generateMeta({
     title: `${community.name} - Chapters`,
     description: `Explore local chapters of ${community.name}. Join a chapter near you.`,
-    path: `/communities/${community.id}/chapters`,
+    path: `${buildCommunityUrl(community)}/chapters`,
   });
 }
 
 export default async function CommunityChaptersPage({ params }: PageProps) {
   const { id } = await params;
-  const numericId = parseInt(id);
-  if (isNaN(numericId)) {
-    notFound();
-  }
+  const numericId = await resolveCommunityIdForPage(id, "/chapters");
   const community = await getCommunityWithChapters(numericId);
 
   if (!community) {

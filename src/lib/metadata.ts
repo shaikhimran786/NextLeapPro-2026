@@ -185,6 +185,7 @@ export function generateServiceStructuredData(service: {
 
 export function generateCommunityStructuredData(community: {
   id: number;
+  slug?: string | null;
   name: string;
   description: string;
   memberCount: number;
@@ -192,13 +193,14 @@ export function generateCommunityStructuredData(community: {
   image?: string;
   location?: string;
 }) {
+  const path = community.slug ? `/communities/${community.slug}` : `/communities/${community.id}`;
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "@id": `${defaultMeta.url}/communities/${community.id}`,
+    "@id": `${defaultMeta.url}${path}`,
     name: community.name,
     description: community.description,
-    url: `${defaultMeta.url}/communities/${community.id}`,
+    url: `${defaultMeta.url}${path}`,
     logo: community.image || `${defaultMeta.url}/logo.png`,
     numberOfEmployees: {
       "@type": "QuantitativeValue",

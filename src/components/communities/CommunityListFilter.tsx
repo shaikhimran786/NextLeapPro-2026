@@ -9,6 +9,7 @@ import { CommunityCard } from "@/components/shared/CommunityCard";
 
 interface CommunityItem {
   id: number;
+  slug?: string | null;
   name: string;
   description: string;
   shortDescription: string | null;
@@ -102,6 +103,7 @@ export function CommunityListFilter({ communities, categories }: CommunityListFi
             <CommunityCard
               key={community.id}
               id={community.id}
+              slug={community.slug}
               name={community.name}
               description={community.shortDescription || community.description}
               logo={community.logo}

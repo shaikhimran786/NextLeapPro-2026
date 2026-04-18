@@ -15,9 +15,11 @@ import { joinCommunity, acceptCommunityInvite } from "@/lib/actions/community-ac
 import { cn } from "@/lib/utils";
 import { CommunityGuestJoinDialog } from "@/components/communities/CommunityGuestJoinDialog";
 import { resolveJoinIntent } from "@/lib/community-membership";
+import { buildCommunityUrl } from "@/lib/community-slug";
 
 interface CommunityCardProps {
   id: number;
+  slug?: string | null;
   name: string;
   description: string;
   logo: string;
@@ -57,6 +59,7 @@ const categoryGradients: Record<string, string> = {
 
 function CommunityCardComponent({
   id,
+  slug,
   name,
   description,
   logo,
@@ -88,7 +91,8 @@ function CommunityCardComponent({
     e.stopPropagation();
   };
 
-  const detailHref = `/communities/${id}`;
+  const detailHref = buildCommunityUrl({ id, slug });
+  const settingsHref = `${detailHref}/settings`;
 
   // Membership badge shown near the top
   const membershipBadge = (() => {
@@ -120,7 +124,7 @@ function CommunityCardComponent({
       case "admin":
         return {
           label: "Manage",
-          href: `/communities/${id}/settings`,
+          href: settingsHref,
           variant: "default" as const,
           icon: Settings,
         };

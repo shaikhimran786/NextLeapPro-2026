@@ -122,12 +122,11 @@ export default function CommunitySettingsPage({ params }: PageProps) {
     async function loadData() {
       try {
         const resolvedParams = await params;
-        const id = parseInt(resolvedParams.id);
-        if (isNaN(id)) {
+        const segment = resolvedParams.id;
+        if (!segment) {
           router.push("/communities");
           return;
         }
-        setCommunityId(id);
 
         const statusRes = await fetch("/api/me/status");
         if (!statusRes.ok) {
@@ -137,7 +136,7 @@ export default function CommunitySettingsPage({ params }: PageProps) {
         const statusData: UserStatus = await statusRes.json();
         const isAdmin = checkIsAdmin(statusData);
 
-        const commRes = await fetch(`/api/communities/${id}`);
+        const commRes = await fetch(`/api/communities/${segment}`);
         if (!commRes.ok) {
           toast.error("Community not found");
           router.push("/communities");
@@ -145,11 +144,13 @@ export default function CommunitySettingsPage({ params }: PageProps) {
         }
         const commData = await commRes.json();
         setCommunity(commData);
+        const id: number = commData.id;
+        setCommunityId(id);
 
         const hasAccess = canManageCommunity(statusData, id);
         if (!hasAccess && !isAdmin) {
           toast.error("You don't have permission to edit this community");
-          router.push(`/communities/${id}`);
+          router.push(commData.slug ? `/communities/${commData.slug}` : `/communities/${id}`);
           return;
         }
 

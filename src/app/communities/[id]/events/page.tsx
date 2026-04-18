@@ -4,6 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { generateMeta } from "@/lib/metadata";
+import { resolveCommunityIdForPage } from "@/lib/community-page-resolver";
+import { resolveCommunitySegment } from "@/lib/community-resolver";
+import { buildCommunityUrl } from "@/lib/community-slug";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -43,24 +46,21 @@ async function getCommunityWithEvents(id: number) {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const numericId = parseInt(id);
-  if (isNaN(numericId)) return {};
-  const community = await getCommunityWithEvents(numericId);
+  const resolution = await resolveCommunitySegment(id);
+  if (resolution.kind !== "found") return {};
+  const community = await getCommunityWithEvents(resolution.communityId);
   if (!community) return {};
 
   return generateMeta({
     title: `${community.name} - Events`,
     description: `Explore events hosted by ${community.name}. Learn, connect, and grow with the community.`,
-    path: `/communities/${community.id}/events`,
+    path: `${buildCommunityUrl(community)}/events`,
   });
 }
 
 export default async function CommunityEventsPage({ params }: PageProps) {
   const { id } = await params;
-  const numericId = parseInt(id);
-  if (isNaN(numericId)) {
-    notFound();
-  }
+  const numericId = await resolveCommunityIdForPage(id, "/events");
   const community = await getCommunityWithEvents(numericId);
 
   if (!community) {

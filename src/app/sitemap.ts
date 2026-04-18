@@ -94,11 +94,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const communities = await prisma.community.findMany({
       where: { isPublic: true },
-      select: { id: true, updatedAt: true },
+      select: { id: true, slug: true, updatedAt: true },
     });
 
+    const { buildCommunityUrl } = await import("@/lib/community-slug");
     const communityRoutes: MetadataRoute.Sitemap = communities.map((community) => ({
-      url: `${baseUrl}/communities/${community.id}`,
+      url: `${baseUrl}${buildCommunityUrl(community)}`,
       lastModified: community.updatedAt,
       changeFrequency: "weekly" as const,
       priority: 0.6,
