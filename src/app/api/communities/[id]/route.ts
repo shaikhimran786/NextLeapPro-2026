@@ -36,7 +36,8 @@ export async function GET(
         const membership = await prisma.communityMember.findFirst({
           where: { communityId: community.id, userId },
         });
-        if (!membership) {
+        const allowedRoles = new Set(["owner", "admin", "moderator", "member"]);
+        if (!membership || !allowedRoles.has(membership.role)) {
           return NextResponse.json({ error: "Community not found" }, { status: 404 });
         }
       }

@@ -103,7 +103,8 @@ export default async function CommunityDetailPage({ params }: PageProps) {
       const membership = await prisma.communityMember.findFirst({
         where: { communityId: community.id, userId },
       });
-      if (!membership) {
+      const allowedRoles = new Set(["owner", "admin", "moderator", "member"]);
+      if (!membership || !allowedRoles.has(membership.role)) {
         notFound();
       }
     }

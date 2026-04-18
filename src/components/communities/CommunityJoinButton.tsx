@@ -16,7 +16,7 @@ import {
   AlertCircle,
   LogOut,
 } from "@/lib/icons";
-import { useUserStatus, performOptimisticAction } from "@/hooks/useUserStatus";
+import { useUserStatus, performOptimisticAction, revalidateUserStatus } from "@/hooks/useUserStatus";
 import { leaveCommunity, acceptCommunityInvite, joinCommunity } from "@/lib/actions/community-actions";
 import { cn } from "@/lib/utils";
 import { CommunityGuestJoinDialog } from "@/components/communities/CommunityGuestJoinDialog";
@@ -144,6 +144,12 @@ export function CommunityJoinButton({
   const buttonConfig = getButtonConfig();
   const IconComponent = buttonConfig.icon;
 
+  // Owner/admin already get a dedicated CommunitySettingsButton on the detail page,
+  // so suppress this CTA for those roles to avoid duplicate "Manage" buttons.
+  if (membershipStatus === "owner" || membershipStatus === "admin") {
+    return null;
+  }
+
   const handleClick = async () => {
     if (buttonConfig.disabled) return;
 
@@ -169,10 +175,23 @@ export function CommunityJoinButton({
       case "accept":
         try {
           setIsLoading(true);
-          await acceptCommunityInvite(communityId);
-          toast.success("Welcome to the community!");
-        } catch (error) {
-          toast.error(error instanceof Error ? error.message : "Failed to accept invite. Please try again.");
+          await performOptimisticAction(
+            (current) => ({
+              ...current,
+              communityMemberships: {
+                ...current.communityMemberships,
+                [communityId]: {
+                  status: "member",
+                  role: "member",
+                  joinedAt: new Date().toISOString(),
+                },
+              },
+            }),
+            async () => acceptCommunityInvite(communityId),
+            () => toast.success("Welcome to the community!"),
+            (error) => toast.error(error.message || "Failed to accept invite. Please try again."),
+          );
+          await revalidateUserStatus();
         } finally {
           setIsLoading(false);
         }
