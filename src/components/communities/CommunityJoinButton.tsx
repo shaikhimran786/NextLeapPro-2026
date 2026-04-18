@@ -21,6 +21,16 @@ import { leaveCommunity, acceptCommunityInvite, joinCommunity } from "@/lib/acti
 import { cn } from "@/lib/utils";
 import { CommunityGuestJoinDialog } from "@/components/communities/CommunityGuestJoinDialog";
 import { resolveJoinIntent } from "@/lib/community-membership";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface CommunityJoinButtonProps {
   communityId: number;
@@ -46,6 +56,7 @@ export function CommunityJoinButton({
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
 
   const isLoggedIn = userStatus.authStatus === "logged_in";
   const membershipInfo = userStatus.communityMemberships[communityId];
@@ -243,9 +254,9 @@ export function CommunityJoinButton({
 
   async function handleLeave() {
     if (isLeaving) return;
-    if (!confirm(`Leave ${communityName}? You can re-join later.`)) return;
     try {
       setIsLeaving(true);
+      setIsLeaveDialogOpen(false);
       await performOptimisticAction(
         (current) => {
           const next = { ...current.communityMemberships };
@@ -292,7 +303,7 @@ export function CommunityJoinButton({
               isMobile && "w-full",
             )}
             disabled={isLeaving}
-            onClick={handleLeave}
+            onClick={() => setIsLeaveDialogOpen(true)}
             data-testid={isMobile ? "button-leave-community-mobile" : "button-leave-community"}
           >
             {isLeaving ? (
@@ -318,6 +329,39 @@ export function CommunityJoinButton({
         membershipType={membershipType}
         isPublic={isPublic}
       />
+
+      <AlertDialog open={isLeaveDialogOpen} onOpenChange={setIsLeaveDialogOpen}>
+        <AlertDialogContent data-testid="dialog-leave-community">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave {communityName}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You can re-join later if this community is open. Your posts and comments will remain.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLeaving} data-testid="button-cancel-leave-community">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void handleLeave();
+              }}
+              disabled={isLeaving}
+              data-testid="button-confirm-leave-community"
+            >
+              {isLeaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Leaving…
+                </>
+              ) : (
+                "Leave"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
