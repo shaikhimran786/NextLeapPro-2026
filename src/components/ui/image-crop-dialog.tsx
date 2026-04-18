@@ -7,7 +7,7 @@ import imageCompression from "browser-image-compression";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Loader2 } from "@/lib/icons";
+import { Loader2, AlertCircle } from "@/lib/icons";
 
 export type CropAspect = "square" | "banner" | "video";
 
@@ -83,6 +83,7 @@ export function ImageCropDialog({
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !file) {
@@ -118,6 +119,7 @@ export function ImageCropDialog({
   const handleConfirm = async () => {
     if (!imageSrc || !croppedAreaPixels || !file) return;
     setIsProcessing(true);
+    setErrorMsg(null);
     try {
       const croppedBlob = await getCroppedBlob(imageSrc, croppedAreaPixels, outputType);
       const croppedFile = new File(
@@ -136,6 +138,11 @@ export function ImageCropDialog({
       reset();
     } catch (err) {
       console.error("Crop/compress error:", err);
+      setErrorMsg(
+        err instanceof Error
+          ? `Could not process image: ${err.message}. Try again or pick a different image.`
+          : "Could not process image. Try again or pick a different image.",
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -186,6 +193,17 @@ export function ImageCropDialog({
             data-testid="slider-crop-zoom"
           />
         </div>
+
+        {errorMsg && (
+          <div
+            className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2"
+            role="alert"
+            data-testid="crop-error"
+          >
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel} disabled={isProcessing}>

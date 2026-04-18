@@ -22,6 +22,7 @@ import { ImageUploader } from "@/components/ui/image-uploader";
 import type { UserStatus } from "@/lib/user-status";
 import { normalizeSlug, validateSlug, buildCommunityUrl } from "@/lib/community-slug";
 import { revalidateUserStatus } from "@/hooks/useUserStatus";
+import { mutate as swrMutate } from "swr";
 import { SmartImage } from "@/components/ui/smart-image";
 
 const COMMUNITY_CATEGORIES = [
@@ -345,6 +346,14 @@ export default function CommunitySettingsPage({ params }: PageProps) {
         toast.success("Community settings saved successfully!");
         // Refresh shared user-status (navbar avatar / role caches)
         revalidateUserStatus();
+        // Invalidate any SWR caches whose key references this community
+        // (detail pages, listing pages, member lists, etc.) so listing
+        // cards and headers reflect the new branding without a hard reload.
+        swrMutate(
+          (key) => typeof key === "string" && key.startsWith("/api/communities"),
+          undefined,
+          { revalidate: true },
+        );
         // If slug changed, push the new canonical settings URL so the
         // address bar reflects it without a full page reload.
         const newSegment = updated.slug || String(updated.id);

@@ -60,6 +60,7 @@ export function ImageUploader({
   const [urlInput, setUrlInput] = useState("");
   const [previewError, setPreviewError] = useState(false);
   const [pendingCropFile, setPendingCropFile] = useState<File | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -162,9 +163,11 @@ export function ImageUploader({
   const handleIncomingFile = useCallback((file: File) => {
     const error = validateFile(file);
     if (error) {
+      setValidationError(error);
       toast.error(error);
       return;
     }
+    setValidationError(null);
     if (enableCrop) {
       setPendingCropFile(file);
     } else {
@@ -325,6 +328,30 @@ export function ImageUploader({
         className="hidden"
         disabled={disabled || isUploading}
       />
+
+      {validationError && (
+        <div
+          className="flex items-start gap-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded p-2"
+          role="alert"
+          data-testid={`uploader-error-${imageType}`}
+        >
+          <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-medium">{validationError}</p>
+            <p className="text-red-500/80 mt-0.5">
+              Choose another file (max {maxSizeMB}MB, {allowedTypes.map(t => t.split('/')[1].toUpperCase()).join(', ')}).
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setValidationError(null)}
+            className="text-red-500 hover:text-red-700"
+            aria-label="Dismiss error"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
 
       <div className="flex gap-2">
         <Button
