@@ -76,9 +76,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const community = await getCommunity(resolution.communityId);
   if (!community) return {};
 
+  // Prefer the curated shortDescription so previews on WhatsApp / LinkedIn
+  // get the same one-liner the owner sees on the listing card. Fall back to
+  // a 160-char snippet of the long description when no shortDescription is
+  // set. Cover image is preferred over the logo for the OG/Twitter card.
+  const previewDescription =
+    community.shortDescription?.trim() || community.description.slice(0, 160);
+
   return generateMeta({
     title: community.name,
-    description: community.description.slice(0, 160),
+    description: previewDescription,
     image: community.coverImage || community.logo,
     path: buildCommunityUrl(community),
   });
@@ -120,14 +127,20 @@ export default async function CommunityDetailPage({ params }: PageProps) {
     }
   }
 
-  // Share visibility: hide entirely for non-public communities (the link
-  // wouldn't work for recipients), full dialog when a slug exists, copy-only
-  // limited mode otherwise.
+  // Share visibility:
+  //  - non-public communities: no Share button at all (the recipient of
+  //    the link could not access the page).
+  //  - has a custom slug → full dialog (Copy + WhatsApp + LinkedIn).
+  //  - id-only fallback URL (no usable slug) → limited dialog with Copy
+  //    Link only. Today the schema requires `slug`, so this branch is a
+  //    forward-compat safety net rather than a regularly hit code path.
   const siteOrigin = process.env.NEXT_PUBLIC_APP_URL || "https://nextleappro.com";
-  const shareUrl = `${siteOrigin}${buildCommunityUrl(community)}`;
+  const canonicalPath = buildCommunityUrl(community);
+  const shareUrl = `${siteOrigin}${canonicalPath}`;
+  const hasCustomSlug = canonicalPath !== `/communities/${community.id}`;
   const shareMode: ShareMode | null = !community.isPublic
     ? null
-    : community.slug
+    : hasCustomSlug
       ? "full"
       : "limited";
 
