@@ -224,6 +224,7 @@ export default async function CommunityDetailPage({ params }: PageProps) {
                 />
                 <CommunitySettingsButton
                   communityId={community.id}
+                  communitySlug={community.slug}
                   creatorId={community.creatorId}
                 />
                 <Button variant="outline" className="bg-white/10 text-white border-white/30 hover:bg-white/20 rounded-full backdrop-blur-sm" data-testid="button-share-community">

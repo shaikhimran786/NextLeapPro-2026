@@ -5,13 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Settings } from "@/lib/icons";
 import { useUserStatus } from "@/hooks/useUserStatus";
 import { canManageCommunity } from "@/lib/user-status";
+import { buildCommunityUrl } from "@/lib/community-slug";
 
 interface CommunitySettingsButtonProps {
   communityId: number;
+  communitySlug?: string | null;
   creatorId: number | null;
 }
 
-export function CommunitySettingsButton({ communityId, creatorId }: CommunitySettingsButtonProps) {
+export function CommunitySettingsButton({ communityId, communitySlug, creatorId }: CommunitySettingsButtonProps) {
   const { userStatus, isLoading } = useUserStatus();
   
   const canEdit = canManageCommunity(userStatus, communityId);
@@ -19,7 +21,7 @@ export function CommunitySettingsButton({ communityId, creatorId }: CommunitySet
   if (isLoading || !canEdit) return null;
 
   return (
-    <Link href={`/communities/${communityId}/settings`}>
+    <Link href={`${buildCommunityUrl({ id: communityId, slug: communitySlug })}/settings`}>
       <Button 
         variant="outline" 
         className="bg-white/10 text-white border-white/30 hover:bg-white/20 rounded-full backdrop-blur-sm"
