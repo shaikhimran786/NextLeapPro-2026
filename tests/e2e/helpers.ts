@@ -95,7 +95,7 @@ export interface TestCommunityOptions {
  */
 export async function createTestCommunity(
   options: TestCommunityOptions = {},
-): Promise<{ id: number; name: string; slug: string; membershipType: string; isPublic: boolean }> {
+): Promise<{ id: number; name: string; slug: string | null; membershipType: string; isPublic: boolean }> {
   const id = nanoid(10).toLowerCase();
   const membershipType = options.membershipType ?? "open";
   const isPublic = options.isPublic ?? true;

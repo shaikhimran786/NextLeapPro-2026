@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { ImageCropDialog } from "./image-crop-dialog";
 
 type EntityType = "users" | "communities" | "chapters" | "events" | "services" | "static";
-type ImageType = "avatar" | "logo" | "cover" | "image";
+type ImageType = "avatar" | "logo" | "cover" | "image" | "profile";
 
 interface ImageUploaderProps {
   value: string | null | undefined;

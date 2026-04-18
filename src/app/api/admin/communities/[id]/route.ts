@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { checkAdminAccess } from "@/lib/auth-utils";
 import { prepareSlugChange, revalidateCommunityPaths } from "@/lib/community-slug-write";
+import {
+  diffCommunityFields,
+  writeCommunityFieldAudits,
+  writeCommunityActionAudit,
+} from "@/lib/community-audit";
 
 export async function GET(
   request: NextRequest,
@@ -78,15 +83,27 @@ export async function PATCH(
       return NextResponse.json({ error: "Community not found" }, { status: 404 });
     }
 
+    // Admin override: when `forceSlug` is true, slug-collision (live or
+    // alias) is bypassed and a separate audit row records the override.
+    const forceSlug = data.forceSlug === true;
     let previousSlugForAlias: string | null = null;
+    let slugWasReset = false;
+    let slugWasOverridden = false;
     if (data.slug !== undefined) {
-      const slugChange = await prepareSlugChange(communityId, existing.slug, data.slug);
+      const slugChange = await prepareSlugChange(
+        communityId,
+        existing.slug,
+        data.slug,
+        { allowOverride: forceSlug },
+      );
       if (!slugChange.ok) {
         return NextResponse.json({ error: slugChange.message }, { status: slugChange.status });
       }
-      if (slugChange.newSlug) {
+      if (slugChange.action === "set" || slugChange.action === "clear") {
         updateData.slug = slugChange.newSlug;
         previousSlugForAlias = slugChange.previousSlug;
+        slugWasReset = slugChange.action === "clear";
+        slugWasOverridden = forceSlug && slugChange.action === "set";
       }
     }
 
@@ -101,14 +118,53 @@ export async function PATCH(
           create: { oldSlug: previousSlugForAlias, communityId },
           update: { communityId },
         });
-        await tx.communitySlugAlias.deleteMany({ where: { oldSlug: updated.slug } });
+        if (updated.slug) {
+          await tx.communitySlugAlias.deleteMany({ where: { oldSlug: updated.slug } });
+        }
       }
+      // Per-field audit (slug, isPublic, featured/verified, branding, etc.)
+      const changes = diffCommunityFields(
+        existing as unknown as Record<string, unknown>,
+        updateData,
+      );
+      const snapshot = { name: updated.name, slug: updated.slug };
+      await writeCommunityFieldAudits(tx, {
+        communityId,
+        snapshot,
+        actorUserId: adminId,
+        changes,
+      });
+      if (slugWasReset) {
+        await writeCommunityActionAudit(tx, {
+          communityId,
+          snapshot,
+          actorUserId: adminId,
+          action: "reset_url",
+          note: previousSlugForAlias,
+        });
+      }
+      if (slugWasOverridden) {
+        // Repoint or remove the stale alias inside this transaction so the
+        // unique constraint stays consistent with the new live slug.
+        if (typeof updateData.slug === "string") {
+          await tx.communitySlugAlias.deleteMany({ where: { oldSlug: updateData.slug } });
+        }
+        await writeCommunityActionAudit(tx, {
+          communityId,
+          snapshot,
+          actorUserId: adminId,
+          action: "override_slug",
+          note: typeof updateData.slug === "string" ? updateData.slug : null,
+        });
+      }
+      // Keep the legacy global admin audit row so existing reporting still
+      // captures admin community edits.
       await tx.adminAuditLog.create({
         data: {
           userId: adminId,
           action: "update_community",
           target: `Community #${communityId}: ${updated.name}`,
-          details: { changes: data },
+          details: { changes: data, forceSlug },
         },
       });
       return updated;
@@ -142,16 +198,25 @@ export async function DELETE(
       return NextResponse.json({ error: "Community not found" }, { status: 404 });
     }
 
-    await prisma.community.delete({
-      where: { id: parseInt(id) },
-    });
-
-    await prisma.adminAuditLog.create({
-      data: {
-        userId: adminId,
-        action: "delete_community",
-        target: `Community #${id}: ${community.name}`,
-      },
+    // Audit must be written BEFORE the delete (otherwise the FK to the
+    // community row would be dangling). Both sit inside the same
+    // transaction so a delete failure rolls the audit row back too.
+    await prisma.$transaction(async (tx) => {
+      await writeCommunityActionAudit(tx, {
+        communityId: community.id,
+        snapshot: { name: community.name, slug: community.slug },
+        actorUserId: adminId,
+        action: "delete",
+        note: `${community.name} (slug=${community.slug ?? "—"})`,
+      });
+      await tx.community.delete({ where: { id: community.id } });
+      await tx.adminAuditLog.create({
+        data: {
+          userId: adminId,
+          action: "delete_community",
+          target: `Community #${id}: ${community.name}`,
+        },
+      });
     });
 
     revalidateCommunityPaths(community.id, community.slug, null);

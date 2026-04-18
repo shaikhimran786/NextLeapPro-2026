@@ -25,11 +25,12 @@ interface Creator {
 interface Community {
   id: number;
   name: string;
-  slug: string;
+  slug: string | null;
   description: string;
   shortDescription: string | null;
   logo: string;
   coverImage: string | null;
+  profileImage?: string | null;
   category: string;
   tags: string[];
   location: string | null;
@@ -155,6 +156,21 @@ interface UserOption {
   email: string;
 }
 
+interface AuditEntry {
+  id: number;
+  action: string;
+  field: string | null;
+  oldValue: string | null;
+  newValue: string | null;
+  createdAt: string;
+  actor: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  } | null;
+}
+
 export default function AdminCommunitiesPage() {
   const [communities, setCommunities] = useState<Community[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -166,6 +182,11 @@ export default function AdminCommunitiesPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [users, setUsers] = useState<UserOption[]>([]);
   const [selectedCreatorId, setSelectedCreatorId] = useState<string>("");
+  const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
+  const [isLoadingAudit, setIsLoadingAudit] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [slugConflictOpen, setSlugConflictOpen] = useState(false);
+  const [resetUrlConfirmOpen, setResetUrlConfirmOpen] = useState(false);
 
   useEffect(() => {
     fetchCommunities();
@@ -261,26 +282,61 @@ export default function AdminCommunitiesPage() {
     }
   }
 
-  async function saveCommunity() {
-    if (!editingCommunity) return;
-
+  async function fetchAudit(communityId: number) {
+    setIsLoadingAudit(true);
     try {
+      const res = await fetch(`/api/admin/communities/${communityId}/audit`);
+      if (res.ok) {
+        setAuditEntries(await res.json());
+      } else {
+        setAuditEntries([]);
+      }
+    } catch {
+      setAuditEntries([]);
+    } finally {
+      setIsLoadingAudit(false);
+    }
+  }
+
+  async function saveCommunity(opts: { forceSlug?: boolean; slugOverride?: string | null } = {}) {
+    if (!editingCommunity) return;
+    setIsSaving(true);
+    try {
+      const payload: Record<string, unknown> = { ...editingCommunity };
+      if (opts.slugOverride !== undefined) payload.slug = opts.slugOverride;
+      if (opts.forceSlug) payload.forceSlug = true;
+
       const res = await fetch(`/api/admin/communities/${editingCommunity.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editingCommunity),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
         toast.success("Community updated successfully");
+        setSlugConflictOpen(false);
+        setResetUrlConfirmOpen(false);
         setIsDialogOpen(false);
         setEditingCommunity(null);
         fetchCommunities();
+      } else if (res.status === 409) {
+        setSlugConflictOpen(true);
       } else {
-        toast.error("Failed to update community");
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Failed to update community");
       }
-    } catch (error) {
+    } catch {
       toast.error("An error occurred");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function resetCommunityUrl() {
+    if (!editingCommunity) return;
+    await saveCommunity({ slugOverride: null });
+    if (editingCommunity) {
+      await fetchAudit(editingCommunity.id);
     }
   }
 
@@ -424,6 +480,7 @@ export default function AdminCommunitiesPage() {
                       onClick={() => {
                         setEditingCommunity(community);
                         setIsDialogOpen(true);
+                        fetchAudit(community.id);
                       }}
                       data-testid={`button-edit-community-${community.id}`}
                     >
@@ -675,6 +732,36 @@ export default function AdminCommunitiesPage() {
               </div>
 
               <div className="space-y-4 pt-4 border-t">
+                <h4 className="font-semibold text-slate-900">Custom URL</h4>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-slug">Slug</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="edit-slug"
+                      value={editingCommunity.slug ?? ""}
+                      onChange={(e) => setEditingCommunity({ ...editingCommunity, slug: e.target.value })}
+                      placeholder="custom-url-slug (leave empty for default)"
+                      data-testid="input-community-slug"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setResetUrlConfirmOpen(true)}
+                      disabled={!editingCommunity.slug}
+                      data-testid="button-reset-community-url"
+                    >
+                      Reset to default URL
+                    </Button>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Lowercase letters, numbers, and hyphens. Saving a new slug
+                    keeps the previous one as a redirect alias. Admins can
+                    override an existing alias when prompted.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-4 border-t">
                 <h4 className="font-semibold text-slate-900">Branding & Links</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <ImageUploader
@@ -698,6 +785,16 @@ export default function AdminCommunitiesPage() {
                     aspectRatio="banner"
                   />
                 </div>
+                <ImageUploader
+                  value={editingCommunity.profileImage ?? null}
+                  onChange={(url) => setEditingCommunity({ ...editingCommunity, profileImage: url })}
+                  entityType="communities"
+                  entityId={editingCommunity.id}
+                  imageType="profile"
+                  label="Profile Image (square branding image)"
+                  placeholder="Upload profile image"
+                  aspectRatio="square"
+                />
                 <div className="grid gap-2">
                   <Label htmlFor="edit-website">Website</Label>
                   <Input
@@ -782,14 +879,105 @@ export default function AdminCommunitiesPage() {
                   </p>
                 )}
               </div>
+
+              <div className="space-y-2 pt-4 border-t">
+                <h4 className="font-semibold text-slate-900">Audit history</h4>
+                <p className="text-xs text-slate-500">
+                  Most recent 50 admin / owner changes for this community.
+                </p>
+                {isLoadingAudit ? (
+                  <p className="text-sm text-slate-500" data-testid="text-audit-loading">
+                    Loading…
+                  </p>
+                ) : auditEntries.length === 0 ? (
+                  <p className="text-sm text-slate-500" data-testid="text-audit-empty">
+                    No audit entries yet.
+                  </p>
+                ) : (
+                  <ul className="max-h-64 overflow-y-auto divide-y border rounded" data-testid="list-audit-entries">
+                    {auditEntries.map((entry) => {
+                      const actorName = entry.actor
+                        ? `${entry.actor.firstName} ${entry.actor.lastName}`.trim() || entry.actor.email
+                        : "System";
+                      const summary = entry.field
+                        ? `${entry.action} ${entry.field}: ${entry.oldValue ?? "—"} → ${entry.newValue ?? "—"}`
+                        : `${entry.action}${entry.newValue ? `: ${entry.newValue}` : ""}`;
+                      return (
+                        <li
+                          key={entry.id}
+                          className="px-3 py-2 text-xs"
+                          data-testid={`audit-entry-${entry.id}`}
+                        >
+                          <div className="font-medium text-slate-700 break-all">{summary}</div>
+                          <div className="text-slate-500">
+                            {actorName} • {new Date(entry.createdAt).toLocaleString()}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
             </div>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={saveCommunity} data-testid="button-save-community">
-              Save Changes
+            <Button onClick={() => saveCommunity()} disabled={isSaving} data-testid="button-save-community">
+              {isSaving ? "Saving…" : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={resetUrlConfirmOpen} onOpenChange={setResetUrlConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset to default URL?</DialogTitle>
+            <DialogDescription>
+              This clears the custom slug. The community will be reachable at
+              its numeric URL again, and the previous slug becomes a redirect
+              alias so old links keep working.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetUrlConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={resetCommunityUrl}
+              disabled={isSaving}
+              data-testid="button-confirm-reset-url"
+            >
+              {isSaving ? "Resetting…" : "Reset URL"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={slugConflictOpen} onOpenChange={setSlugConflictOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>That URL is already taken</DialogTitle>
+            <DialogDescription>
+              Another community owns this slug (live or as a redirect alias).
+              As an admin you can override and take it anyway. The override
+              will be recorded in the audit log.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSlugConflictOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => saveCommunity({ forceSlug: true })}
+              disabled={isSaving}
+              data-testid="button-confirm-force-slug"
+            >
+              {isSaving ? "Overriding…" : "Override and take URL"}
             </Button>
           </DialogFooter>
         </DialogContent>

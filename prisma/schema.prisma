@@ -39,6 +39,7 @@ model User {
   serviceBookings     ServiceBooking[]
   serviceReviews      ServiceReview[]
   adminAuditLogs      AdminAuditLog[]
+  communityAuditLogs  CommunityAuditLog[] @relation("CommunityAuditActor")
   subscriptions       UserSubscription[]
   payments            PaymentTransaction[]
   sessions            Session[]
@@ -253,7 +254,7 @@ model EventRegistration {
 model Community {
   id              Int      @id @default(autoincrement())
   name            String
-  slug            String   @unique
+  slug            String?  @unique
   description     String
   shortDescription String?
   logo            String
@@ -289,6 +290,7 @@ model Community {
   chapters     Chapter[]
   events       CommunityEvent[]
   slugAliases  CommunitySlugAlias[]
+  auditLogs    CommunityAuditLog[]
 
   @@index([category])
   @@index([location])
@@ -499,6 +501,26 @@ model AdminAuditLog {
   target    String
   details   Json?
   createdAt DateTime @default(now())
+}
+
+model CommunityAuditLog {
+  id              Int        @id @default(autoincrement())
+  communityId     Int?
+  community       Community? @relation(fields: [communityId], references: [id], onDelete: SetNull)
+  // Snapshot fields so the row survives community deletion (FK is set null
+  // on cascade) and the original target is still readable.
+  communityName   String
+  communitySlug   String?
+  actorUserId     Int
+  actor           User       @relation("CommunityAuditActor", fields: [actorUserId], references: [id])
+  action          String
+  field           String?
+  oldValue        String?
+  newValue        String?
+  createdAt       DateTime   @default(now())
+
+  @@index([communityId, createdAt])
+  @@index([createdAt])
 }
 
 model CTAConfig {

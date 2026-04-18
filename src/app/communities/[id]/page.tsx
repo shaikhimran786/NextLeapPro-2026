@@ -101,7 +101,7 @@ export default async function CommunityDetailPage({ params }: PageProps) {
 
   if (resolution.kind === "redirect") {
     // Old slug → permanent redirect to current canonical slug URL.
-    permanentRedirect(`/communities/${resolution.canonicalSlug}`);
+    permanentRedirect(`/communities/${resolution.canonicalSlug ?? resolution.communityId}`);
   }
 
   const community = await getCommunity(resolution.communityId);

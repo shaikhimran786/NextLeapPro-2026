@@ -3,7 +3,7 @@ import { isNumericCommunityId } from "@/lib/community-slug";
 
 export type CommunityResolution =
   | { kind: "found"; communityId: number }
-  | { kind: "redirect"; communityId: number; canonicalSlug: string }
+  | { kind: "redirect"; communityId: number; canonicalSlug: string | null }
   | { kind: "not_found" };
 
 /**

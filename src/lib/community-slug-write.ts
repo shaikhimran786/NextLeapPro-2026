@@ -3,30 +3,67 @@ import prisma from "@/lib/prisma";
 import { normalizeSlug, validateSlug } from "@/lib/community-slug";
 
 export type SlugChangePlan =
-  | { ok: true; newSlug: string | null; previousSlug: string | null }
+  | { ok: true; action: "noop" }
+  | {
+      ok: true;
+      action: "set" | "clear";
+      newSlug: string | null;
+      previousSlug: string | null;
+    }
   | { ok: false; status: number; message: string };
+
+interface PrepareSlugChangeOptions {
+  /**
+   * When true, an existing *alias* collision is treated as overridable:
+   * the caller is expected to delete/repoint the conflicting alias inside
+   * the same transaction. Live-owner collisions are NEVER bypassed —
+   * stealing another community's live slug would silently break that
+   * community's URLs, so the admin must reset the other community first.
+   */
+  allowOverride?: boolean;
+}
 
 /**
  * Validate and plan a slug change for a community.
  *
- *  - Returns `{ newSlug: null }` when the requested slug is unchanged or empty
- *    after normalization (no-op).
- *  - Returns 400 for shape / reserved violations.
- *  - Returns 409 when the slug is taken by a different community (live or alias).
- *  - On success, returns the normalized new slug and the previous slug to alias.
+ *  - `undefined` input → `{ action: "noop" }` (caller passed no slug field).
+ *  - `null` input → `{ action: "clear" }`, the community's slug becomes
+ *    null and the previous slug is preserved so callers can write an alias.
+ *  - empty-after-normalize input → `{ action: "noop" }` to avoid silently
+ *    clearing the slug on accidental empty strings; admins should pass
+ *    explicit `null` to reset.
+ *  - unchanged slug → `{ action: "noop" }`.
+ *  - 400 for shape / reserved violations.
+ *  - 409 when the slug is taken by a different community (live or alias),
+ *    unless `allowOverride` is set.
  */
 export async function prepareSlugChange(
   communityId: number,
-  currentSlug: string,
+  currentSlug: string | null,
   rawNewSlug: unknown,
+  options: PrepareSlugChangeOptions = {},
 ): Promise<SlugChangePlan> {
-  if (rawNewSlug === null || rawNewSlug === undefined) {
-    return { ok: true, newSlug: null, previousSlug: null };
+  if (rawNewSlug === undefined) {
+    return { ok: true, action: "noop" };
+  }
+  if (rawNewSlug === null) {
+    if (currentSlug === null) {
+      return { ok: true, action: "noop" };
+    }
+    return {
+      ok: true,
+      action: "clear",
+      newSlug: null,
+      previousSlug: currentSlug,
+    };
   }
 
   const normalized = normalizeSlug(String(rawNewSlug));
-  if (!normalized || normalized === currentSlug) {
-    return { ok: true, newSlug: null, previousSlug: null };
+  if (!normalized) {
+    return { ok: true, action: "noop" };
+  }
+  if (normalized === currentSlug) {
+    return { ok: true, action: "noop" };
   }
 
   const validation = validateSlug(normalized, { assumeNormalized: true });
@@ -45,13 +82,25 @@ export async function prepareSlugChange(
   ]);
 
   if (liveOwner && liveOwner.id !== communityId) {
-    return { ok: false, status: 409, message: "That URL is already taken." };
+    // Always reject live-owner collisions; admin must reset that community
+    // first. Admin overrides only apply to redirect-alias collisions.
+    return {
+      ok: false,
+      status: 409,
+      message:
+        "Another community currently uses that URL. Reset that community's URL first, then try again.",
+    };
   }
-  if (alias && alias.communityId !== communityId) {
-    return { ok: false, status: 409, message: "That URL is already taken." };
+  if (alias && alias.communityId !== communityId && !options.allowOverride) {
+    return { ok: false, status: 409, message: "That URL is already taken by a redirect alias." };
   }
 
-  return { ok: true, newSlug, previousSlug: currentSlug };
+  return {
+    ok: true,
+    action: "set",
+    newSlug,
+    previousSlug: currentSlug,
+  };
 }
 
 /**

@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { checkCommunityAccess, checkAdminAccess, getCurrentUserId } from "@/lib/auth-utils";
 import { resolveCommunitySegment } from "@/lib/community-resolver";
 import { prepareSlugChange, revalidateCommunityPaths } from "@/lib/community-slug-write";
+import { diffCommunityFields, writeCommunityFieldAudits } from "@/lib/community-audit";
 
 export async function GET(
   request: NextRequest,
@@ -17,7 +18,7 @@ export async function GET(
     if (resolution.kind === "redirect") {
       // Mirror the page's 308 redirect for the public detail API.
       return NextResponse.redirect(
-        new URL(`/api/communities/${resolution.canonicalSlug}`, request.url),
+        new URL(`/api/communities/${resolution.canonicalSlug ?? resolution.communityId}`, request.url),
         308,
       );
     }
@@ -135,7 +136,7 @@ export async function PATCH(
       if (!slugChange.ok) {
         return NextResponse.json({ error: slugChange.message }, { status: slugChange.status });
       }
-      if (slugChange.newSlug) {
+      if (slugChange.action === "set" || slugChange.action === "clear") {
         updateData.slug = slugChange.newSlug;
         previousSlugForAlias = slugChange.previousSlug;
       }
@@ -153,10 +154,24 @@ export async function PATCH(
           update: { communityId },
         });
         // Drop any stale alias matching the new live slug to avoid loops.
-        await tx.communitySlugAlias.deleteMany({
-          where: { oldSlug: updated.slug },
-        });
+        if (updated.slug) {
+          await tx.communitySlugAlias.deleteMany({
+            where: { oldSlug: updated.slug },
+          });
+        }
       }
+      // Audit per-field changes inside the same transaction so the log
+      // can never silently miss an event.
+      const changes = diffCommunityFields(
+        community as unknown as Record<string, unknown>,
+        updateData,
+      );
+      await writeCommunityFieldAudits(tx, {
+        communityId,
+        snapshot: { name: updated.name, slug: updated.slug },
+        actorUserId: userId,
+        changes,
+      });
       return updated;
     });
 

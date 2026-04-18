@@ -37,7 +37,7 @@ export class ObjectNotFoundError extends Error {
 }
 
 export type EntityType = "users" | "communities" | "chapters" | "events" | "services" | "static";
-export type ImageType = "avatar" | "logo" | "cover" | "image";
+export type ImageType = "avatar" | "logo" | "cover" | "image" | "profile";
 
 export class ObjectStorageService {
   constructor() {}

@@ -10,7 +10,7 @@ export async function resolveCommunityIdForPage(
     notFound();
   }
   if (result.kind === "redirect") {
-    permanentRedirect(`/communities/${result.canonicalSlug}${subPath}`);
+    permanentRedirect(`/communities/${result.canonicalSlug ?? result.communityId}${subPath}`);
   }
   return result.communityId;
 }

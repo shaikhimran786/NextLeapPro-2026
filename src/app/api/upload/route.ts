@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
     }
 
     const validEntityTypes: EntityType[] = ["users", "communities", "chapters", "events", "services", "static"];
-    const validImageTypes: ImageType[] = ["avatar", "logo", "cover", "image"];
+    const validImageTypes: ImageType[] = ["avatar", "logo", "cover", "image", "profile"];
 
     if (!validEntityTypes.includes(entityType)) {
       return NextResponse.json({ error: "Invalid entity type" }, { status: 400 });
