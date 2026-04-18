@@ -747,7 +747,7 @@ export default function AdminCommunitiesPage() {
                       id="edit-slug"
                       value={editingCommunity.slug ?? ""}
                       onChange={(e) => setEditingCommunity({ ...editingCommunity, slug: e.target.value })}
-                      placeholder="custom-url-slug (leave empty for default)"
+                      placeholder="custom-url-slug (use Reset to default URL to clear)"
                       data-testid="input-community-slug"
                     />
                     <Button
