@@ -3,14 +3,7 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getCurrentUserId } from "@/lib/auth-utils";
-
-function resolveJoinRole(membershipType: string, isPublic: boolean): "member" | "pending" | "invite_only" {
-  if (membershipType === "invite") return "invite_only";
-  if (membershipType === "approval") return "pending";
-  if (membershipType === "open") return "member";
-  // Fallback for legacy data without membershipType: use isPublic.
-  return isPublic ? "member" : "pending";
-}
+import { resolveJoinRole } from "@/lib/community-membership";
 
 export async function joinCommunity(communityId: number) {
   const userId = await getCurrentUserId();

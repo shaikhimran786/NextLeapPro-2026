@@ -2,16 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/auth-utils";
+import { resolveJoinRole } from "@/lib/community-membership";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
-}
-
-function resolveJoinRole(membershipType: string, isPublic: boolean): "member" | "pending" | "invite_only" {
-  if (membershipType === "invite") return "invite_only";
-  if (membershipType === "approval") return "pending";
-  if (membershipType === "open") return "member";
-  return isPublic ? "member" : "pending";
 }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {

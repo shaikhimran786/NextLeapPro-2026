@@ -20,6 +20,7 @@ import { useUserStatus, performOptimisticAction, revalidateUserStatus } from "@/
 import { leaveCommunity, acceptCommunityInvite, joinCommunity } from "@/lib/actions/community-actions";
 import { cn } from "@/lib/utils";
 import { CommunityGuestJoinDialog } from "@/components/communities/CommunityGuestJoinDialog";
+import { resolveJoinIntent } from "@/lib/community-membership";
 
 interface CommunityJoinButtonProps {
   communityId: number;
@@ -29,13 +30,6 @@ interface CommunityJoinButtonProps {
   className?: string;
   variant?: "default" | "outline" | "ghost";
   isMobile?: boolean;
-}
-
-function resolveJoinIntent(membershipType: string | undefined, isPublic: boolean): "open" | "approval" | "invite" {
-  if (membershipType === "invite") return "invite";
-  if (membershipType === "approval") return "approval";
-  if (membershipType === "open") return "open";
-  return isPublic ? "open" : "approval";
 }
 
 export function CommunityJoinButton({

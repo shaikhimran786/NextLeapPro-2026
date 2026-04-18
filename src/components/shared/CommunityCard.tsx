@@ -14,6 +14,7 @@ import { useUserStatus, performOptimisticAction, revalidateUserStatus } from "@/
 import { joinCommunity, acceptCommunityInvite } from "@/lib/actions/community-actions";
 import { cn } from "@/lib/utils";
 import { CommunityGuestJoinDialog } from "@/components/communities/CommunityGuestJoinDialog";
+import { resolveJoinIntent } from "@/lib/community-membership";
 
 interface CommunityCardProps {
   id: number;
@@ -80,6 +81,7 @@ function CommunityCardComponent({
   const isLoggedIn = userStatus.authStatus === "logged_in";
   const membershipInfo = userStatus.communityMemberships[id];
   const membershipStatus = membershipInfo?.status || "not_member";
+  const joinIntent = resolveJoinIntent(membershipType, isPublic);
 
   const stop = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -153,7 +155,7 @@ function CommunityCardComponent({
           icon: ArrowUpRight,
         };
       default: {
-        if (membershipType === "invite") {
+        if (joinIntent === "invite") {
           return {
             label: "Invite Only",
             href: detailHref,
@@ -163,7 +165,7 @@ function CommunityCardComponent({
           };
         }
         return {
-          label: membershipType === "approval" || !isPublic ? "Request to Join" : "Join Community",
+          label: joinIntent === "approval" ? "Request to Join" : "Join Community",
           variant: "default" as const,
           icon: UserPlus,
           action: (isLoggedIn ? "join" : "guest_join") as "join" | "guest_join",
@@ -215,8 +217,7 @@ function CommunityCardComponent({
     if ("action" in ctaConfig && ctaConfig.action === "join") {
       try {
         setIsActionLoading(true);
-        const optimisticRole =
-          membershipType === "approval" || !isPublic ? "pending" : "member";
+        const optimisticRole = joinIntent === "approval" ? "pending" : "member";
         await performOptimisticAction(
           (current) => ({
             ...current,
