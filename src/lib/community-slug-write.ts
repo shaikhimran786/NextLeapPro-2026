@@ -14,11 +14,13 @@ export type SlugChangePlan =
 
 interface PrepareSlugChangeOptions {
   /**
-   * When true, an existing *alias* collision is treated as overridable:
-   * the caller is expected to delete/repoint the conflicting alias inside
-   * the same transaction. Live-owner collisions are NEVER bypassed —
-   * stealing another community's live slug would silently break that
-   * community's URLs, so the admin must reset the other community first.
+   * When true, both alias collisions and live-owner collisions are
+   * permitted. The caller is responsible for resolving the collision
+   * inside the same transaction:
+   *   - alias collision → delete or repoint the conflicting alias.
+   *   - live-owner collision → move the conflicting community's current
+   *     slug into the alias table and null its slug, then perform our
+   *     update. This is what the admin "Override and take URL" path does.
    */
   allowOverride?: boolean;
 }
@@ -81,18 +83,11 @@ export async function prepareSlugChange(
     }),
   ]);
 
-  if (liveOwner && liveOwner.id !== communityId) {
-    // Always reject live-owner collisions; admin must reset that community
-    // first. Admin overrides only apply to redirect-alias collisions.
-    return {
-      ok: false,
-      status: 409,
-      message:
-        "Another community currently uses that URL. Reset that community's URL first, then try again.",
-    };
+  if (liveOwner && liveOwner.id !== communityId && !options.allowOverride) {
+    return { ok: false, status: 409, message: "That URL is already taken." };
   }
   if (alias && alias.communityId !== communityId && !options.allowOverride) {
-    return { ok: false, status: 409, message: "That URL is already taken by a redirect alias." };
+    return { ok: false, status: 409, message: "That URL is already taken." };
   }
 
   return {

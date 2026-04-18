@@ -3,7 +3,11 @@ import prisma from "@/lib/prisma";
 import { checkCommunityAccess, checkAdminAccess, getCurrentUserId } from "@/lib/auth-utils";
 import { resolveCommunitySegment } from "@/lib/community-resolver";
 import { prepareSlugChange, revalidateCommunityPaths } from "@/lib/community-slug-write";
-import { diffCommunityFields, writeCommunityFieldAudits } from "@/lib/community-audit";
+import {
+  diffCommunityFields,
+  writeCommunityFieldAudits,
+  writeCommunityActionAudit,
+} from "@/lib/community-audit";
 
 export async function GET(
   request: NextRequest,
@@ -218,8 +222,18 @@ export async function DELETE(
       );
     }
 
-    await prisma.community.delete({
-      where: { id: communityId },
+    // Audit must be written before the cascade-delete frees the row, and
+    // both must share a transaction so a failed delete rolls the audit
+    // back too.
+    await prisma.$transaction(async (tx) => {
+      await writeCommunityActionAudit(tx, {
+        communityId,
+        snapshot: { name: community.name, slug: community.slug },
+        actorUserId: userId,
+        action: "delete",
+        note: `${community.name} (slug=${community.slug ?? "—"})`,
+      });
+      await tx.community.delete({ where: { id: communityId } });
     });
 
     revalidateCommunityPaths(communityId, community.slug, null);

@@ -183,6 +183,8 @@ export default function AdminCommunitiesPage() {
   const [users, setUsers] = useState<UserOption[]>([]);
   const [selectedCreatorId, setSelectedCreatorId] = useState<string>("");
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
+  const [auditTotal, setAuditTotal] = useState(0);
+  const [auditPageSize, setAuditPageSize] = useState(50);
   const [isLoadingAudit, setIsLoadingAudit] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [slugConflictOpen, setSlugConflictOpen] = useState(false);
@@ -287,12 +289,17 @@ export default function AdminCommunitiesPage() {
     try {
       const res = await fetch(`/api/admin/communities/${communityId}/audit`);
       if (res.ok) {
-        setAuditEntries(await res.json());
+        const data = await res.json();
+        setAuditEntries(data.entries ?? []);
+        setAuditTotal(data.total ?? (data.entries?.length ?? 0));
+        setAuditPageSize(data.pageSize ?? 50);
       } else {
         setAuditEntries([]);
+        setAuditTotal(0);
       }
     } catch {
       setAuditEntries([]);
+      setAuditTotal(0);
     } finally {
       setIsLoadingAudit(false);
     }
@@ -882,8 +889,12 @@ export default function AdminCommunitiesPage() {
 
               <div className="space-y-2 pt-4 border-t">
                 <h4 className="font-semibold text-slate-900">Audit history</h4>
-                <p className="text-xs text-slate-500">
-                  Most recent 50 admin / owner changes for this community.
+                <p className="text-xs text-slate-500" data-testid="text-audit-summary">
+                  {auditTotal === 0
+                    ? "Most recent admin / owner changes for this community."
+                    : auditTotal > auditPageSize
+                      ? `Showing latest ${auditPageSize} of ${auditTotal} entries (newest first).`
+                      : `Showing all ${auditTotal} ${auditTotal === 1 ? "entry" : "entries"} (newest first).`}
                 </p>
                 {isLoadingAudit ? (
                   <p className="text-sm text-slate-500" data-testid="text-audit-loading">
@@ -894,6 +905,7 @@ export default function AdminCommunitiesPage() {
                     No audit entries yet.
                   </p>
                 ) : (
+                  <>
                   <ul className="max-h-64 overflow-y-auto divide-y border rounded" data-testid="list-audit-entries">
                     {auditEntries.map((entry) => {
                       const actorName = entry.actor
@@ -916,6 +928,14 @@ export default function AdminCommunitiesPage() {
                       );
                     })}
                   </ul>
+                  {auditTotal > auditEntries.length && (
+                    <p className="text-xs text-slate-400 mt-1" data-testid="text-audit-truncated">
+                      {auditTotal - auditEntries.length} older{" "}
+                      {auditTotal - auditEntries.length === 1 ? "entry is" : "entries are"} not
+                      shown. A full history view is coming soon.
+                    </p>
+                  )}
+                  </>
                 )}
               </div>
             </div>

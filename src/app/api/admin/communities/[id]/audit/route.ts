@@ -19,18 +19,22 @@ export async function GET(
       return NextResponse.json({ error: "Invalid community id" }, { status: 400 });
     }
 
-    const entries = await prisma.communityAuditLog.findMany({
-      where: { communityId },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-      include: {
-        actor: {
-          select: { id: true, firstName: true, lastName: true, email: true },
+    const PAGE_SIZE = 50;
+    const [entries, total] = await Promise.all([
+      prisma.communityAuditLog.findMany({
+        where: { communityId },
+        orderBy: { createdAt: "desc" },
+        take: PAGE_SIZE,
+        include: {
+          actor: {
+            select: { id: true, firstName: true, lastName: true, email: true },
+          },
         },
-      },
-    });
+      }),
+      prisma.communityAuditLog.count({ where: { communityId } }),
+    ]);
 
-    return NextResponse.json(entries);
+    return NextResponse.json({ entries, total, pageSize: PAGE_SIZE });
   } catch (error) {
     console.error("Error fetching community audit log:", error);
     return NextResponse.json({ error: "Failed to fetch audit log" }, { status: 500 });

@@ -108,6 +108,37 @@ export async function PATCH(
     }
 
     const community = await prisma.$transaction(async (tx) => {
+      // True admin override: if forceSlug and a *different* community
+      // currently owns the new slug, move its slug into the alias table
+      // and null its slug so the unique constraint frees up.
+      if (slugWasOverridden && typeof updateData.slug === "string") {
+        const newSlugStr = updateData.slug;
+        const conflictingOwner = await tx.community.findUnique({
+          where: { slug: newSlugStr },
+          select: { id: true, name: true, slug: true },
+        });
+        if (conflictingOwner && conflictingOwner.id !== communityId) {
+          await tx.community.update({
+            where: { id: conflictingOwner.id },
+            data: { slug: null },
+          });
+          await tx.communitySlugAlias.upsert({
+            where: { oldSlug: newSlugStr },
+            create: { oldSlug: newSlugStr, communityId: conflictingOwner.id },
+            update: { communityId: conflictingOwner.id },
+          });
+          await writeCommunityActionAudit(tx, {
+            communityId: conflictingOwner.id,
+            snapshot: {
+              name: conflictingOwner.name,
+              slug: conflictingOwner.slug,
+            },
+            actorUserId: adminId,
+            action: "reset_url",
+            note: `Reset by admin override (URL transferred to community #${communityId})`,
+          });
+        }
+      }
       const updated = await tx.community.update({
         where: { id: communityId },
         data: updateData,
@@ -144,10 +175,13 @@ export async function PATCH(
         });
       }
       if (slugWasOverridden) {
-        // Repoint or remove the stale alias inside this transaction so the
-        // unique constraint stays consistent with the new live slug.
+        // The conflicting alias / live owner has already been migrated
+        // above; remove any stale alias that would now collide with the
+        // newly-claimed live slug, and record the override.
         if (typeof updateData.slug === "string") {
-          await tx.communitySlugAlias.deleteMany({ where: { oldSlug: updateData.slug } });
+          await tx.communitySlugAlias.deleteMany({
+            where: { oldSlug: updateData.slug, communityId: { not: communityId } },
+          });
         }
         await writeCommunityActionAudit(tx, {
           communityId,
