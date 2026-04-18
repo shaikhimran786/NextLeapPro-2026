@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CheckCircle, Users, Loader2, Lock, Globe, UserPlus, Clock, Settings, Shield, AlertCircle } from "@/lib/icons";
+import { CheckCircle, Users, Loader2, Lock, Globe, UserPlus, Clock, Settings, Shield, AlertCircle, LogOut } from "@/lib/icons";
 import { useUserStatus, revalidateUserStatus, performOptimisticAction } from "@/hooks/useUserStatus";
 import { joinCommunity, leaveCommunity, acceptCommunityInvite } from "@/lib/actions/community-actions";
 import { cn } from "@/lib/utils";
@@ -16,15 +16,24 @@ interface CommunityJoinButtonProps {
   communityId: number;
   communityName: string;
   isPublic: boolean;
+  membershipType?: string;
   className?: string;
   variant?: "default" | "outline" | "ghost";
   isMobile?: boolean;
+}
+
+function resolveJoinIntent(membershipType: string | undefined, isPublic: boolean): "open" | "approval" | "invite" {
+  if (membershipType === "invite") return "invite";
+  if (membershipType === "approval") return "approval";
+  if (membershipType === "open") return "open";
+  return isPublic ? "open" : "approval";
 }
 
 export function CommunityJoinButton({
   communityId,
   communityName,
   isPublic,
+  membershipType,
   className = "",
   variant = "default",
   isMobile = false,
@@ -43,6 +52,8 @@ export function CommunityJoinButton({
   const isLoggedIn = userStatus.authStatus === "logged_in";
   const membershipInfo = userStatus.communityMemberships[communityId];
   const membershipStatus = membershipInfo?.status || "not_member";
+  const joinIntent = resolveJoinIntent(membershipType, isPublic);
+  const [isLeaving, setIsLeaving] = useState(false);
 
   const getButtonConfig = useCallback(() => {
     switch (membershipStatus) {
@@ -72,11 +83,11 @@ export function CommunityJoinButton({
         };
       case "member":
         return {
-          label: "Member",
+          label: "Open Community",
           icon: CheckCircle,
           variant: "outline" as const,
           action: "view",
-          style: "border-green-500 text-green-600",
+          style: "border-green-500 text-green-700 bg-green-50 hover:bg-green-100",
         };
       case "pending":
         return {
@@ -105,17 +116,28 @@ export function CommunityJoinButton({
           style: "border-red-500 text-red-600",
         };
       default:
+        if (joinIntent === "invite") {
+          return {
+            label: "Invite Only",
+            icon: Lock,
+            variant: "outline" as const,
+            action: "none",
+            style: "border-amber-400 text-amber-700 bg-amber-50",
+            disabled: true,
+            tooltip: "This community is invite-only.",
+          };
+        }
         return {
-          label: "Join Community",
+          label: joinIntent === "approval" ? "Request to Join" : "Join Community",
           icon: Users,
           variant: variant === "outline" ? "outline" as const : "default" as const,
           action: "join",
-          style: variant === "outline" 
+          style: variant === "outline"
             ? "bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm"
             : "bg-white text-primary hover:bg-white/90 shadow-lg",
         };
     }
-  }, [membershipStatus, variant]);
+  }, [membershipStatus, variant, joinIntent]);
 
   const buttonConfig = getButtonConfig();
   const IconComponent = buttonConfig.icon;
@@ -161,6 +183,7 @@ export function CommunityJoinButton({
         if (isLoggedIn) {
           try {
             setIsLoading(true);
+            const optimisticRole = joinIntent === "approval" ? "pending" : "member";
 
             // Use performOptimisticAction for immediate UI feedback
             await performOptimisticAction(
@@ -170,8 +193,8 @@ export function CommunityJoinButton({
                 communityMemberships: {
                   ...current.communityMemberships,
                   [communityId]: {
-                    status: isPublic ? 'member' : 'pending',
-                    role: isPublic ? 'member' : 'pending',
+                    status: optimisticRole,
+                    role: optimisticRole,
                     joinedAt: new Date().toISOString(),
                   },
                 },
@@ -255,27 +278,77 @@ export function CommunityJoinButton({
     router.push(`/auth/login?redirect=/communities/${communityId}`);
   };
 
+  // Members & moderators can leave; owners/admins cannot via this control.
+  const showLeaveButton = membershipStatus === "member" || membershipStatus === "moderator";
+
+  async function handleLeave() {
+    if (isLeaving) return;
+    if (!confirm(`Leave ${communityName}? You can re-join later.`)) return;
+    try {
+      setIsLeaving(true);
+      await performOptimisticAction(
+        (current) => {
+          const next = { ...current.communityMemberships };
+          delete next[communityId];
+          return { ...current, communityMemberships: next };
+        },
+        async () => leaveCommunity(communityId),
+        () => toast.success(`You left ${communityName}.`),
+        (err) => toast.error(err.message || "Failed to leave community"),
+      );
+    } finally {
+      setIsLeaving(false);
+    }
+  }
+
   return (
     <>
-      <Button
-        className={cn(buttonConfig.style, "rounded-full", className)}
-        data-testid={isMobile ? "button-join-community-mobile" : "button-join-community"}
-        disabled={buttonConfig.disabled || isLoading || isStatusLoading}
-        onClick={handleClick}
-        variant={buttonConfig.variant}
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Processing...
-          </>
-        ) : (
-          <>
-            <IconComponent className="mr-2 h-4 w-4" />
-            {buttonConfig.label}
-          </>
+      <div className={cn("flex items-center gap-2", isMobile && "flex-col w-full")}>
+        <Button
+          className={cn(buttonConfig.style, "rounded-full", isMobile && "w-full", className)}
+          data-testid={isMobile ? "button-join-community-mobile" : "button-join-community"}
+          disabled={buttonConfig.disabled || isLoading || isStatusLoading}
+          onClick={handleClick}
+          variant={buttonConfig.variant}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            <>
+              <IconComponent className="mr-2 h-4 w-4" />
+              {buttonConfig.label}
+            </>
+          )}
+        </Button>
+
+        {showLeaveButton && (
+          <Button
+            variant="outline"
+            className={cn(
+              "rounded-full bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm",
+              isMobile && "w-full",
+            )}
+            disabled={isLeaving}
+            onClick={handleLeave}
+            data-testid={isMobile ? "button-leave-community-mobile" : "button-leave-community"}
+          >
+            {isLeaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Leaving…
+              </>
+            ) : (
+              <>
+                <LogOut className="mr-2 h-4 w-4" />
+                Leave
+              </>
+            )}
+          </Button>
         )}
-      </Button>
+      </div>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md">

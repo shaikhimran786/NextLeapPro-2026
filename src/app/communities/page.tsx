@@ -34,6 +34,7 @@ async function getCommunities() {
     location: c.location,
     mode: c.mode,
     membershipType: c.membershipType,
+    isPublic: c.isPublic,
     memberCount: c._count.members,
   }));
 }

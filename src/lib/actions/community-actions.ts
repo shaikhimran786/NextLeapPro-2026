@@ -4,6 +4,14 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getCurrentUserId } from "@/lib/auth-utils";
 
+function resolveJoinRole(membershipType: string, isPublic: boolean): "member" | "pending" | "invite_only" {
+  if (membershipType === "invite") return "invite_only";
+  if (membershipType === "approval") return "pending";
+  if (membershipType === "open") return "member";
+  // Fallback for legacy data without membershipType: use isPublic.
+  return isPublic ? "member" : "pending";
+}
+
 export async function joinCommunity(communityId: number) {
   const userId = await getCurrentUserId();
   if (!userId) {
@@ -23,10 +31,18 @@ export async function joinCommunity(communityId: number) {
   });
 
   if (existingMembership) {
-    throw new Error("Already a member of this community");
+    if (existingMembership.role === "invited") {
+      throw new Error("You have an invite — accept it instead of joining.");
+    }
+    throw new Error("You are already a member of this community");
   }
 
-  const role = community.isPublic ? "member" : "pending";
+  const resolved = resolveJoinRole(community.membershipType, community.isPublic);
+  if (resolved === "invite_only") {
+    throw new Error("This community is invite-only. Please wait for an invitation.");
+  }
+  const role = resolved;
+  const isPending = role === "pending";
 
   const membership = await prisma.$transaction(async (tx) => {
     const member = await tx.communityMember.create({
@@ -40,7 +56,7 @@ export async function joinCommunity(communityId: number) {
     await tx.adminAuditLog.create({
       data: {
         userId,
-        action: community.isPublic ? "community_join" : "community_join_request",
+        action: isPending ? "community_join_request" : "community_join",
         target: `Community #${communityId}: ${community.name}`,
         details: { membershipId: member.id, role },
       },
@@ -57,7 +73,7 @@ export async function joinCommunity(communityId: number) {
     membership: {
       id: membership.id,
       role: membership.role,
-      isPending: !community.isPublic,
+      isPending,
     },
   };
 }
@@ -141,6 +157,7 @@ export async function acceptCommunityInvite(communityId: number) {
   });
 
   revalidatePath(`/communities/${communityId}`);
+  revalidatePath("/communities");
 
   return { success: true };
 }

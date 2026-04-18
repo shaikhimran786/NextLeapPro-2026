@@ -19,6 +19,7 @@ interface CommunityItem {
   tags: string[];
   mode: string;
   membershipType: string;
+  isPublic: boolean;
 }
 
 interface CommunityListFilterProps {
@@ -110,6 +111,7 @@ export function CommunityListFilter({ communities, categories }: CommunityListFi
               tags={community.tags}
               mode={community.mode}
               membershipType={community.membershipType}
+              isPublic={community.isPublic}
             />
           ))}
         </div>

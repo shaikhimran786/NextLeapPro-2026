@@ -1,12 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { memo } from "react";
+import { useRouter } from "next/navigation";
+import { memo, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, MapPin, ArrowUpRight, Video, Laptop, Lock } from "@/lib/icons";
+import { Button } from "@/components/ui/button";
+import { Users, MapPin, ArrowUpRight, Video, Lock, CheckCircle, Clock, Settings, Shield, UserPlus, Loader2 } from "@/lib/icons";
 import { SmartImage } from "@/components/ui/smart-image";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { useUserStatus, performOptimisticAction } from "@/hooks/useUserStatus";
+import { joinCommunity, acceptCommunityInvite } from "@/lib/actions/community-actions";
+import { cn } from "@/lib/utils";
 
 interface CommunityCardProps {
   id: number;
@@ -19,6 +25,7 @@ interface CommunityCardProps {
   tags?: string[];
   mode?: string;
   membershipType?: string;
+  isPublic?: boolean;
   index?: number;
 }
 
@@ -57,174 +64,348 @@ function CommunityCardComponent({
   tags = [],
   mode,
   membershipType,
-  index = 0,
+  isPublic = true,
 }: CommunityCardProps) {
+  const router = useRouter();
+  const { userStatus, isLoading: isStatusLoading } = useUserStatus();
+  const [isActionLoading, setIsActionLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => setIsMounted(true), []);
+
   const colorScheme = categoryColors[category] || categoryColors.default;
   const gradient = categoryGradients[category] || categoryGradients.default;
 
+  const isLoggedIn = userStatus.authStatus === "logged_in";
+  const membershipInfo = userStatus.communityMemberships[id];
+  const membershipStatus = membershipInfo?.status || "not_member";
+
+  const stop = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const detailHref = `/communities/${id}`;
+
+  // Membership badge shown near the top
+  const membershipBadge = (() => {
+    switch (membershipStatus) {
+      case "owner":
+        return { label: "Owner", icon: Settings, className: "bg-primary/10 text-primary border-primary/20" };
+      case "admin":
+        return { label: "Admin", icon: Settings, className: "bg-slate-100 text-slate-700 border-slate-200" };
+      case "moderator":
+        return { label: "Moderator", icon: Shield, className: "bg-slate-100 text-slate-700 border-slate-200" };
+      case "member":
+        return { label: "Joined", icon: CheckCircle, className: "bg-green-50 text-green-700 border-green-200" };
+      case "pending":
+        return { label: "Pending", icon: Clock, className: "bg-amber-50 text-amber-700 border-amber-200" };
+      case "invited":
+        return { label: "Invited", icon: UserPlus, className: "bg-blue-50 text-blue-700 border-blue-200" };
+      default:
+        return null;
+    }
+  })();
+
+  // CTA button config
+  const ctaConfig = (() => {
+    if (isStatusLoading) {
+      return { label: "Loading…", href: detailHref, variant: "outline" as const, disabled: true };
+    }
+    switch (membershipStatus) {
+      case "owner":
+      case "admin":
+        return {
+          label: "Manage",
+          href: `/communities/${id}/settings`,
+          variant: "default" as const,
+          icon: Settings,
+        };
+      case "moderator":
+      case "member":
+        return {
+          label: "Open Community",
+          href: detailHref,
+          variant: "outline" as const,
+          icon: ArrowUpRight,
+        };
+      case "pending":
+        return {
+          label: "Request Pending",
+          href: detailHref,
+          variant: "outline" as const,
+          disabled: true,
+          icon: Clock,
+        };
+      case "invited":
+        return {
+          label: "Accept Invite",
+          variant: "default" as const,
+          icon: UserPlus,
+          action: "accept" as const,
+        };
+      case "blocked":
+        return {
+          label: "View",
+          href: detailHref,
+          variant: "outline" as const,
+          icon: ArrowUpRight,
+        };
+      default: {
+        if (membershipType === "invite") {
+          return {
+            label: "Invite Only",
+            href: detailHref,
+            variant: "outline" as const,
+            disabled: true,
+            icon: Lock,
+          };
+        }
+        return {
+          label: membershipType === "approval" || !isPublic ? "Request to Join" : "Join Community",
+          variant: "default" as const,
+          icon: UserPlus,
+          action: (isLoggedIn ? "join" : "guest_join") as "join" | "guest_join",
+        };
+      }
+    }
+  })();
+
+  async function handleCtaClick(e: React.MouseEvent) {
+    stop(e);
+    if (ctaConfig.disabled || isActionLoading) return;
+
+    if ("href" in ctaConfig && ctaConfig.href) {
+      router.push(ctaConfig.href);
+      return;
+    }
+
+    if ("action" in ctaConfig && ctaConfig.action === "accept") {
+      try {
+        setIsActionLoading(true);
+        await acceptCommunityInvite(id);
+        toast.success(`Welcome to ${name}!`);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to accept invite");
+      } finally {
+        setIsActionLoading(false);
+      }
+      return;
+    }
+
+    if ("action" in ctaConfig && ctaConfig.action === "guest_join") {
+      router.push(detailHref);
+      return;
+    }
+
+    if ("action" in ctaConfig && ctaConfig.action === "join") {
+      try {
+        setIsActionLoading(true);
+        const optimisticRole =
+          membershipType === "approval" || !isPublic ? "pending" : "member";
+        await performOptimisticAction(
+          (current) => ({
+            ...current,
+            communityMemberships: {
+              ...current.communityMemberships,
+              [id]: {
+                status: optimisticRole,
+                role: optimisticRole,
+                joinedAt: new Date().toISOString(),
+              },
+            },
+          }),
+          async () => {
+            const result = await joinCommunity(id);
+            if (!result.success) throw new Error("Failed to join");
+            return result;
+          },
+          (result) => {
+            if (result.membership.isPending) {
+              toast.success("Join request submitted! You'll be notified when approved.");
+            } else {
+              toast.success(`Welcome to ${name}!`);
+            }
+          },
+          (err) => {
+            toast.error(err.message || "Failed to join community");
+          },
+        );
+      } finally {
+        setIsActionLoading(false);
+      }
+    }
+  }
+
+  const CtaIcon = "icon" in ctaConfig ? ctaConfig.icon : ArrowUpRight;
+
   return (
-    <Link href={`/communities/${id}`} className="block h-full">
+    <motion.div
+      className="relative h-full group"
+      whileHover="hover"
+      initial="rest"
+      animate="rest"
+    >
       <motion.div
-        className="relative h-full group"
-        whileHover="hover"
-        initial="rest"
-        animate="rest"
+        className={`absolute -inset-0.5 bg-gradient-to-r ${gradient} rounded-2xl blur opacity-0 group-hover:opacity-40 transition-opacity duration-500 pointer-events-none`}
+        variants={{ rest: { opacity: 0 }, hover: { opacity: 0.4 } }}
+      />
+
+      <Card
+        className="relative overflow-hidden bg-white/80 backdrop-blur-sm border-none shadow-md hover:shadow-xl transition-all duration-500 h-full rounded-2xl flex flex-col"
+        data-testid={`community-card-${id}`}
       >
-        {/* Gradient Border Effect */}
-        <motion.div
-          className={`absolute -inset-0.5 bg-gradient-to-r ${gradient} rounded-2xl blur opacity-0 group-hover:opacity-40 transition-opacity duration-500`}
-          variants={{
-            rest: { opacity: 0 },
-            hover: { opacity: 0.4 },
-          }}
+        <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${gradient} opacity-5 rounded-bl-full pointer-events-none`} />
+
+        {/* Stretched link overlay so the entire card (except CTA) is clickable */}
+        <Link
+          href={detailHref}
+          aria-label={`View ${name} community`}
+          className="absolute inset-0 z-10"
+          data-testid={`link-community-${id}`}
         />
-        
-        <Card 
-          className="relative overflow-hidden bg-white/80 backdrop-blur-sm border-none shadow-md hover:shadow-xl transition-all duration-500 h-full rounded-2xl"
-          data-testid={`community-card-${id}`}
-        >
-          {/* Decorative Corner Accent */}
-          <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${gradient} opacity-5 rounded-bl-full`} />
-          
-          <CardContent className="p-6 relative">
-            {/* Header with Logo and Category */}
-            <div className="flex items-start gap-4 mb-4">
-              <motion.div 
-                className="relative"
-                variants={{
-                  rest: { scale: 1, rotate: 0 },
-                  hover: { scale: 1.05, rotate: 3 },
-                }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+
+        <CardContent className="p-6 relative flex-1 flex flex-col">
+          {/* Header */}
+          <div className="flex items-start gap-4 mb-4">
+            <motion.div
+              className="relative"
+              variants={{ rest: { scale: 1, rotate: 0 }, hover: { scale: 1.05, rotate: 3 } }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <div className={`absolute -inset-1 bg-gradient-to-r ${gradient} rounded-xl blur-sm opacity-30`} />
+              <div className="relative h-16 w-16 rounded-xl overflow-hidden ring-2 ring-white shadow-md">
+                <SmartImage
+                  src={logo}
+                  alt={`${name} community logo - ${category}`}
+                  fill
+                  className="object-cover"
+                  sizes="64px"
+                  fallbackType="logo"
+                />
+              </div>
+            </motion.div>
+
+            <div className="flex-1 min-w-0">
+              <motion.h3
+                className="font-heading font-bold text-lg line-clamp-1 text-slate-900"
+                variants={{ rest: { color: "#0f172a" }, hover: { color: "#FF0099" } }}
+                transition={{ duration: 0.3 }}
               >
-                <div className={`absolute -inset-1 bg-gradient-to-r ${gradient} rounded-xl blur-sm opacity-30`} />
-                <div className="relative h-16 w-16 rounded-xl overflow-hidden ring-2 ring-white shadow-md">
-                  <SmartImage
-                    src={logo}
-                    alt={`${name} community logo - ${category}`}
-                    fill
-                    className="object-cover"
-                    sizes="64px"
-                    fallbackType="logo"
-                  />
-                </div>
-              </motion.div>
-              
-              <div className="flex-1 min-w-0">
-                <motion.h3 
-                  className="font-heading font-bold text-lg line-clamp-1 text-slate-900"
-                  variants={{
-                    rest: { color: "#0f172a" },
-                    hover: { color: "#FF0099" },
-                  }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {name}
-                </motion.h3>
-                <Badge 
-                  className={`mt-1.5 ${colorScheme.bg} ${colorScheme.text} ${colorScheme.border} border font-medium`}
-                >
+                {name}
+              </motion.h3>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <Badge className={`${colorScheme.bg} ${colorScheme.text} ${colorScheme.border} border font-medium`}>
                   {category}
                 </Badge>
-              </div>
-
-              {/* Hover Arrow Indicator */}
-              <motion.div
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
-                variants={{
-                  rest: { x: -5, opacity: 0 },
-                  hover: { x: 0, opacity: 1 },
-                }}
-              >
-                <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${gradient} flex items-center justify-center`}>
-                  <ArrowUpRight className="w-4 h-4 text-white" />
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Description */}
-            <p className="text-sm text-slate-600 line-clamp-2 mb-4 leading-relaxed">
-              {description}
-            </p>
-
-            {/* Tags with Animation */}
-            {tags.length > 0 && (
-              <motion.div 
-                className="flex flex-wrap gap-1.5 mb-4"
-                variants={{
-                  rest: {},
-                  hover: {
-                    transition: { staggerChildren: 0.05 }
-                  }
-                }}
-              >
-                {tags.slice(0, 3).map((tag, idx) => (
-                  <motion.span
-                    key={idx}
-                    className="text-xs px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-600 transition-colors cursor-default"
-                    variants={{
-                      rest: { y: 0 },
-                      hover: { y: -2 },
-                    }}
+                {membershipBadge && (
+                  <Badge
+                    className={cn("border font-medium flex items-center gap-1", membershipBadge.className)}
+                    data-testid={`badge-membership-${id}`}
                   >
-                    {tag}
-                  </motion.span>
-                ))}
-                {tags.length > 3 && (
-                  <span className="text-xs px-2.5 py-1 text-slate-400">
-                    +{tags.length - 3} more
-                  </span>
-                )}
-              </motion.div>
-            )}
-
-            {/* Mode & Membership Badges */}
-            {(mode || membershipType) && (
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {mode && mode !== "hybrid" && (
-                  <span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full flex items-center gap-1">
-                    {mode === "online" ? <Video className="h-3 w-3" /> : <MapPin className="h-3 w-3" />}
-                    {mode === "online" ? "Online" : "In Person"}
-                  </span>
-                )}
-                {membershipType && membershipType !== "open" && (
-                  <span className="text-xs px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full flex items-center gap-1">
-                    <Lock className="h-3 w-3" />
-                    {membershipType === "approval" ? "Approval" : "Invite Only"}
-                  </span>
+                    <membershipBadge.icon className="w-3 h-3" />
+                    {membershipBadge.label}
+                  </Badge>
                 )}
               </div>
-            )}
+            </div>
+          </div>
 
-            {/* Footer Stats */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-              <motion.div 
-                className="flex items-center gap-2 text-sm"
-                variants={{
-                  rest: { scale: 1 },
-                  hover: { scale: 1.05 },
-                }}
-              >
-                <div className={`w-7 h-7 rounded-full bg-gradient-to-r ${gradient} flex items-center justify-center`}>
-                  <Users className="w-3.5 h-3.5 text-white" />
-                </div>
-                <span className="text-slate-700 font-medium" suppressHydrationWarning>
-                  {memberCount.toLocaleString("en-IN")}
+          {/* Description */}
+          <p className="text-sm text-slate-600 line-clamp-2 mb-4 leading-relaxed">
+            {description}
+          </p>
+
+          {/* Tags */}
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              {tags.slice(0, 3).map((tag, idx) => (
+                <span
+                  key={idx}
+                  className="text-xs px-2.5 py-1 bg-slate-100 rounded-full text-slate-600"
+                >
+                  {tag}
                 </span>
-                <span className="text-slate-400 text-xs">members</span>
-              </motion.div>
-              
-              {location && (
-                <div className="flex items-center gap-1.5 text-sm text-slate-500">
-                  <MapPin size={14} className="text-slate-400" />
-                  <span className="truncate max-w-[100px]">{location}</span>
-                </div>
+              ))}
+              {tags.length > 3 && (
+                <span className="text-xs px-2.5 py-1 text-slate-400">
+                  +{tags.length - 3} more
+                </span>
               )}
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-    </Link>
+          )}
+
+          {/* Mode & Membership type badges */}
+          {(mode || membershipType) && (
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {mode && mode !== "hybrid" && (
+                <span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full flex items-center gap-1">
+                  {mode === "online" ? <Video className="h-3 w-3" /> : <MapPin className="h-3 w-3" />}
+                  {mode === "online" ? "Online" : "In Person"}
+                </span>
+              )}
+              {membershipType && membershipType !== "open" && (
+                <span className="text-xs px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  {membershipType === "approval" ? "Approval" : "Invite Only"}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Footer Stats */}
+          <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-auto">
+            <div className="flex items-center gap-2 text-sm">
+              <div className={`w-7 h-7 rounded-full bg-gradient-to-r ${gradient} flex items-center justify-center`}>
+                <Users className="w-3.5 h-3.5 text-white" />
+              </div>
+              <span className="text-slate-700 font-medium" suppressHydrationWarning>
+                {memberCount.toLocaleString("en-IN")}
+              </span>
+              <span className="text-slate-400 text-xs">members</span>
+            </div>
+
+            {location && (
+              <div className="flex items-center gap-1.5 text-sm text-slate-500">
+                <MapPin size={14} className="text-slate-400" />
+                <span className="truncate max-w-[100px]">{location}</span>
+              </div>
+            )}
+          </div>
+
+          {/* CTA - sits above the stretched link via z-index */}
+          <div className="relative z-20 mt-4">
+            {!isMounted ? (
+              <div
+                className="h-9 w-full rounded-full bg-slate-100 animate-pulse"
+                aria-hidden="true"
+              />
+            ) : (
+              <Button
+                type="button"
+                size="sm"
+                variant={ctaConfig.variant}
+                disabled={ctaConfig.disabled || isActionLoading}
+                onClick={handleCtaClick}
+                className="w-full rounded-full"
+                data-testid={`cta-community-${id}`}
+              >
+                {isActionLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Working…
+                  </>
+                ) : (
+                  <>
+                    <CtaIcon className="mr-2 h-4 w-4" />
+                    {ctaConfig.label}
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
 

@@ -1,31 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
+import { getCurrentUserId } from "@/lib/auth-utils";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
+export async function POST(_request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
     const communityId = parseInt(id);
-    const { userId } = await request.json();
+    if (Number.isNaN(communityId)) {
+      return NextResponse.json({ error: "Invalid community id" }, { status: 400 });
+    }
 
+    const userId = await getCurrentUserId();
     if (!userId) {
-      return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
     const membership = await prisma.communityMember.findFirst({
-      where: {
-        communityId,
-        userId: parseInt(userId),
-      },
-      include: {
-        community: true,
-      },
+      where: { communityId, userId },
+      include: { community: true },
     });
 
     if (!membership) {
@@ -44,10 +41,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (membership.role === "admin") {
       const adminCount = await prisma.communityMember.count({
-        where: {
-          communityId,
-          role: { in: ["admin", "owner"] },
-        },
+        where: { communityId, role: { in: ["admin", "owner"] } },
       });
 
       if (adminCount <= 1) {
@@ -58,11 +52,23 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    await prisma.communityMember.delete({
-      where: { id: membership.id },
+    await prisma.$transaction(async (tx) => {
+      await tx.communityMember.delete({ where: { id: membership.id } });
+      await tx.adminAuditLog.create({
+        data: {
+          userId,
+          action: "community_leave",
+          target: `Community #${communityId}`,
+          details: { previousRole: membership.role },
+        },
+      });
     });
 
+    revalidatePath(`/communities/${communityId}`);
+    revalidatePath("/communities");
+
     return NextResponse.json({
+      success: true,
       message: `Successfully left ${membership.community.name}`,
     });
   } catch (error) {

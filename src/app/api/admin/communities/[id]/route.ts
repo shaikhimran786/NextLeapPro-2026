@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { checkAdminAccess } from "@/lib/auth-utils";
 
@@ -84,6 +85,9 @@ export async function PATCH(
       },
     });
 
+    revalidatePath(`/communities/${id}`);
+    revalidatePath("/communities");
+
     return NextResponse.json(community);
   } catch (error) {
     console.error("Error updating community:", error);
@@ -121,6 +125,9 @@ export async function DELETE(
         target: `Community #${id}: ${community.name}`,
       },
     });
+
+    revalidatePath(`/communities/${id}`);
+    revalidatePath("/communities");
 
     return NextResponse.json({ success: true });
   } catch (error) {

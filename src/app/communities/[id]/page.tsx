@@ -209,6 +209,7 @@ export default async function CommunityDetailPage({ params }: PageProps) {
                   communityId={community.id}
                   communityName={community.name}
                   isPublic={community.isPublic}
+                  membershipType={community.membershipType}
                 />
                 <CommunitySettingsButton
                   communityId={community.id}
@@ -480,6 +481,7 @@ export default async function CommunityDetailPage({ params }: PageProps) {
                     communityId={community.id}
                     communityName={community.name}
                     isPublic={community.isPublic}
+                    membershipType={community.membershipType}
                     className="w-full bg-primary hover:bg-primary/90 rounded-full"
                     isMobile={true}
                   />
