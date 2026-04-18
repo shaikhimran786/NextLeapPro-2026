@@ -24,6 +24,7 @@ import {
 import { formatDate } from "@/lib/utils";
 import { CommunityJoinButton } from "@/components/communities/CommunityJoinButton";
 import { CommunitySettingsButton } from "@/components/communities/CommunitySettingsButton";
+import { ShareCommunityDialog, type ShareMode } from "@/components/communities/ShareCommunityDialog";
 
 export const revalidate = 300; // 5-minute ISR
 
@@ -118,6 +119,17 @@ export default async function CommunityDetailPage({ params }: PageProps) {
       }
     }
   }
+
+  // Share visibility: hide entirely for non-public communities (the link
+  // wouldn't work for recipients), full dialog when a slug exists, copy-only
+  // limited mode otherwise.
+  const siteOrigin = process.env.NEXT_PUBLIC_APP_URL || "https://nextleappro.com";
+  const shareUrl = `${siteOrigin}${buildCommunityUrl(community)}`;
+  const shareMode: ShareMode | null = !community.isPublic
+    ? null
+    : community.slug
+      ? "full"
+      : "limited";
 
   const memberCount = community.members.length;
   const chapterCount = community.chapters.length;
@@ -227,9 +239,14 @@ export default async function CommunityDetailPage({ params }: PageProps) {
                   communitySlug={community.slug}
                   creatorId={community.creatorId}
                 />
-                <Button variant="outline" className="bg-white/10 text-white border-white/30 hover:bg-white/20 rounded-full backdrop-blur-sm" data-testid="button-share-community">
-                  <Share2 className="mr-2 h-4 w-4" /> Share
-                </Button>
+                {shareMode && (
+                  <ShareCommunityDialog
+                    mode={shareMode}
+                    communityName={community.name}
+                    shortDescription={community.shortDescription}
+                    shareUrl={shareUrl}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -497,9 +514,15 @@ export default async function CommunityDetailPage({ params }: PageProps) {
                     className="w-full bg-primary hover:bg-primary/90 rounded-full"
                     isMobile={true}
                   />
-                  <Button variant="outline" className="w-full rounded-full" data-testid="button-share-community-mobile">
-                    <Share2 className="mr-2 h-4 w-4" /> Share
-                  </Button>
+                  {shareMode && (
+                    <ShareCommunityDialog
+                      mode={shareMode}
+                      communityName={community.name}
+                      shortDescription={community.shortDescription}
+                      shareUrl={shareUrl}
+                      isMobile
+                    />
+                  )}
                 </div>
               </div>
             </div>
