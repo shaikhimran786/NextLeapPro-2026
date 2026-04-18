@@ -252,7 +252,8 @@ function CommunityCardComponent({
     }
   }
 
-  const CtaIcon = "icon" in ctaConfig ? ctaConfig.icon : ArrowUpRight;
+  const CtaIcon: React.ComponentType<{ className?: string }> =
+    "icon" in ctaConfig && ctaConfig.icon ? ctaConfig.icon : ArrowUpRight;
 
   return (
     <motion.div
