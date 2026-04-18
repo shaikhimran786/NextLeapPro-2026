@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useUserStatus, performOptimisticAction } from "@/hooks/useUserStatus";
 import { joinCommunity, acceptCommunityInvite } from "@/lib/actions/community-actions";
 import { cn } from "@/lib/utils";
+import { CommunityGuestJoinDialog } from "@/components/communities/CommunityGuestJoinDialog";
 
 interface CommunityCardProps {
   id: number;
@@ -69,6 +70,7 @@ function CommunityCardComponent({
   const router = useRouter();
   const { userStatus, isLoading: isStatusLoading } = useUserStatus();
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [isGuestDialogOpen, setIsGuestDialogOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => setIsMounted(true), []);
 
@@ -193,7 +195,7 @@ function CommunityCardComponent({
     }
 
     if ("action" in ctaConfig && ctaConfig.action === "guest_join") {
-      router.push(detailHref);
+      setIsGuestDialogOpen(true);
       return;
     }
 
@@ -405,6 +407,15 @@ function CommunityCardComponent({
           </div>
         </CardContent>
       </Card>
+
+      <CommunityGuestJoinDialog
+        open={isGuestDialogOpen}
+        onOpenChange={setIsGuestDialogOpen}
+        communityId={id}
+        communityName={name}
+        membershipType={membershipType}
+        isPublic={isPublic}
+      />
     </motion.div>
   );
 }
