@@ -54,30 +54,17 @@ export async function PATCH(
 
     const data = await request.json();
 
-    const updateData: Record<string, unknown> = {};
-    
-    if (data.name !== undefined) updateData.name = data.name;
-    if (data.description !== undefined) updateData.description = data.description;
-    if (data.shortDescription !== undefined) updateData.shortDescription = data.shortDescription;
-    if (data.category !== undefined) updateData.category = data.category;
-    if (data.location !== undefined) updateData.location = data.location;
-    if (data.city !== undefined) updateData.city = data.city;
-    if (data.country !== undefined) updateData.country = data.country;
-    if (data.timezone !== undefined) updateData.timezone = data.timezone;
-    if (data.language !== undefined) updateData.language = data.language;
-    if (data.logo !== undefined) updateData.logo = data.logo;
-    if (data.website !== undefined) updateData.website = data.website;
-    if (data.mode !== undefined) updateData.mode = data.mode;
-    if (data.membershipType !== undefined) updateData.membershipType = data.membershipType;
-    if (data.meetupFrequency !== undefined) updateData.meetupFrequency = data.meetupFrequency;
-    if (data.maxMembers !== undefined) updateData.maxMembers = data.maxMembers;
-    if (data.primaryColor !== undefined) updateData.primaryColor = data.primaryColor;
+    // Shared owner-side validation (length, enum normalization, null
+    // coercion). Admin-only fields (featured/verified/creatorId) are
+    // layered on top below.
+    const validation = buildCommunityUpdateData(data);
+    if (!validation.ok) {
+      return NextResponse.json({ error: validation.message }, { status: validation.status });
+    }
+    const updateData = validation.updateData;
     if (data.featured !== undefined) updateData.featured = data.featured;
     if (data.verified !== undefined) updateData.verified = data.verified;
-    if (data.isPublic !== undefined) updateData.isPublic = data.isPublic;
     if (data.creatorId !== undefined) updateData.creatorId = data.creatorId;
-    if (data.profileImage !== undefined) updateData.profileImage = data.profileImage || null;
-    if (data.coverImage !== undefined) updateData.coverImage = data.coverImage || null;
 
     const communityId = parseInt(id);
     const existing = await prisma.community.findUnique({ where: { id: communityId } });
