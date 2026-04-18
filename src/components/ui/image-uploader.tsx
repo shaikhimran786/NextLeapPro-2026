@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Upload, X, Trash2, Image as ImageIcon, Loader2, AlertCircle, Check, Link2 } from "@/lib/icons";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { ImageCropDialog } from "./image-crop-dialog";
 
 type EntityType = "users" | "communities" | "chapters" | "events" | "services" | "static";
 type ImageType = "avatar" | "logo" | "cover" | "image";
@@ -28,6 +29,8 @@ interface ImageUploaderProps {
   className?: string;
   showPreview?: boolean;
   disabled?: boolean;
+  enableCrop?: boolean;
+  cropOutputMaxMB?: number;
 }
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -47,6 +50,8 @@ export function ImageUploader({
   className,
   showPreview = true,
   disabled = false,
+  enableCrop = false,
+  cropOutputMaxMB = 1,
 }: ImageUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -54,6 +59,7 @@ export function ImageUploader({
   const [showUrlDialog, setShowUrlDialog] = useState(false);
   const [urlInput, setUrlInput] = useState("");
   const [previewError, setPreviewError] = useState(false);
+  const [pendingCropFile, setPendingCropFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -153,21 +159,34 @@ export function ImageUploader({
     }
   }, [entityType, entityId, imageType, onChange]);
 
+  const handleIncomingFile = useCallback((file: File) => {
+    const error = validateFile(file);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    if (enableCrop) {
+      setPendingCropFile(file);
+    } else {
+      uploadFile(file);
+    }
+  }, [enableCrop, uploadFile]);
+
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      uploadFile(file);
+      handleIncomingFile(file);
     }
     event.target.value = "";
-  }, [uploadFile]);
+  }, [handleIncomingFile]);
 
   const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const file = event.dataTransfer.files?.[0];
     if (file) {
-      uploadFile(file);
+      handleIncomingFile(file);
     }
-  }, [uploadFile]);
+  }, [handleIncomingFile]);
 
   const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -360,6 +379,20 @@ export function ImageUploader({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {enableCrop && (
+        <ImageCropDialog
+          open={pendingCropFile !== null}
+          file={pendingCropFile}
+          aspect={aspectRatio === "video" ? "video" : aspectRatio === "banner" ? "banner" : "square"}
+          maxOutputSizeMB={cropOutputMaxMB}
+          onCancel={() => setPendingCropFile(null)}
+          onConfirm={async (compressed) => {
+            setPendingCropFile(null);
+            await uploadFile(compressed);
+          }}
+        />
+      )}
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>

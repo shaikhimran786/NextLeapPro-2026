@@ -16,10 +16,13 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { ArrowLeft, Settings, Image as ImageIcon, Tag, X, Globe, MapPin, Link as LinkIcon, Lock, Unlock, Trash2, Save, Palette, Users, Video, Laptop, UserPlus, Shield, Crown, MoreHorizontal, Ban, Check } from "@/lib/icons";
+import { ArrowLeft, Settings, Image as ImageIcon, Tag, X, Globe, MapPin, Link as LinkIcon, Lock, Unlock, Trash2, Save, Palette, Users, Video, Laptop, UserPlus, Shield, Crown, MoreHorizontal, Ban, Check, Loader2 } from "@/lib/icons";
 import { canManageCommunity, isAdmin as checkIsAdmin } from "@/lib/user-status";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import type { UserStatus } from "@/lib/user-status";
+import { normalizeSlug, validateSlug, buildCommunityUrl } from "@/lib/community-slug";
+import { revalidateUserStatus } from "@/hooks/useUserStatus";
+import { SmartImage } from "@/components/ui/smart-image";
 
 const COMMUNITY_CATEGORIES = [
   "technology", "design", "business", "marketing", "education",
@@ -47,11 +50,12 @@ interface SocialLinks {
 interface CommunityData {
   id: number;
   name: string;
-  slug: string;
+  slug: string | null;
   description: string;
   shortDescription: string | null;
   logo: string;
   coverImage: string | null;
+  profileImage: string | null;
   category: string;
   tags: string[];
   location: string | null;
@@ -65,6 +69,12 @@ interface CommunityData {
   meetupFrequency: string | null;
   creatorId: number | null;
 }
+
+type SlugCheckState =
+  | { status: "idle" }
+  | { status: "checking" }
+  | { status: "available"; normalized: string }
+  | { status: "unavailable"; message: string; normalized: string };
 
 interface MemberData {
   id: number;
@@ -105,6 +115,7 @@ export default function CommunitySettingsPage({ params }: PageProps) {
     shortDescription: "",
     logo: "",
     coverImage: "",
+    profileImage: "",
     category: "technology",
     tags: [] as string[],
     location: "",
@@ -116,7 +127,15 @@ export default function CommunitySettingsPage({ params }: PageProps) {
     primaryColor: "",
     maxMembers: "",
     meetupFrequency: "",
+    slug: "",
   });
+  const [customUrlEnabled, setCustomUrlEnabled] = useState(false);
+  const [slugCheck, setSlugCheck] = useState<SlugCheckState>({ status: "idle" });
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") setOrigin(window.location.origin);
+  }, []);
 
   useEffect(() => {
     async function loadData() {
@@ -161,6 +180,7 @@ export default function CommunitySettingsPage({ params }: PageProps) {
           shortDescription: commData.shortDescription || "",
           logo: commData.logo || "",
           coverImage: commData.coverImage || "",
+          profileImage: commData.profileImage || "",
           category: commData.category || "technology",
           tags: commData.tags || [],
           location: commData.location || "",
@@ -172,7 +192,9 @@ export default function CommunitySettingsPage({ params }: PageProps) {
           primaryColor: commData.primaryColor || "",
           maxMembers: commData.maxMembers ? String(commData.maxMembers) : "",
           meetupFrequency: commData.meetupFrequency || "",
+          slug: commData.slug || "",
         });
+        setCustomUrlEnabled(Boolean(commData.slug));
 
         fetch(`/api/communities/${id}/members`)
           .then(r => r.ok ? r.json() : [])
@@ -192,6 +214,55 @@ export default function CommunitySettingsPage({ params }: PageProps) {
   function updateField<K extends keyof typeof formData>(key: K, value: (typeof formData)[K]) {
     setFormData(prev => ({ ...prev, [key]: value }));
   }
+
+  // Debounced slug availability check
+  useEffect(() => {
+    if (!customUrlEnabled) {
+      setSlugCheck({ status: "idle" });
+      return;
+    }
+    const raw = formData.slug;
+    if (!raw.trim()) {
+      setSlugCheck({ status: "idle" });
+      return;
+    }
+    const validation = validateSlug(raw);
+    if (!validation.ok) {
+      setSlugCheck({ status: "unavailable", message: validation.message, normalized: normalizeSlug(raw) });
+      return;
+    }
+    // If unchanged from current, mark available immediately
+    if (community && validation.slug === (community.slug || "")) {
+      setSlugCheck({ status: "available", normalized: validation.slug });
+      return;
+    }
+    setSlugCheck({ status: "checking" });
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const url = `/api/communities/check-slug?slug=${encodeURIComponent(validation.slug)}${communityId ? `&excludeCommunityId=${communityId}` : ""}`;
+        const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) {
+          setSlugCheck({ status: "unavailable", message: "Could not verify slug", normalized: validation.slug });
+          return;
+        }
+        const data = await res.json();
+        if (data.available) {
+          setSlugCheck({ status: "available", normalized: data.normalized || validation.slug });
+        } else {
+          setSlugCheck({ status: "unavailable", message: data.message || "Slug not available", normalized: data.normalized || validation.slug });
+        }
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          setSlugCheck({ status: "unavailable", message: "Could not verify slug", normalized: validation.slug });
+        }
+      }
+    }, 300);
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [formData.slug, customUrlEnabled, community, communityId]);
 
   function updateSocialLink(platform: string, value: string) {
     setFormData(prev => ({
@@ -224,25 +295,60 @@ export default function CommunitySettingsPage({ params }: PageProps) {
       return;
     }
 
+    // Slug validation gate when custom URL is enabled
+    let slugToSend: string | null = null;
+    if (customUrlEnabled) {
+      if (!formData.slug.trim()) {
+        toast.error("Custom URL slug is required");
+        return;
+      }
+      if (slugCheck.status === "unavailable") {
+        toast.error(slugCheck.message);
+        return;
+      }
+      if (slugCheck.status === "checking") {
+        toast.error("Please wait — checking slug availability");
+        return;
+      }
+      const v = validateSlug(formData.slug);
+      if (!v.ok) {
+        toast.error(v.message);
+        return;
+      }
+      slugToSend = v.slug;
+    }
+
     setIsSaving(true);
     try {
+      const { slug: _omit, ...rest } = formData;
       const res = await fetch(`/api/communities/${communityId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...formData,
+          ...rest,
           coverImage: formData.coverImage || null,
+          profileImage: formData.profileImage || null,
           location: formData.location || null,
           website: formData.website || null,
           socialLinks: Object.keys(formData.socialLinks).length > 0 ? formData.socialLinks : null,
           primaryColor: formData.primaryColor || null,
           maxMembers: formData.maxMembers ? parseInt(formData.maxMembers) : null,
           meetupFrequency: formData.meetupFrequency || null,
+          slug: slugToSend,
         }),
       });
 
       if (res.ok) {
+        const updated = await res.json();
+        // Sync local community state so preview reflects the saved values
+        setCommunity((prev) => (prev ? { ...prev, ...updated } : prev));
         toast.success("Community settings saved successfully!");
+        // Refresh shared user-status (navbar avatar / role caches)
+        revalidateUserStatus();
+        // If slug changed, push the new canonical settings URL so the
+        // address bar reflects it without a full page reload.
+        const newSegment = updated.slug || String(updated.id);
+        router.replace(`/communities/${newSegment}/settings`);
         router.refresh();
       } else {
         const data = await res.json();
@@ -465,6 +571,78 @@ export default function CommunitySettingsPage({ params }: PageProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
+                  <LinkIcon className="h-5 w-5" /> Custom URL
+                </CardTitle>
+                <CardDescription>
+                  Choose a memorable web address for your community. The numeric URL keeps working as a fallback.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-medium text-sm">Enable Custom Community URL</p>
+                    <p className="text-xs text-muted-foreground">
+                      When off, your community is reached via {origin || ""}/communities/{community.id}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={customUrlEnabled}
+                    onCheckedChange={setCustomUrlEnabled}
+                    data-testid="switch-settings-custom-url"
+                  />
+                </div>
+
+                {customUrlEnabled && (
+                  <div>
+                    <Label htmlFor="slug">Slug</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {origin}/communities/
+                      </span>
+                      <Input
+                        id="slug"
+                        value={formData.slug}
+                        onChange={(e) => updateField("slug", normalizeSlug(e.target.value))}
+                        placeholder="my-community"
+                        maxLength={50}
+                        className="flex-1"
+                        data-testid="input-settings-slug"
+                      />
+                      <div className="w-5 flex justify-center">
+                        {slugCheck.status === "checking" && (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
+                        {slugCheck.status === "available" && (
+                          <Check className="h-4 w-4 text-green-600" data-testid="icon-slug-available" />
+                        )}
+                        {slugCheck.status === "unavailable" && (
+                          <X className="h-4 w-4 text-red-600" data-testid="icon-slug-unavailable" />
+                        )}
+                      </div>
+                    </div>
+                    {slugCheck.status === "available" && (
+                      <p className="text-xs text-green-600 mt-1" data-testid="text-slug-status">
+                        ✓ Available — your URL will be {origin}/communities/{slugCheck.normalized}
+                      </p>
+                    )}
+                    {slugCheck.status === "unavailable" && (
+                      <p className="text-xs text-red-600 mt-1" data-testid="text-slug-status">
+                        ✗ {slugCheck.message}
+                      </p>
+                    )}
+                    {slugCheck.status === "idle" && formData.slug && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Lowercase letters, numbers and hyphens. 3–50 characters.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
                   <Palette className="h-5 w-5" /> Branding
                 </CardTitle>
                 <CardDescription>Customize your community's visual identity</CardDescription>
@@ -472,7 +650,7 @@ export default function CommunitySettingsPage({ params }: PageProps) {
               <CardContent className="space-y-6">
                 {communityId && (
                   <>
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="grid md:grid-cols-3 gap-6">
                       <ImageUploader
                         value={formData.logo}
                         onChange={(url) => updateField("logo", url || "")}
@@ -482,6 +660,20 @@ export default function CommunitySettingsPage({ params }: PageProps) {
                         label="Community Logo"
                         placeholder="Upload logo image"
                         aspectRatio="square"
+                        enableCrop
+                        cropOutputMaxMB={0.5}
+                      />
+                      <ImageUploader
+                        value={formData.profileImage}
+                        onChange={(url) => updateField("profileImage", url || "")}
+                        entityType="communities"
+                        entityId={communityId}
+                        imageType="image"
+                        label="Profile Image"
+                        placeholder="Upload profile image"
+                        aspectRatio="square"
+                        enableCrop
+                        cropOutputMaxMB={0.5}
                       />
                       <ImageUploader
                         value={formData.coverImage}
@@ -492,10 +684,12 @@ export default function CommunitySettingsPage({ params }: PageProps) {
                         label="Cover Image"
                         placeholder="Upload cover image"
                         aspectRatio="banner"
+                        enableCrop
+                        cropOutputMaxMB={1}
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Logo: Square image (200x200 or larger) | Cover: 1200x400 pixels or larger
+                      Logo &amp; profile: square (cropped to 1:1). Cover: 16:9. Images are cropped &amp; compressed before upload.
                     </p>
                   </>
                 )}
@@ -875,6 +1069,80 @@ export default function CommunitySettingsPage({ params }: PageProps) {
                     onCheckedChange={(checked) => updateField("isPublic", checked)}
                     data-testid="switch-settings-public"
                   />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card data-testid="card-branding-preview">
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" /> Live Preview
+                </CardTitle>
+                <CardDescription>How your community will look</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Detail header preview */}
+                <div className="rounded-lg overflow-hidden border bg-white">
+                  <div className="relative w-full aspect-[16/9] bg-slate-100">
+                    {formData.coverImage ? (
+                      <SmartImage
+                        src={formData.coverImage}
+                        alt="Cover preview"
+                        fill
+                        className="object-cover"
+                        sizes="320px"
+                        fallbackType="cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-slate-300 text-xs">
+                        Cover image
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3 flex items-center gap-3">
+                    <div className="relative h-12 w-12 rounded-lg overflow-hidden ring-2 ring-white shadow shrink-0 bg-slate-100">
+                      {formData.profileImage || formData.logo ? (
+                        <SmartImage
+                          src={formData.profileImage || formData.logo}
+                          alt="Logo preview"
+                          fill
+                          className="object-cover"
+                          sizes="48px"
+                          fallbackType="logo"
+                        />
+                      ) : null}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate">{formData.name || "Community name"}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {origin}{buildCommunityUrl({ id: community.id, slug: customUrlEnabled ? formData.slug : null })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card preview */}
+                <div className="rounded-xl border bg-white p-3">
+                  <div className="flex items-start gap-3">
+                    <div className="relative h-12 w-12 rounded-lg overflow-hidden ring-2 ring-white shadow shrink-0 bg-slate-100">
+                      {formData.logo ? (
+                        <SmartImage
+                          src={formData.logo}
+                          alt="Card logo preview"
+                          fill
+                          className="object-cover"
+                          sizes="48px"
+                          fallbackType="logo"
+                        />
+                      ) : null}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate">{formData.name || "Community name"}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {formData.shortDescription || formData.description || "Short description"}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
