@@ -19,6 +19,18 @@ export const AUDITED_COMMUNITY_FIELDS = [
   "primaryColor",
   "category",
   "creatorId",
+  "website",
+  "socialLinks",
+  "tags",
+  "location",
+  "city",
+  "country",
+  "timezone",
+  "language",
+  "mode",
+  "membershipType",
+  "maxMembers",
+  "meetupFrequency",
 ] as const;
 
 export type AuditedField = (typeof AUDITED_COMMUNITY_FIELDS)[number];
