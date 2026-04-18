@@ -127,13 +127,17 @@ export async function POST(request: NextRequest) {
       slug = `community-${Date.now().toString(36)}`;
     }
 
-    const existingCommunity = await prisma.community.findFirst({
-      where: { slug },
-    });
+    const isSlugTaken = async (candidate: string) => {
+      const [live, alias] = await Promise.all([
+        prisma.community.findFirst({ where: { slug: candidate }, select: { id: true } }),
+        prisma.communitySlugAlias.findUnique({ where: { oldSlug: candidate }, select: { id: true } }),
+      ]);
+      return Boolean(live || alias);
+    };
 
-    if (existingCommunity) {
+    if (await isSlugTaken(slug)) {
       let suffix = 2;
-      while (await prisma.community.findFirst({ where: { slug: `${slug}-${suffix}` } })) {
+      while (await isSlugTaken(`${slug}-${suffix}`)) {
         suffix++;
       }
       slug = `${slug}-${suffix}`;

@@ -6,6 +6,7 @@ import prisma from "@/lib/prisma";
 import { generateMeta } from "@/lib/metadata";
 import { resolveCommunityIdForPage } from "@/lib/community-page-resolver";
 import { resolveCommunitySegment } from "@/lib/community-resolver";
+import { buildCommunityUrl } from "@/lib/community-slug";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -73,7 +74,7 @@ export default async function ChapterDetailPage({ params }: PageProps) {
         <div className="bg-gradient-to-r from-primary/10 via-blue-500/10 to-green-500/10 py-12">
           <div className="container mx-auto px-4">
             <Link 
-              href={`/communities/${id}/chapters`}
+              href={`${buildCommunityUrl(chapter.community)}/chapters`}
               className="inline-flex items-center gap-2 text-primary hover:underline mb-4"
             >
               <ArrowLeft className="h-4 w-4" /> All Chapters
@@ -104,7 +105,7 @@ export default async function ChapterDetailPage({ params }: PageProps) {
                 </h1>
                 <div className="flex flex-wrap gap-4 text-muted-foreground">
                   <Link 
-                    href={`/communities/${id}`}
+                    href={buildCommunityUrl(chapter.community)}
                     className="flex items-center gap-1 hover:text-primary transition-colors"
                   >
                     <Users className="h-4 w-4" /> {chapter.community.name}
@@ -227,7 +228,7 @@ export default async function ChapterDetailPage({ params }: PageProps) {
                         <div>
                           <p className="font-medium">Parent Community</p>
                           <Link 
-                            href={`/communities/${id}`}
+                            href={buildCommunityUrl(chapter.community)}
                             className="text-sm text-primary hover:underline"
                           >
                             {chapter.community.name}

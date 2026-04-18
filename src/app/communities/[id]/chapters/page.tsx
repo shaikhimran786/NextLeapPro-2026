@@ -66,7 +66,7 @@ export default async function CommunityChaptersPage({ params }: PageProps) {
         <div className="bg-gradient-to-r from-primary/10 via-blue-500/10 to-green-500/10 py-12">
           <div className="container mx-auto px-4">
             <Link 
-              href={`/communities/${id}`}
+              href={buildCommunityUrl(community)}
               className="inline-flex items-center gap-2 text-primary hover:underline mb-4"
             >
               <ArrowLeft className="h-4 w-4" /> Back to {community.name}
@@ -98,7 +98,7 @@ export default async function CommunityChaptersPage({ params }: PageProps) {
           {community.chapters.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {community.chapters.map((chapter) => (
-                <Link key={chapter.id} href={`/communities/${id}/chapters/${chapter.id}`}>
+                <Link key={chapter.id} href={`${buildCommunityUrl(community)}/chapters/${chapter.id}`}>
                   <Card className="h-full hover:shadow-lg transition-all duration-300 group">
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">

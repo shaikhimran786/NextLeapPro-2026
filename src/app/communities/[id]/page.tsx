@@ -257,7 +257,7 @@ export default async function CommunityDetailPage({ params }: PageProps) {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-2xl font-heading font-bold">Chapters</h2>
                   {community.chapters.length > 0 && (
-                    <Link href={`/communities/${id}/chapters`} className="text-primary hover:underline flex items-center gap-1 text-sm font-medium">
+                    <Link href={`${buildCommunityUrl(community)}/chapters`} className="text-primary hover:underline flex items-center gap-1 text-sm font-medium">
                       View all <ArrowRight className="h-4 w-4" />
                     </Link>
                   )}
@@ -265,7 +265,7 @@ export default async function CommunityDetailPage({ params }: PageProps) {
                 {community.chapters.length > 0 ? (
                   <div className="grid sm:grid-cols-2 gap-4">
                     {community.chapters.slice(0, 4).map((chapter) => (
-                      <Link key={chapter.id} href={`/communities/${id}/chapters/${chapter.id}`}>
+                      <Link key={chapter.id} href={`${buildCommunityUrl(community)}/chapters/${chapter.id}`}>
                         <Card className="hover:shadow-md transition-shadow cursor-pointer">
                           <CardContent className="p-4">
                             <div className="flex items-center gap-3">
@@ -301,7 +301,7 @@ export default async function CommunityDetailPage({ params }: PageProps) {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-2xl font-heading font-bold">Upcoming Events</h2>
                   {upcomingEvents.length > 0 && (
-                    <Link href={`/communities/${id}/events`} className="text-primary hover:underline flex items-center gap-1 text-sm font-medium">
+                    <Link href={`${buildCommunityUrl(community)}/events`} className="text-primary hover:underline flex items-center gap-1 text-sm font-medium">
                       View all <ArrowRight className="h-4 w-4" />
                     </Link>
                   )}

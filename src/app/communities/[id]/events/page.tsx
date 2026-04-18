@@ -82,7 +82,7 @@ export default async function CommunityEventsPage({ params }: PageProps) {
         <div className="bg-gradient-to-r from-primary/10 via-blue-500/10 to-green-500/10 py-12">
           <div className="container mx-auto px-4">
             <Link 
-              href={`/communities/${id}`}
+              href={buildCommunityUrl(community)}
               className="inline-flex items-center gap-2 text-primary hover:underline mb-4"
             >
               <ArrowLeft className="h-4 w-4" /> Back to {community.name}
