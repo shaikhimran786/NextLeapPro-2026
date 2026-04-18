@@ -928,11 +928,20 @@ export default function AdminCommunitiesPage() {
                       );
                     })}
                   </ul>
-                  {auditTotal > auditEntries.length && (
-                    <p className="text-xs text-slate-400 mt-1" data-testid="text-audit-truncated">
+                  {auditTotal > auditEntries.length && editingCommunity && (
+                    <p className="text-xs text-slate-500 mt-1" data-testid="text-audit-truncated">
                       {auditTotal - auditEntries.length} older{" "}
                       {auditTotal - auditEntries.length === 1 ? "entry is" : "entries are"} not
-                      shown. A full history view is coming soon.
+                      shown.{" "}
+                      <a
+                        href={`/admin/communities/${editingCommunity.id}/audit`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline"
+                        data-testid="link-full-audit-history"
+                      >
+                        View full history
+                      </a>
                     </p>
                   )}
                   </>

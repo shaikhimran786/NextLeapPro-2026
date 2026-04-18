@@ -76,6 +76,7 @@ export async function PATCH(
     if (data.isPublic !== undefined) updateData.isPublic = data.isPublic;
     if (data.creatorId !== undefined) updateData.creatorId = data.creatorId;
     if (data.profileImage !== undefined) updateData.profileImage = data.profileImage || null;
+    if (data.coverImage !== undefined) updateData.coverImage = data.coverImage || null;
 
     const communityId = parseInt(id);
     const existing = await prisma.community.findUnique({ where: { id: communityId } });

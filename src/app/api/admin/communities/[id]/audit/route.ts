@@ -5,7 +5,7 @@ import { checkAdminAccess } from "@/lib/auth-utils";
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
@@ -19,7 +19,10 @@ export async function GET(
       return NextResponse.json({ error: "Invalid community id" }, { status: 400 });
     }
 
-    const PAGE_SIZE = 50;
+    // Inline view caps at 50; the dedicated audit page passes ?all=1 to
+    // request the full history (capped at 1000 to bound payload size).
+    const all = request.nextUrl.searchParams.get("all") === "1";
+    const PAGE_SIZE = all ? 1000 : 50;
     const [entries, total] = await Promise.all([
       prisma.communityAuditLog.findMany({
         where: { communityId },
