@@ -18,7 +18,7 @@ import { SmartImage } from "@/components/ui/smart-image";
 import { getImageUrl, isValidImageSrc } from "@/lib/image-utils";
 import {
   Users, MapPin, Globe, Calendar, ArrowRight,
-  Building2, CalendarDays, Share2, CheckCircle2, Star,
+  Building2, CalendarDays, CheckCircle2, Star,
   Video, Laptop, Clock, Languages, Lock, Unlock
 } from "@/lib/icons";
 import { formatDate } from "@/lib/utils";
