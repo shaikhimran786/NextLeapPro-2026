@@ -644,6 +644,22 @@ export default function CommunitySettingsPage({ params }: PageProps) {
                         Lowercase letters, numbers and hyphens. 3–50 characters.
                       </p>
                     )}
+                    {slugCheck.status === "idle" && !formData.slug.trim() && (
+                      <p
+                        className="text-xs text-amber-600 mt-1"
+                        data-testid="text-slug-required"
+                      >
+                        A slug is required when Custom Community URL is enabled.
+                      </p>
+                    )}
+                    {slugCheck.status === "checking" && (
+                      <p
+                        className="text-xs text-muted-foreground mt-1"
+                        data-testid="text-slug-checking"
+                      >
+                        Checking availability…
+                      </p>
+                    )}
                   </div>
                 )}
               </CardContent>
