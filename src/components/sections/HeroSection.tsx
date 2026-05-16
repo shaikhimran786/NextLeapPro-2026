@@ -249,7 +249,7 @@ export function HeroSection({ siteSettings }: HeroSectionProps) {
                   className="w-full sm:w-auto rounded-full px-10 text-base h-13 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 hover:scale-[1.02] transition-all font-semibold"
                   data-testid="button-get-started"
                 >
-                  Start Learning <ArrowRight className="ml-2 h-4 w-4" />
+                  Join the Community <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/events">

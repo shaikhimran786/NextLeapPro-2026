@@ -171,16 +171,20 @@ export function Footer() {
             href="https://uixpertslabs.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-3 px-5 py-2.5 rounded-xl bg-gradient-to-r from-slate-800/80 to-slate-700/60 hover:from-slate-700/90 hover:to-slate-600/70 border border-slate-600/50 hover:border-cyan-500/40 shadow-lg hover:shadow-cyan-500/20 transition-all duration-300"
+            aria-label="Visit UIXPERTS LABS"
+            className="group inline-flex items-center gap-3 rounded-2xl border border-slate-700/70 bg-slate-800/90 px-4 py-3 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.9)] transition-all duration-300 hover:border-cyan-400/80 hover:bg-slate-700/95 hover:shadow-[0_14px_40px_-24px_rgba(34,211,238,0.35)]"
             data-testid="link-uixperts-footer"
           >
-            <span className="text-sm font-medium text-slate-400 group-hover:text-slate-200 transition-colors">Powered by</span>
+            <div className="flex flex-col leading-tight">
+              <span className="text-[11px] uppercase tracking-[0.35em] text-cyan-300">Powered by</span>
+              <span className="text-sm font-semibold text-white">UIXPERTS LABS™</span>
+            </div>
             <Image
               src="/logos/uixperts-labs-logo.png"
-              alt="UIXPERTS LABS - Technology solutions company"
-              width={120}
-              height={32}
-              className="h-8 w-auto drop-shadow-[0_0_8px_rgba(56,189,248,0.3)] group-hover:drop-shadow-[0_0_12px_rgba(56,189,248,0.5)] transition-all duration-300"
+              alt="UIXPERTS LABS logo"
+              width={96}
+              height={28}
+              className="h-7 w-auto rounded-md border border-slate-700/60 bg-slate-950/80 p-1 shadow-sm transition-all duration-300 group-hover:scale-[1.02]"
             />
           </a>
           <p className="text-sm text-slate-400">
