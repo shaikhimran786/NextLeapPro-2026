@@ -1,4 +1,4 @@
-You are working on NextLeapPro, a production-grade SaaS community platform. Your task is to activate, validate, and fix the complete subscription flow for the /pricing page with a seamless, secure Razorpay integration, following enterprise-level UI, UX, and engineering best practices.
+You are working on NextLeapPro, a production-grade SaaS community platform.Your task is to activate, validate, and fix the complete subscription flow for the /pricing page with a seamless, secure Razorpay integration, following enterprise-level UI, UX, and engineering best practices.
 
 Objective
 Implement and test a robust subscription flow on /pricing that:
@@ -119,4 +119,4 @@ Ensure:
 * UX feels smooth, predictable, and trustworthy
 * Flow is production-ready
 
-Goal: Deliver a clean, reliable, enterprise-grade subscription experience that aligns with Next Leap Pro’s mission to help users Learn, Earn, and Grow, without friction or confusion.
+Goal:Deliver a clean, reliable, enterprise-grade subscription experience that aligns with Next Leap Pro’s mission to help users Learn, Earn, and Grow, without friction or confusion.
