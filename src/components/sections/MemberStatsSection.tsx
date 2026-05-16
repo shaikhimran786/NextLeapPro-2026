@@ -50,14 +50,6 @@ const statsConfig = [
     borderColor: "border-blue-200/50",
   },
   {
-    key: "activeSubscribers",
-    label: "Pro Subscribers",
-    icon: Crown,
-    gradient: "from-amber-500 to-orange-600",
-    bgGradient: "from-amber-50 via-yellow-50 to-orange-50",
-    borderColor: "border-amber-200/50",
-  },
-  {
     key: "totalEvents",
     label: "Total Events",
     icon: Calendar,
@@ -132,7 +124,7 @@ export function MemberStatsSection() {
         />
       </div>
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-4 z-10">
         <motion.div 
           className="max-w-6xl mx-auto"
           initial="hidden"

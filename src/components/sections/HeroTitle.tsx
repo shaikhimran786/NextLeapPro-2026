@@ -186,7 +186,7 @@ export function HeroTitle({
     fetcher,
     {
       revalidateOnFocus: false,
-      dedupingInterval: 60000,
+      dedupingInterval: 90000,
       suspense: false,
     }
   );
@@ -330,7 +330,7 @@ export function HeroTitleTyping({
 
   return (
     <span
-      className={`hero-title-typing inline-flex items-center justify-center min-h-[clamp(90px,12vw,150px)] w-full max-w-full whitespace-normal break-words overflow-hidden text-balance ${className}`}
+      className={`hero-title-typing inline-flex items-center justify-center min-h-[clamp(120px,12vw,160px)] w-full max-w-full whitespace-normal wrap-break-word overflow-hidden text-balance ${className}`}
       data-testid="hero-title-typing"
     >
       <span className="inline-block max-w-full">{displayText}</span>
