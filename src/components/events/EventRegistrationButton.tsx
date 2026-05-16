@@ -334,6 +334,7 @@ export function EventRegistrationButton({
         currency: orderData.currency,
         name: "Next Leap Pro",
         description: `Event: ${orderData.registration.eventTitle}`,
+        image: "/logos/nlp-logo-white.png",
         order_id: orderData.orderId,
         prefill: {
           name: orderData.prefill?.name || "",
