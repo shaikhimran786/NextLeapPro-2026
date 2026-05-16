@@ -362,7 +362,7 @@ export function PricingPlans({ monthlyPlans, annualPlans }: PricingPlansProps) {
           currency: checkoutData.currency,
           name: "Next Leap Pro",
           description: `Subscription: ${plan.name}`,
-          image: "/logos/nlp-logo-white.png",
+          image: "/logos/logo-icon.png",
           order_id: checkoutData.orderId,
           prefill: {
             name: userName,
