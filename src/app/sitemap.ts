@@ -54,10 +54,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     },
     {
-      url: `${baseUrl}/faq`,
+      url: `${baseUrl}/blog`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/career`,
       lastModified: new Date(),
       changeFrequency: "monthly",
-      priority: 0.6,
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/careers`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.7,
     },
     {
       url: `${baseUrl}/terms`,
@@ -82,11 +94,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const events = await prisma.event.findMany({
       where: { status: "published" },
-      select: { id: true, updatedAt: true },
+      select: { id: true, slug: true, updatedAt: true },
     });
 
     const eventRoutes: MetadataRoute.Sitemap = events.map((event) => ({
-      url: `${baseUrl}/events/${event.id}`,
+      url: `${baseUrl}/events/${event.slug || event.id}`,
       lastModified: event.updatedAt,
       changeFrequency: "weekly" as const,
       priority: 0.7,
@@ -117,7 +129,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }));
 
-    return [...staticRoutes, ...eventRoutes, ...communityRoutes, ...serviceRoutes];
+    const profiles = await prisma.user.findMany({
+      where: { isPublished: true, handle: { not: null } },
+      select: { handle: true, updatedAt: true },
+    });
+
+    const profileRoutes: MetadataRoute.Sitemap = profiles.map((profile) => ({
+      url: `${baseUrl}/u/${profile.handle}`,
+      lastModified: profile.updatedAt,
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    }));
+
+    return [...staticRoutes, ...eventRoutes, ...communityRoutes, ...serviceRoutes, ...profileRoutes];
   } catch (error) {
     console.error("Error generating sitemap:", error);
     return staticRoutes;

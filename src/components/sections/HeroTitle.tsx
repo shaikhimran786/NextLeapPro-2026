@@ -35,7 +35,7 @@ const DEFAULT_GRADIENTS: HeroGradientsConfig = {
 const DEFAULT_ANIMATION: HeroAnimationConfig = {
   type: "fade",
   duration: 0.8,
-  delay: 0.1,
+  delay: 0.5,
   stagger: 0.15,
   easing: "easeOut",
   loop: false,
@@ -181,15 +181,15 @@ export function HeroTitle({
   const shouldReduceMotion = useReducedMotion();
 
   // Fetch settings from API (skip if preview mode with overrides)
-  const { data: settings } = useSWR(
+  const settings = useSWR(
     !isPreview ? "/api/admin/settings" : null,
     fetcher,
     {
       revalidateOnFocus: false,
-      dedupingInterval: 90000,
+      dedupingInterval: 60000,
       suspense: false,
     }
-  );
+  ).data;
 
   // Parse animation config
   const animationConfig = useMemo<HeroAnimationConfig>(() => {

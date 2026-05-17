@@ -11,11 +11,16 @@ interface GenerateMetaOptions {
 
 const defaultMeta = {
   siteName: "Next Leap Pro",
-  title: "Next Leap Pro - Learn, Earn, and Grow",
+  title: "Your career is bigger than one company — Next Leap Pro",
   description:
-    "The platform for students and professionals to master new skills, monetize their talents, and accelerate their career growth through community and events.",
+    "A professional opportunity ecosystem helping experienced professionals, returning women, students, and independent experts connect with communities, mentorship, and real opportunities to learn, earn and grow.",
   image: "/og-image.png",
   url: process.env.NEXT_PUBLIC_APP_URL || "https://nextleappro.com",
+  socialProfiles: [
+    "https://twitter.com/nextleappro",
+    "https://www.linkedin.com/company/nextleappro",
+    "https://www.facebook.com/nextleappro"
+  ],
 };
 
 export function generateMeta(options: GenerateMetaOptions = {}): Metadata {
@@ -123,12 +128,9 @@ export function generateOrganizationStructuredData() {
     "@type": "Organization",
     name: defaultMeta.siteName,
     url: defaultMeta.url,
-    logo: `${defaultMeta.url}/logo.png`,
+    logo: `${defaultMeta.url}/logos/nlp-logo-white.png`,
     description: defaultMeta.description,
-    sameAs: [
-      "https://twitter.com/nextleappro",
-      "https://linkedin.com/company/nextleappro",
-    ],
+    sameAs: Array.isArray((defaultMeta as any).socialProfiles) ? (defaultMeta as any).socialProfiles : [],
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "customer service",

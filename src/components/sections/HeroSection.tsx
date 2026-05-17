@@ -74,7 +74,7 @@ const itemVariants = {
   }
 };
 
-const DEFAULT_HERO_TITLE = "The Career Ecosystem for Every Stage of Growth";
+const DEFAULT_HERO_TITLE = "Your career is bigger than one company.";
 
 export function HeroSection({ siteSettings }: HeroSectionProps) {
   const title = siteSettings?.heroTitle || DEFAULT_HERO_TITLE;

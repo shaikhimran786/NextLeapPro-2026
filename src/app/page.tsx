@@ -17,9 +17,9 @@ import { CTASection } from "@/components/sections/CTASection";
 export const revalidate = 300;
 
 export const metadata: Metadata = generateMeta({
-  title: "Learn, Earn, and Grow",
+  title: "Your career is bigger than one company.",
   description:
-    "A powerful ecosystem built for students and professionals to gain in-demand skills, convert their talents into real earning opportunities, and accelerate career growth through structured learning, expert guidance, and a strong, opportunity-driven community.",
+    "Next Leap Pro is a professional opportunity ecosystem helping professionals connect with communities, mentors, and real opportunities to restart careers, freelance, consult, and grow with resilience.",
   path: "/",
 });
 
