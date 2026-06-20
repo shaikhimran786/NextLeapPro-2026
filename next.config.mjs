@@ -60,6 +60,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: '*.cdn-files-a.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'assets.zyrosite.com',
+      },
     ],
   },
   
