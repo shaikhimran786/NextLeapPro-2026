@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
         slug,
         description: trimmedDesc,
         shortDescription: shortDescription ? String(shortDescription).trim().slice(0, 200) : null,
-        logo: logo || "",
+        logo: logo || `https://api.dicebear.com/7.x/shapes/svg?seed=${slug}`,
         coverImage: coverImage || null,
         category,
         tags: tags || [],

@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
         slug,
         description: data.description,
         shortDescription: data.shortDescription || null,
-        logo: data.logo || "",
+        logo: data.logo || `https://api.dicebear.com/7.x/shapes/svg?seed=${slug}`,
         coverImage: data.coverImage || null,
         category: data.category,
         tags: data.tags || [],
