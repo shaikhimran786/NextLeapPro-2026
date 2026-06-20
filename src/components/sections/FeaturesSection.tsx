@@ -1,4 +1,5 @@
-import { BookOpen, IndianRupee, TrendingUp } from "@/lib/icons";
+import Link from "next/link";
+import { BookOpen, IndianRupee, TrendingUp, ArrowRight } from "@/lib/icons";
 
 const features = [
   {
@@ -8,6 +9,8 @@ const features = [
       "Master new skills through workshops, webinars, hackathons, and expert-led sessions.",
     color: "bg-blue-50",
     borderColor: "border-blue-100",
+    href: "/events",
+    linkColor: "text-blue-600",
   },
   {
     icon: <IndianRupee className="h-8 w-8 text-green-600" />,
@@ -16,6 +19,8 @@ const features = [
       "Monetize your expertise by offering services, mentoring, and consulting through our marketplace.",
     color: "bg-green-50",
     borderColor: "border-green-100",
+    href: "/services",
+    linkColor: "text-green-600",
   },
   {
     icon: <TrendingUp className="h-8 w-8 text-purple-600" />,
@@ -24,6 +29,8 @@ const features = [
       "Connect with like-minded professionals, join communities, and accelerate your career.",
     color: "bg-purple-50",
     borderColor: "border-purple-100",
+    href: "/communities",
+    linkColor: "text-purple-600",
   },
 ];
 
@@ -44,7 +51,7 @@ export function FeaturesSection() {
           {features.map((feature, index) => (
             <div
               key={index}
-              className={`${feature.color} ${feature.borderColor} border rounded-2xl p-8 transition-transform hover:-translate-y-1`}
+              className={`${feature.color} ${feature.borderColor} flex flex-col border rounded-2xl p-8 transition-transform hover:-translate-y-1`}
               data-testid={`feature-${feature.title.toLowerCase()}`}
             >
               <div className="mb-6">{feature.icon}</div>
@@ -52,6 +59,15 @@ export function FeaturesSection() {
                 {feature.title}
               </h3>
               <p className="text-slate-600">{feature.description}</p>
+              <Link
+                href={feature.href}
+                className={`group mt-6 inline-flex items-center gap-1.5 text-sm font-semibold ${feature.linkColor} focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-current rounded`}
+                aria-label={`Learn more about ${feature.title}`}
+                data-testid={`feature-link-${feature.title.toLowerCase()}`}
+              >
+                Learn more
+                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+              </Link>
             </div>
           ))}
         </div>

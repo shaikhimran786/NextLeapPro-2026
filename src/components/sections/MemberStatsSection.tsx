@@ -155,7 +155,7 @@ export function MemberStatsSection() {
                 Growing Community
               </span>
             </h2>
-            <p className="text-slate-600 mt-3 max-w-xl mx-auto">
+            <p className="text-slate-600 mt-3 w-full mx-auto">
               Thousands of learners, professionals, and creators are already growing with us
             </p>
           </motion.div>
