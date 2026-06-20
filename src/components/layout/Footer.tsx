@@ -74,8 +74,7 @@ export function Footer() {
               />
             </Link>
             <p className="text-slate-400 text-sm mb-6 max-w-sm">
-              The platform for students and professionals to learn new skills, 
-              monetize their talents, and grow their careers.
+            Learn. Earn. Grow. Build a resilient career and multiple income opportunities for the future.
             </p>
             <div className="flex gap-6 mb-6">
               <div className="flex items-center gap-2 text-sm">

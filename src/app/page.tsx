@@ -6,6 +6,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 
 import { HeroSection } from "@/components/sections/HeroSection";
+import { HowItWorksTeaser } from "@/components/sections/HowItWorksTeaser";
 import { MemberStatsSection } from "@/components/sections/MemberStatsSection";
 import { FeaturesSection } from "@/components/sections/FeaturesSection";
 import { EventsSection } from "@/components/sections/EventsSection";
@@ -70,7 +71,7 @@ export default async function HomePage() {
       />
       <main id="main-content" className="flex-grow" role="main">
         <HeroSection siteSettings={siteSettings as any} />
-        <MemberStatsSection />
+        <HowItWorksTeaser />
         <FeaturesSection />
         <EventsSection events={events} />
         <DailyPollSection />
