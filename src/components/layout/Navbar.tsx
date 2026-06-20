@@ -601,15 +601,16 @@ export function Navbar({
 }: NavbarProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const { userStatus, isLoading } = useUserStatus();
   const router = useRouter();
   const pathname = usePathname();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const menuToggleRef = useRef<HTMLButtonElement>(null);
 
-  const isHomePage = pathname === '/';
-  const isTransparent = isHomePage && !scrolled;
+  // The home hero is now a light design, so the navbar must stay solid
+  // (dark text + dark logo) for legibility instead of the old transparent
+  // white treatment that was built for the previous dark hero.
+  const isTransparent = false;
 
   const { data: siteSettings } = useSWR("/api/admin/settings", fetcher, {
     revalidateOnFocus: false,
@@ -691,12 +692,6 @@ export function Navbar({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, closeMenu]);
 
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const logoSrc = siteSettings?.logoDark || DEFAULT_LOGO;
 
