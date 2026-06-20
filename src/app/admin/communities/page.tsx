@@ -104,7 +104,7 @@ const MEMBERSHIP_TYPES = [
 ];
 
 const MEETUP_FREQUENCIES = [
-  { value: "", label: "Not Specified" },
+  { value: "not_specified", label: "Not Specified" },
   { value: "weekly", label: "Weekly" },
   { value: "biweekly", label: "Bi-weekly" },
   { value: "monthly", label: "Monthly" },
@@ -201,6 +201,9 @@ export default function AdminCommunitiesPage() {
       if (res.ok) {
         const data = await res.json();
         setCommunities(data);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || `Failed to load communities (HTTP ${res.status})`);
       }
     } catch (error) {
       toast.error("Failed to load communities");
@@ -691,8 +694,8 @@ export default function AdminCommunitiesPage() {
                   <div className="grid gap-2">
                     <Label>Meetup Frequency</Label>
                     <Select
-                      value={editingCommunity.meetupFrequency || ""}
-                      onValueChange={(value) => setEditingCommunity({ ...editingCommunity, meetupFrequency: value })}
+                      value={editingCommunity.meetupFrequency || "not_specified"}
+                      onValueChange={(value) => setEditingCommunity({ ...editingCommunity, meetupFrequency: value === "not_specified" ? "" : value })}
                     >
                       <SelectTrigger data-testid="select-community-frequency">
                         <SelectValue placeholder="Select frequency" />
@@ -1180,8 +1183,8 @@ export default function AdminCommunitiesPage() {
                 <div className="grid gap-2">
                   <Label>Meetup Frequency</Label>
                   <Select
-                    value={newCommunity.meetupFrequency}
-                    onValueChange={(value) => setNewCommunity({ ...newCommunity, meetupFrequency: value })}
+                    value={newCommunity.meetupFrequency || "not_specified"}
+                    onValueChange={(value) => setNewCommunity({ ...newCommunity, meetupFrequency: value === "not_specified" ? "" : value })}
                   >
                     <SelectTrigger data-testid="select-new-community-frequency">
                       <SelectValue placeholder="Select frequency" />
