@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Image, { ImageProps } from "next/image";
 import { PLACEHOLDER_IMAGE, isValidImageSrc, getImageUrl } from "@/lib/image-utils";
 import { ImageOff } from "@/lib/icons";
@@ -23,11 +23,31 @@ export function SmartImage({
 }: SmartImageProps) {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  // When the optimized next/image fails (e.g. the host isn't listed in
+  // next.config remotePatterns), retry once with a native <img>. The native
+  // tag bypasses the Next image optimizer and its host allowlist, so a valid
+  // remote logo still renders instead of collapsing to the "No Image"
+  // placeholder. Only after the native <img> also fails do we treat the
+  // image as genuinely broken.
+  const [useNativeImg, setUseNativeImg] = useState(false);
+
+  // Reset transient state whenever the source changes so a new logo gets a
+  // fresh optimized attempt.
+  useEffect(() => {
+    setHasError(false);
+    setIsLoading(true);
+    setUseNativeImg(false);
+  }, [src]);
 
   const handleError = useCallback(() => {
+    if (!useNativeImg) {
+      setUseNativeImg(true);
+      setIsLoading(true);
+      return;
+    }
     setHasError(true);
     setIsLoading(false);
-  }, []);
+  }, [useNativeImg]);
 
   const handleLoad = useCallback(() => {
     setIsLoading(false);
@@ -37,7 +57,7 @@ export function SmartImage({
 
   if (shouldShowFallback) {
     return (
-      <div 
+      <div
         className={`flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 ${className}`}
         style={props.fill ? { position: "absolute", inset: 0 } : { width: props.width, height: props.height }}
       >
@@ -53,23 +73,47 @@ export function SmartImage({
 
   const resolvedSrc = getImageUrl(src);
 
+  // Pull out next/image-only props so we can render a clean native <img>
+  // fallback that still mimics `fill` layout.
+  const { fill, width, height, sizes, priority, quality, placeholder, blurDataURL, loader, ...imgRest } =
+    props as ImageProps & Record<string, unknown>;
+  void sizes; void priority; void quality; void placeholder; void blurDataURL; void loader;
+
   return (
     <>
       {isLoading && (
-        <div 
+        <div
           className={`animate-pulse bg-slate-200 ${className}`}
-          style={props.fill ? { position: "absolute", inset: 0 } : { width: props.width, height: props.height }}
+          style={fill ? { position: "absolute", inset: 0 } : { width, height }}
         />
       )}
-      <Image
-        src={resolvedSrc}
-        alt={alt}
-        className={`${className} ${isLoading ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}
-        onError={handleError}
-        onLoad={handleLoad}
-        loading="lazy"
-        {...props}
-      />
+      {useNativeImg ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={resolvedSrc}
+          alt={typeof alt === "string" ? alt : ""}
+          className={`${className} ${isLoading ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}
+          style={
+            fill
+              ? { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }
+              : { width, height }
+          }
+          onError={handleError}
+          onLoad={handleLoad}
+          loading="lazy"
+          {...(imgRest as React.ImgHTMLAttributes<HTMLImageElement>)}
+        />
+      ) : (
+        <Image
+          src={resolvedSrc}
+          alt={alt}
+          className={`${className} ${isLoading ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}
+          onError={handleError}
+          onLoad={handleLoad}
+          loading="lazy"
+          {...props}
+        />
+      )}
     </>
   );
 }
