@@ -15,6 +15,7 @@ import {
   Briefcase,
   CreditCard,
   ScrollText,
+  Handshake,
   LogOut,
 } from "@/lib/icons";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ const sidebarLinks = [
   { href: "/admin/seo", icon: Globe, label: "Page SEO" },
   { href: "/admin/features", icon: ToggleLeft, label: "Feature Toggles" },
   { href: "/admin/events", icon: Calendar, label: "Events" },
+  { href: "/admin/referral-hires", icon: Handshake, label: "Referral Hires" },
   { href: "/admin/communities", icon: Users, label: "Communities" },
   { href: "/admin/services", icon: Briefcase, label: "Services" },
   { href: "/admin/plans", icon: CreditCard, label: "Plans & Pricing" },
