@@ -44,6 +44,9 @@ model User {
   payments            PaymentTransaction[]
   sessions            Session[]
   passwordResetTokens PasswordResetToken[]
+  jobReferralsPosted  JobReferral[]       @relation("JobReferralPoster")
+  jobApplications     Application[]
+  uploadedCvs         UploadedCv[]
 }
 
 model Session {
@@ -879,4 +882,126 @@ model CareerInsightFeedback {
 
   @@unique([insightId, userId])
   @@index([insightId])
+}
+
+// ============================================================
+// Referral Hires + Talent Pool feature
+// ============================================================
+
+model GuestProfile {
+  id             Int      @id @default(autoincrement())
+  name           String
+  email          String
+  whatsappNumber String
+  linkedinUrl    String?
+  portfolioUrl   String?
+  location       String?
+  createdAt      DateTime @default(now())
+
+  jobReferralsPosted JobReferral[] @relation("JobReferralGuestPoster")
+  applications       Application[]
+  uploadedCvs        UploadedCv[]
+
+  @@index([email])
+}
+
+model JobReferral {
+  id              Int       @id @default(autoincrement())
+  jobTitle        String
+  companyName     String
+  location        String
+  workMode        String    // remote | hybrid | onsite
+  experienceRange String
+  shortDescription String
+  salaryRange     String?
+  jobLink         String?
+  lastDateToApply DateTime?
+  referralSource  String?   // self | hr | friend | community | other
+  pocName         String
+  pocEmail        String
+  pocWhatsapp     String
+  postedByUserId  Int?
+  postedByUser    User?         @relation("JobReferralPoster", fields: [postedByUserId], references: [id], onDelete: SetNull)
+  postedByGuestId Int?
+  postedByGuest   GuestProfile? @relation("JobReferralGuestPoster", fields: [postedByGuestId], references: [id], onDelete: SetNull)
+  status          String        @default("pending_review") // pending_review | verified | rejected | expired
+  isVerified      Boolean       @default(false)
+  verifiedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  applications    Application[]
+
+  @@index([status])
+  @@index([isVerified])
+  @@index([postedByUserId])
+}
+
+model UploadedCv {
+  id             Int           @id @default(autoincrement())
+  userId         Int?
+  user           User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestProfileId Int?
+  guestProfile   GuestProfile? @relation(fields: [guestProfileId], references: [id], onDelete: Cascade)
+  fileUrl        String        // protected object path e.g. /objects/referral-cvs/...
+  fileName       String
+  fileType       String
+  uploadedAt     DateTime      @default(now())
+
+  applications   Application[]
+
+  @@index([userId])
+  @@index([guestProfileId])
+}
+
+model Application {
+  id             Int           @id @default(autoincrement())
+  jobReferralId  Int?
+  jobReferral    JobReferral?  @relation(fields: [jobReferralId], references: [id], onDelete: SetNull)
+  userId         Int?
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  guestProfileId Int?
+  guestProfile   GuestProfile? @relation(fields: [guestProfileId], references: [id], onDelete: SetNull)
+  cvId           Int?
+  cv             UploadedCv?   @relation(fields: [cvId], references: [id], onDelete: SetNull)
+  source         String        // registered | guest
+  applicationType String       @default("referral") // referral | talent_pool
+  status         String        @default("applied") // applied | sent_to_contact | shortlisted | interview | selected | rejected | closed
+  whatsappClicked Boolean      @default(false)
+  emailClicked    Boolean      @default(false)
+
+  // Candidate intelligence (talent intake) fields
+  employmentStatus     String?   // currently_employed | serving_notice | open_to_opportunities | freelancer | returning | student | layoff_impacted
+  joiningAvailability  String?   // immediate | within_15 | within_30 | within_60 | more_than_60
+  layoffImpacted       Boolean?
+  layoffLastWorkingMonth String?
+  opportunityPreference String[]
+  professionalSummary  String?
+  applicationSource    String?   @default("referral_opening") // referral_opening | direct_submission | community_event | whatsapp_group | partner_referral | website | other
+  talentStatus         String?   @default("new") // new | under_review | referred | shortlisted | interview_scheduled | selected | on_hold | archived
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  activityLogs   ReferralActivityLog[]
+
+  @@index([jobReferralId])
+  @@index([userId])
+  @@index([guestProfileId])
+  @@index([status])
+  @@index([applicationType])
+  @@index([talentStatus])
+}
+
+model ReferralActivityLog {
+  id            Int         @id @default(autoincrement())
+  applicationId Int
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  activityType  String      // created | whatsapp_clicked | email_clicked | status_changed | note | verified | rejected
+  activityBy    String      // "user:123" | "guest:45" | "admin:7" | "system"
+  notes         String?
+  createdAt     DateTime    @default(now())
+
+  @@index([applicationId])
 }

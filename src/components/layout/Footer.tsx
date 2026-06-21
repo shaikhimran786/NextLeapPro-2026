@@ -12,6 +12,7 @@ const footerLinks = {
     { href: "/services", label: "Services" },
     { href: "/communities", label: "Communities" },
     { href: "/pricing", label: "Pricing" },
+    { href: "/referral-hires", label: "Referral Hires" },
   ],
   company: [
     { href: "/about", label: "About Us" },
