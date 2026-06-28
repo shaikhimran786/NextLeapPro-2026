@@ -20,28 +20,30 @@ export const metadata: Metadata = generateMeta({
 
 async function getInitialOpenings(): Promise<PublicOpening[]> {
   const now = new Date();
-  const rows = await prisma.jobReferral.findMany({
-    where: { status: "verified", isVerified: true },
-    select: {
-      id: true,
-      jobTitle: true,
-      companyName: true,
-      location: true,
-      workMode: true,
-      experienceRange: true,
-      shortDescription: true,
-      salaryRange: true,
-      jobLink: true,
-      lastDateToApply: true,
-      referralSource: true,
-      isVerified: true,
-      createdAt: true,
-      pocName: true,
-      _count: { select: { applications: true } },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-  });
+  const rows = await prisma.jobReferral
+    .findMany({
+      where: { status: "verified", isVerified: true },
+      select: {
+        id: true,
+        jobTitle: true,
+        companyName: true,
+        location: true,
+        workMode: true,
+        experienceRange: true,
+        shortDescription: true,
+        salaryRange: true,
+        jobLink: true,
+        lastDateToApply: true,
+        referralSource: true,
+        isVerified: true,
+        createdAt: true,
+        pocName: true,
+        _count: { select: { applications: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+    })
+    .catch(() => []);
 
   return rows
     .filter((o) => !o.lastDateToApply || new Date(o.lastDateToApply) >= now)
