@@ -42,7 +42,7 @@ async function getHomeData() {
       })
       .catch(() => []),
     prisma.siteSettings.findFirst().catch(() => null),
-    getNavbarPlansData(),
+    getNavbarPlansData().catch(() => ({ plans: [] })),
   ]);
 
   return {

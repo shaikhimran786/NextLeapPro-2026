@@ -16,10 +16,12 @@ export const metadata: Metadata = generateMeta({
 });
 
 async function getPlans() {
-  const plans = await prisma.subscriptionPlan.findMany({
-    where: { active: true },
-    orderBy: { sortOrder: "asc" },
-  });
+  const plans = await prisma.subscriptionPlan
+    .findMany({
+      where: { active: true },
+      orderBy: { sortOrder: "asc" },
+    })
+    .catch(() => []);
   
   return plans.map((plan) => ({
     ...plan,

@@ -48,9 +48,7 @@ export async function getNavbarPlansData(): Promise<NavbarPlansData> {
       })),
     };
   } catch (error) {
-    console.error("Error fetching navbar plans data:", error);
-    // Return empty plans array to fallback to hardcoded data
-    // This prevents the page from breaking if database is unavailable
+    console.warn("Navbar plans unavailable, falling back to static navigation plans.", error);
     return { plans: [] };
   }
 }
